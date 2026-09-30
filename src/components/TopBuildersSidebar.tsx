@@ -190,7 +190,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="text-right">
                       <div className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-xs font-mono font-bold text-amber-300">
-                        <Flame className="h-3 w-3 text-amber-400 fill-amber-400/30" />
+                        <Star className="h-3 w-3 text-amber-400 fill-amber-400/40" />
                         <span>{builder.reputationScore || 0}</span>
                       </div>
                       <div className="text-[9px] font-mono text-slate-500 text-right pr-0.5">

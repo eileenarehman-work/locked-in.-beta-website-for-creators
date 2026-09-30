@@ -262,7 +262,7 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-900 py-8 text-center text-xs text-slate-600 font-mono">
-        <p>We Did This — High-Engagement Showcase & Community for Creators.</p>
+        <p>locked in. — High-Engagement Showcase & Community for Creators.</p>
         <p className="mt-1">Learn Something New · Follow Fellow Creators · Express Yourself </p>
       </footer>
     </div>

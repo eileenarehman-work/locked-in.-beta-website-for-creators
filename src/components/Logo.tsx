@@ -59,7 +59,7 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 'md', showTex
 
       {showText && (
         <span className={`tracking-tight text-white flex items-center gap-1.5 ${currentSize.text}`}>
-          <span>We Did This</span>
+          <span className="font-extrabold tracking-tight">locked in.</span>
         </span>
       )}
     </div>

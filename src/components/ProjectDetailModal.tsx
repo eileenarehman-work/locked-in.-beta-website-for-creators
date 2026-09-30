@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Project, Review, User } from '../types';
 import { evaluateReviewQuality, ReviewQualityResult } from '../services/geminiService';
 import {
@@ -10,6 +10,7 @@ import {
   Calendar,
   MessageSquare,
   Sparkles,
+  Star,
   ThumbsUp,
   AlertCircle,
   Eye,
@@ -97,14 +98,27 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
     setEvalResult(null);
   };
 
+  // Easy exit with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-slate-950/80 backdrop-blur-md overflow-y-auto cursor-pointer animate-in fade-in duration-150"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 15 }}
         transition={{ duration: 0.2 }}
-        className="relative my-8 w-full max-w-4xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+        className="relative my-8 w-full max-w-4xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] cursor-default"
       >
         {/* Header Bar */}
         <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4 bg-slate-950/60">
@@ -124,9 +138,12 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+              title="Close (Esc)"
+              aria-label="Close (Esc)"
+              className="flex items-center gap-1 rounded-xl border border-slate-700/80 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
+              <span className="text-[10px] font-mono text-slate-400">Esc</span>
             </button>
           </div>
         </div>
@@ -210,7 +227,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                     </span>
                   </div>
                   <span className="text-xs text-slate-400 flex items-center gap-1 font-mono">
-                    <Sparkles className="h-3 w-3 text-amber-400" />
+                    <Star className="h-3 w-3 text-amber-400 fill-amber-400/40" />
                     Reputation {project.author.reputationScore}
                   </span>
                 </div>

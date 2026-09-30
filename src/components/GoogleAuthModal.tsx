@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { storage } from '../mock/initialData';
 import {
@@ -167,7 +167,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     }
 
     if (!age || age < 13) {
-      setAuthError('You must be at least 13 years old to join We Did This.');
+      setAuthError('You must be at least 13 years old to join locked in.');
       return;
     }
 
@@ -189,19 +189,35 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     onSuccess(newUser);
   };
 
+  // Easy exit with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto cursor-pointer animate-in fade-in duration-150"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="my-8 w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-7 shadow-2xl relative overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        className="my-8 w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-7 shadow-2xl relative overflow-hidden cursor-default"
       >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 rounded-xl p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          title="Close (Esc)"
+          aria-label="Close (Esc)"
+          className="absolute top-5 right-5 flex items-center gap-1.5 rounded-xl border border-slate-700/80 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm z-10"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" />
+          <span className="text-[10px] font-mono text-slate-400">Esc</span>
         </button>
 
         {/* Auth Mode Tabs: Log In vs Sign Up */}
@@ -307,7 +323,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Log In to We Did This</h3>
+              <h3 className="text-xl font-bold text-white tracking-tight">Log In to locked in.</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
                 Returning creator? Just enter your email to log straight into your account.
               </p>
@@ -403,7 +419,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white font-mono focus:border-indigo-500 focus:outline-none"
               />
               <p className="text-[10px] text-slate-400">
-                We Did This is built specifically for preteens and teens (13+).
+                locked in. is built specifically for preteens and teens (13+).
               </p>
             </div>
 

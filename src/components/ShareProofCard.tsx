@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Project } from '../types';
-import { X, Copy, Check, Share2, ShieldCheck, Download, Sparkles } from 'lucide-react';
+import { X, Copy, Check, Share2, ShieldCheck, Download, Sparkles, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface ShareProofCardProps {
@@ -11,6 +11,15 @@ interface ShareProofCardProps {
 export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose }) => {
   const [copied, setCopied] = useState(false);
   const [cardTheme, setCardTheme] = useState<'slate' | 'cyber' | 'emerald'>('slate');
+
+  // Easy exit on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const shareUrl = `https://wedidthis.dev/p/${project.slug}`;
 
@@ -27,12 +36,16 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md cursor-pointer animate-in fade-in duration-150"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-6 cursor-default relative"
       >
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2">
@@ -41,9 +54,12 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            title="Close (Esc)"
+            aria-label="Close (Esc)"
+            className="flex items-center gap-1 rounded-xl border border-slate-700/80 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
+            <span className="text-[10px] font-mono text-slate-400">Esc</span>
           </button>
         </div>
 
@@ -91,10 +107,10 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
           {/* Card Top Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">
-                W
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center font-bold text-white text-[11px] shadow-sm">
+                li.
               </div>
-              <span className="text-sm font-bold tracking-tight text-white">We Did This</span>
+              <span className="text-sm font-extrabold tracking-tight text-white">locked in.</span>
               <span className="text-slate-500 text-xs">·</span>
               <span className="text-xs font-mono text-emerald-400 flex items-center gap-1">
                 <ShieldCheck className="h-3 w-3" />
@@ -150,14 +166,17 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
                 <span className="text-xs font-semibold text-white block">
                   {project.author.displayName}
                 </span>
-                <span className="text-[10px] font-mono text-slate-400">
-                  @{project.author.handle} · Rep {project.author.reputationScore}
+                <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+                  <span>@{project.author.handle}</span>
+                  <span>·</span>
+                  <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400/40" />
+                  <span>{project.author.reputationScore} Rep</span>
                 </span>
               </div>
             </div>
 
             <div className="text-right text-[11px] font-mono text-slate-400">
-              <span>wedidthis.dev/p/{project.slug}</span>
+              <span>locked in. // {project.slug}</span>
             </div>
           </div>
         </div>
@@ -173,7 +192,7 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
             className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm"
           >
             {copied ? <Check className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4" />}
-            <span>{copied ? 'Copied Link!' : 'Copy Link'}</span>
+            <span>{copied ? 'Copied!' : 'Copy Link'}</span>
           </button>
         </div>
       </motion.div>

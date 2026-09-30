@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Project, Review, Badge } from '../types';
 import {
   X,
@@ -65,6 +65,15 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
   const [activeTab, setActiveTab] = useState<'builds' | 'badges' | 'reviews'>('builds');
   const [isHoveringFollow, setIsHoveringFollow] = useState(false);
 
+  // Easy exit with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const userProjects = projects.filter((p) => p.authorId === profileUser.id);
   const userReviews = reviews.filter((r) => r.reviewerId === profileUser.id);
   const isSelf = currentUser?.id === profileUser.id;
@@ -96,21 +105,28 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto cursor-pointer animate-in fade-in duration-150"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        className="my-8 w-full max-w-2xl rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden relative"
+        onClick={(e) => e.stopPropagation()}
+        className="my-8 w-full max-w-2xl rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden relative cursor-default"
       >
         {/* Cover Banner */}
         <div className="h-32 w-full bg-gradient-to-r from-indigo-950 via-indigo-800 to-emerald-700 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.15),transparent)]" />
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 rounded-full bg-slate-950/60 p-2 text-white/80 hover:text-white hover:bg-slate-950/90 transition-colors z-10"
+            title="Close (Esc)"
+            aria-label="Close profile modal (Esc)"
+            className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-slate-950/80 px-3 py-1.5 text-white/90 hover:text-white hover:bg-slate-950 transition-all border border-white/10 shadow-lg z-10"
           >
             <X className="h-4 w-4" />
+            <span className="text-[10px] font-mono text-slate-300">Esc</span>
           </button>
         </div>
 
@@ -292,7 +308,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
             ) : (
               <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-slate-950 p-3.5 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex-shrink-0">
-                  <Flame className="h-5 w-5" />
+                  <Star className="h-5 w-5 fill-amber-400/40 text-amber-400" />
                 </div>
                 <div>
                   <span className="text-xs font-bold text-amber-200 uppercase tracking-wide">
@@ -327,7 +343,8 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
               <span className="text-[11px] font-mono text-slate-400">Following</span>
             </div>
             <div className="text-center">
-              <span className="block text-base font-bold text-emerald-400 tabular-nums">
+              <span className="flex items-center justify-center gap-1 text-base font-bold text-amber-400 tabular-nums">
+                <Star className="h-3.5 w-3.5 fill-amber-400/40 text-amber-400" />
                 {profileUser.reputationScore}
               </span>
               <span className="text-[11px] font-mono text-slate-400">Rep</span>
