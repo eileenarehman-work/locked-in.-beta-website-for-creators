@@ -176,7 +176,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-400">
-            Share what you made! Upload art, 3D prints, robots, games, apps, or music. Real human proof-of-work.
+            Upload any of your wonderful creations for the world to see!
           </p>
         </div>
 
@@ -482,10 +482,9 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 active:scale-[0.98] transition-all disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />
-                <span>Publish to Real Feed</span>
+                <span>Publish to Feed</span>
               </button>
               <p className="mt-2 text-center text-[11px] text-slate-500 font-mono">
-                Real builds by real teens · Zero bots
               </p>
             </div>
           </div>

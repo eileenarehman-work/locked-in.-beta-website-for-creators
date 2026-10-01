@@ -88,8 +88,8 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
           transition={{ delay: 0.2 }}
           className="mx-auto max-w-2xl text-base text-slate-300 sm:text-lg leading-relaxed"
         >
-          The social showcase for makers building real hardware, robotics, 3D prints, games, and art.
-          Turn your hands-on builds into verifiable proof-of-work, follow fellow creators, and collaborate in real-time.
+          The best website for creators of all ages to showcase their projects in hardware, robotics, 3D prints, games, art, music, and more.
+          Publish your projects, follow fellow creators, and collaborate in real-time.
         </motion.p>
 
         {/* High-Converting CTA Buttons */}
@@ -262,7 +262,7 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
 
       {/* Footer */}
       <footer className="border-t border-slate-900 py-8 text-center text-xs text-slate-600 font-mono">
-        <p>locked in. — High-Engagement Showcase & Community for Creators.</p>
+        <p>locked in. — The Best Community for Creators.</p>
         <p className="mt-1">Learn Something New · Follow Fellow Creators · Express Yourself </p>
       </footer>
     </div>

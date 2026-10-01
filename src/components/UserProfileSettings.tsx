@@ -431,7 +431,7 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono uppercase text-slate-300 flex items-center gap-1.5">
                 <Trophy className="h-3.5 w-3.5 text-amber-400" />
-                Earned Maker Badges ({getUnlockedBadgesForUser(currentUser).length})
+                Earned Badges ({getUnlockedBadgesForUser(currentUser).length})
               </span>
               <span className="text-[10px] font-mono text-amber-300 font-semibold flex items-center gap-1">
                 <Star className="h-3 w-3 fill-amber-400/40 text-amber-400" />

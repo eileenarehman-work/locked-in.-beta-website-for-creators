@@ -124,15 +124,13 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           <div className="flex items-center gap-2">
             <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
               <Flame className="h-5 w-5 text-amber-400 fill-amber-400/40 drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]" />
-              <span>Maker Streak & Proof-of-Work Journey</span>
+              <span>Ignite Your Streak</span>
             </h3>
             <span className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-mono font-medium text-emerald-400 flex items-center gap-1">
               <ShieldCheck className="h-3 w-3" />
-              100% Real Human Activity
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Real daily proof-of-work across hardware builds, 3D prints, code commits, and peer rubric reviews.
           </p>
         </div>
 
@@ -558,7 +556,6 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           </div>
 
           <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-slate-800/80">
-            <span>Real daily proof-of-work contributions</span>
             <div className="flex items-center gap-1.5">
               <span>Less</span>
               <span className="h-2.5 w-2.5 rounded-sm bg-slate-900 border border-slate-800" />

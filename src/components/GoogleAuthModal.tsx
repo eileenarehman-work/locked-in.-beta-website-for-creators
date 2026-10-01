@@ -134,7 +134,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
     // No account found: inform the user to sign up
     setAuthError(
-      `No account found for "${loginEmail.trim()}". Accounts are restricted to 1 per email. Please sign up to create your account.`
+      `No account found for "${loginEmail.trim()}". Please sign up to create your account.`
     );
   };
 

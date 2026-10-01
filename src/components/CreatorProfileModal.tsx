@@ -315,7 +315,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                     Master Tier Reached
                   </span>
                   <p className="text-[11px] text-slate-300 leading-snug mt-0.5">
-                    All core maker milestone badges unlocked ({profileUser.reputationScore} reputation points). A legendary leader of the platform.
+                    All badges unlocked... congrats! ({profileUser.reputationScore} reputation points). A legendary leader of the platform.
                   </p>
                 </div>
               </div>

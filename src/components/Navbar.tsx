@@ -114,7 +114,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Compass className="h-4 w-4 text-indigo-400" />
-            Showcase
+            Project Feed
           </button>
 
           <button
@@ -132,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Terminal className="h-4 w-4 text-emerald-400" />
-            Drop Build
+            Post
           </button>
 
           <button
@@ -144,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <ShieldCheck className="h-4 w-4 text-cyan-400" />
-            Peer Reviews
+            Reviews
           </button>
 
           <button

@@ -1076,7 +1076,7 @@ export default function App() {
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
               <div>
                 <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl">
-                  Real Peer Reviews
+                  Peer Reviews
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
                   100% human feedback from real creators. No AI accounts or fake ratings.
