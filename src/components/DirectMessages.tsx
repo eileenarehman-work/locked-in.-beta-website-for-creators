@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   DirectMessage,
   User,
@@ -25,8 +25,16 @@ import {
   Plus,
   MessageSquare,
   Upload,
+  Search,
+  Star,
+  UserCheck,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { storage } from '../mock/initialData';
 
 interface DirectMessagesProps {
   currentUser: User;
@@ -35,12 +43,14 @@ interface DirectMessagesProps {
   chatRooms: ChatRoom[];
   groupMessages: Record<string, GroupChatMessage[]>;
   friendships: Record<string, Friendship>;
+  allRegisteredUsers?: User[];
   onSendMessage: (recipientId: string, text: string, imageUrls?: string[]) => void;
   onSendGroupMessage: (roomId: string, content: string, imageUrls?: string[]) => void;
   onCreateGroupRoom?: (name: string, description: string) => void;
   onUpdateInviteStatus: (inviteId: string, status: 'ACCEPTED' | 'DECLINED') => void;
   onAcceptFriendRequest: (friendshipId: string) => void;
-  onSendFriendRequest: (friendHandle: string) => void;
+  onDeclineFriendRequest?: (friendshipId: string) => void;
+  onSendFriendRequest: (friendHandleOrId: string) => { success: boolean; message?: string; error?: string } | void;
   selectedUserId: string;
   onSelectUser: (userId: string) => void;
 }
@@ -52,11 +62,13 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   chatRooms,
   groupMessages,
   friendships,
+  allRegisteredUsers,
   onSendMessage,
   onSendGroupMessage,
   onCreateGroupRoom,
   onUpdateInviteStatus,
   onAcceptFriendRequest,
+  onDeclineFriendRequest,
   onSendFriendRequest,
   selectedUserId,
   onSelectUser,
@@ -67,7 +79,60 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   const [newFriendInput, setNewFriendInput] = useState('');
-  const [friendActionMsg, setFriendActionMsg] = useState<string | null>(null);
+  const [friendSuccessMsg, setFriendSuccessMsg] = useState<string | null>(null);
+  const [friendErrorMsg, setFriendErrorMsg] = useState<string | null>(null);
+
+  // Categorize friendships relative to currentUser
+  const myFriendships = useMemo(() => {
+    const incoming: { friendship: Friendship; otherUser: User }[] = [];
+    const outgoing: { friendship: Friendship; otherUser: User }[] = [];
+    const accepted: { friendship: Friendship; otherUser: User }[] = [];
+
+    const allUsers = allRegisteredUsers && allRegisteredUsers.length > 0 ? allRegisteredUsers : storage.getAllUsers();
+    const userMap = new Map<string, User>();
+    allUsers.forEach((u) => userMap.set(u.id, u));
+
+    Object.values(friendships).forEach((fr) => {
+      if (!fr) return;
+      if (fr.userId === currentUser.id) {
+        // Current user sent the request
+        const other = userMap.get(fr.friendId) || fr.friend;
+        if (!other || other.bio === 'Teen builder on We Did This' || other.email?.endsWith('@wedidthis.dev')) return;
+        if (fr.status === 'PENDING') {
+          outgoing.push({ friendship: fr, otherUser: other });
+        } else if (fr.status === 'ACCEPTED') {
+          accepted.push({ friendship: fr, otherUser: other });
+        }
+      } else if (fr.friendId === currentUser.id) {
+        // Current user received the request
+        const other = userMap.get(fr.userId) || fr.sender;
+        if (!other || other.bio === 'Teen builder on We Did This' || other.email?.endsWith('@wedidthis.dev')) return;
+        if (fr.status === 'PENDING') {
+          incoming.push({ friendship: fr, otherUser: other });
+        } else if (fr.status === 'ACCEPTED') {
+          accepted.push({ friendship: fr, otherUser: other });
+        }
+      }
+    });
+
+    return { incoming, outgoing, accepted };
+  }, [friendships, currentUser, allRegisteredUsers]);
+
+  const registeredCreators = useMemo(() => {
+    const list = (allRegisteredUsers && allRegisteredUsers.length > 0 ? allRegisteredUsers : storage.getAllUsers())
+      .filter((u) => u && u.id && u.id !== currentUser.id && u.bio !== 'Teen builder on We Did This' && !u.email?.endsWith('@wedidthis.dev'));
+    return list;
+  }, [allRegisteredUsers, currentUser]);
+
+  const searchResults = useMemo(() => {
+    const query = newFriendInput.trim().replace(/^@/, '').toLowerCase();
+    if (!query) return [];
+    return registeredCreators.filter((u) => {
+      const handle = (u.handle || '').replace(/^@/, '').toLowerCase();
+      const name = (u.displayName || '').toLowerCase();
+      return handle.includes(query) || name.includes(query);
+    });
+  }, [newFriendInput, registeredCreators]);
 
   // Create Channel Modal state
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
@@ -121,11 +186,47 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
   const handleSendFriend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFriendInput.trim()) return;
-    onSendFriendRequest(newFriendInput.trim().replace(/^@/, ''));
-    setFriendActionMsg(`Friend request sent to @${newFriendInput.trim()}! Waiting for acceptance.`);
-    setNewFriendInput('');
-    setTimeout(() => setFriendActionMsg(null), 3000);
+    setFriendErrorMsg(null);
+    setFriendSuccessMsg(null);
+
+    const query = newFriendInput.trim().replace(/^@/, '');
+    if (!query) return;
+
+    const res = onSendFriendRequest(query);
+    if (res && typeof res === 'object') {
+      if (!res.success) {
+        setFriendErrorMsg(res.error || 'Could not send friend request.');
+        setTimeout(() => setFriendErrorMsg(null), 5000);
+        return;
+      }
+      setFriendSuccessMsg(res.message || `Friend request sent to @${query}!`);
+      setNewFriendInput('');
+      setTimeout(() => setFriendSuccessMsg(null), 5000);
+    } else {
+      setFriendSuccessMsg(`Friend request sent to @${query}!`);
+      setNewFriendInput('');
+      setTimeout(() => setFriendSuccessMsg(null), 4000);
+    }
+  };
+
+  const handleQuickAddFriend = (target: User) => {
+    setFriendErrorMsg(null);
+    setFriendSuccessMsg(null);
+    const res = onSendFriendRequest(target.id);
+    if (res && typeof res === 'object') {
+      if (!res.success) {
+        setFriendErrorMsg(res.error || 'Could not send friend request.');
+        setTimeout(() => setFriendErrorMsg(null), 5000);
+        return;
+      }
+      setFriendSuccessMsg(res.message || `Friend request sent to @${target.handle}!`);
+      setNewFriendInput('');
+      setTimeout(() => setFriendSuccessMsg(null), 5000);
+    } else {
+      setFriendSuccessMsg(`Friend request sent to @${target.handle}!`);
+      setNewFriendInput('');
+      setTimeout(() => setFriendSuccessMsg(null), 4000);
+    }
   };
 
   const handleCreateChannelSubmit = (e: React.FormEvent) => {
@@ -173,11 +274,16 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('friends')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
                 activeTab === 'friends' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Friends ({Object.keys(friendships).length})
+              <span>Friends ({myFriendships.accepted.length})</span>
+              {myFriendships.incoming.length > 0 && (
+                <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-[10px] font-bold text-slate-950 animate-pulse">
+                  {myFriendships.incoming.length}
+                </span>
+              )}
             </button>
           </div>
 
@@ -335,75 +441,307 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
           {activeTab === 'friends' && (
             <div className="space-y-4">
-              <h3 className="text-xs font-mono uppercase text-slate-400 px-2">
-                Add Friend by @Handle
-              </h3>
-              <form onSubmit={handleSendFriend} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="@handle"
-                  value={newFriendInput}
-                  onChange={(e) => setNewFriendInput(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={!newFriendInput.trim()}
-                  className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-40"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                </button>
-              </form>
+              <div>
+                <h3 className="text-xs font-mono uppercase text-slate-400 px-2 mb-1.5 flex items-center justify-between">
+                  <span>Add Friend (Registered Creators)</span>
+                  <span className="text-[10px] text-indigo-400 lowercase">@handle or name</span>
+                </h3>
+                <form onSubmit={handleSendFriend} className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                    <input
+                      type="text"
+                      placeholder="Search registered creator @handle..."
+                      value={newFriendInput}
+                      onChange={(e) => setNewFriendInput(e.target.value)}
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!newFriendInput.trim()}
+                    className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-40 transition-colors flex items-center gap-1"
+                    title="Send Friend Request"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Add</span>
+                  </button>
+                </form>
+              </div>
 
-              {friendActionMsg && (
-                <div className="rounded-lg bg-emerald-950/40 border border-emerald-800/50 p-2 text-[11px] text-emerald-300">
-                  {friendActionMsg}
+              {/* Status messages */}
+              {friendSuccessMsg && (
+                <div className="rounded-xl bg-emerald-950/40 border border-emerald-800/60 p-2.5 text-[11px] text-emerald-300 flex items-start gap-2 animate-in fade-in">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>{friendSuccessMsg}</span>
                 </div>
               )}
 
-              <div className="pt-2">
-                <h4 className="text-xs font-mono uppercase text-slate-400 px-2 mb-2">
-                  Friends List ({Object.keys(friendships).length})
-                </h4>
-                {Object.keys(friendships).length === 0 ? (
-                  <p className="text-xs text-slate-500 px-2">No friends added yet. Connect with real teen builders!</p>
-                ) : (
+              {friendErrorMsg && (
+                <div className="rounded-xl bg-rose-950/40 border border-rose-800/60 p-2.5 text-[11px] text-rose-300 flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>{friendErrorMsg}</span>
+                </div>
+              )}
+
+              {/* Live search matches */}
+              {newFriendInput.trim() && (
+                <div className="space-y-1.5 border border-slate-800/80 rounded-xl bg-slate-950/60 p-2">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase px-1 block">
+                    Matching Registered Accounts ({searchResults.length})
+                  </span>
+                  {searchResults.length === 0 ? (
+                    <div className="p-3 text-center space-y-1">
+                      <p className="text-xs text-rose-300 font-medium">
+                        No registered creator matches "@{newFriendInput.trim().replace(/^@/, '')}"
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        Only creators who have completed the sign-up process can be found and friended.
+                      </p>
+                    </div>
+                  ) : (
+                    searchResults.map((user) => {
+                      const isFriend = myFriendships.accepted.some((f) => f.otherUser.id === user.id);
+                      const isOutgoing = myFriendships.outgoing.some((f) => f.otherUser.id === user.id);
+                      const isIncoming = myFriendships.incoming.find((f) => f.otherUser.id === user.id);
+
+                      return (
+                        <div
+                          key={user.id}
+                          className="flex items-center justify-between p-2 rounded-lg bg-slate-900/80 border border-slate-800/70"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <img
+                              src={user.avatarUrl}
+                              alt={user.displayName}
+                              referrerPolicy="no-referrer"
+                              className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <span className="text-xs font-semibold text-white block truncate">
+                                {user.displayName}
+                              </span>
+                              <div className="flex items-center gap-1.5 text-[10px]">
+                                <span className="font-mono text-slate-400 truncate">@{user.handle}</span>
+                                <span className="text-amber-400 flex items-center gap-0.5">
+                                  <Star className="h-2.5 w-2.5 fill-amber-400" />
+                                  {user.reputationScore}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 ml-2">
+                            {isFriend ? (
+                              <button
+                                onClick={() => {
+                                  onSelectUser(user.id);
+                                  setActiveTab('dm');
+                                }}
+                                className="flex items-center gap-1 rounded-md bg-indigo-600/20 border border-indigo-500/30 px-2 py-1 text-[10px] font-semibold text-indigo-300 hover:bg-indigo-600 hover:text-white transition-colors"
+                              >
+                                <MessageSquare className="h-3 w-3" />
+                                Chat
+                              </button>
+                            ) : isOutgoing ? (
+                              <span className="flex items-center gap-1 rounded-md bg-amber-500/10 border border-amber-500/30 px-2 py-1 text-[10px] font-mono text-amber-400">
+                                <Clock className="h-3 w-3" />
+                                Sent
+                              </span>
+                            ) : isIncoming ? (
+                              <button
+                                onClick={() => onAcceptFriendRequest(isIncoming.friendship.id)}
+                                className="flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-emerald-500"
+                              >
+                                <Check className="h-3 w-3" />
+                                Accept
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleQuickAddFriend(user)}
+                                className="flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-indigo-500 transition-colors"
+                              >
+                                <UserPlus className="h-3 w-3" />
+                                Add
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* 1. INCOMING FRIEND REQUESTS */}
+              {myFriendships.incoming.length > 0 && (
+                <div className="pt-1">
+                  <div className="flex items-center justify-between px-2 mb-2">
+                    <h4 className="text-xs font-mono uppercase text-emerald-400 font-bold flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Incoming Requests ({myFriendships.incoming.length})
+                    </h4>
+                  </div>
                   <div className="space-y-2">
-                    {Object.values(friendships).map((fr) => (
+                    {myFriendships.incoming.map(({ friendship, otherUser }) => (
                       <div
-                        key={fr.id}
-                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-950/40"
+                        key={friendship.id}
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20"
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <img
-                            src={fr.friend.avatarUrl}
-                            alt={fr.friend.displayName}
+                            src={otherUser.avatarUrl}
+                            alt={otherUser.displayName}
                             referrerPolicy="no-referrer"
-                            className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-700"
+                            className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-500/40 shrink-0"
                           />
-                          <div>
-                            <span className="text-xs font-semibold text-white block">
-                              {fr.friend.displayName}
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold text-white block truncate">
+                              {otherUser.displayName}
                             </span>
-                            <span className="text-[10px] font-mono text-slate-400">
-                              @{fr.friend.handle}
-                            </span>
+                            <div className="flex items-center gap-1.5 text-[10px]">
+                              <span className="font-mono text-slate-400">@{otherUser.handle}</span>
+                              <span className="text-amber-400 flex items-center gap-0.5">
+                                <Star className="h-2.5 w-2.5 fill-amber-400" />
+                                {otherUser.reputationScore}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
-                        {fr.status === 'PENDING' ? (
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
                           <button
-                            onClick={() => onAcceptFriendRequest(fr.id)}
-                            className="flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-emerald-500"
+                            onClick={() => onAcceptFriendRequest(friendship.id)}
+                            className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-500 transition-colors shadow-sm"
+                            title="Accept Request"
                           >
                             <Check className="h-3 w-3" />
                             Accept
                           </button>
-                        ) : (
-                          <span className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-mono text-emerald-400">
-                            Friends
+                          {onDeclineFriendRequest && (
+                            <button
+                              onClick={() => onDeclineFriendRequest(friendship.id)}
+                              className="rounded-lg border border-slate-700 bg-slate-800 p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-700 transition-colors"
+                              title="Decline Request"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 2. OUTGOING SENT REQUESTS */}
+              {myFriendships.outgoing.length > 0 && (
+                <div className="pt-1">
+                  <h4 className="text-xs font-mono uppercase text-slate-400 px-2 mb-2 flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 text-amber-400" />
+                    Sent Requests ({myFriendships.outgoing.length})
+                  </h4>
+                  <div className="space-y-1.5">
+                    {myFriendships.outgoing.map(({ friendship, otherUser }) => (
+                      <div
+                        key={friendship.id}
+                        className="flex items-center justify-between p-2 rounded-xl border border-slate-800 bg-slate-950/40"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <img
+                            src={otherUser.avatarUrl}
+                            alt={otherUser.displayName}
+                            referrerPolicy="no-referrer"
+                            className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold text-white block truncate">
+                              {otherUser.displayName}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 block truncate">
+                              @{otherUser.handle}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                            Pending
                           </span>
-                        )}
+                          {onDeclineFriendRequest && (
+                            <button
+                              onClick={() => onDeclineFriendRequest(friendship.id)}
+                              className="text-slate-500 hover:text-rose-400 text-xs p-1"
+                              title="Cancel Request"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. CONNECTED FRIENDS LIST */}
+              <div className="pt-2">
+                <h4 className="text-xs font-mono uppercase text-slate-400 px-2 mb-2 flex items-center justify-between">
+                  <span>Connected Friends ({myFriendships.accepted.length})</span>
+                  <span className="text-[10px] text-emerald-400">Can Chat</span>
+                </h4>
+
+                {myFriendships.accepted.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-800 p-4 text-center space-y-2">
+                    <p className="text-xs text-slate-400">No friends connected yet.</p>
+                    <p className="text-[11px] text-slate-500">
+                      Search signed-up creators above to send a friend request so you can communicate!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {myFriendships.accepted.map(({ friendship, otherUser }) => (
+                      <div
+                        key={friendship.id}
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-950/40 hover:border-slate-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative shrink-0">
+                            <img
+                              src={otherUser.avatarUrl}
+                              alt={otherUser.displayName}
+                              referrerPolicy="no-referrer"
+                              className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-700"
+                            />
+                            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold text-white block truncate">
+                              {otherUser.displayName}
+                            </span>
+                            <div className="flex items-center gap-1.5 text-[10px]">
+                              <span className="font-mono text-slate-400">@{otherUser.handle}</span>
+                              <span className="text-amber-400 flex items-center gap-0.5">
+                                <Star className="h-2.5 w-2.5 fill-amber-400" />
+                                {otherUser.reputationScore}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                          <button
+                            onClick={() => {
+                              onSelectUser(otherUser.id);
+                              setActiveTab('dm');
+                            }}
+                            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm"
+                            title="Direct Message"
+                          >
+                            <MessageSquare className="h-3 w-3" />
+                            Message
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -629,14 +967,194 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
             )
           )}
 
-          {/* Friends Tab Fallback */}
+          {/* Friends Tab View */}
           {activeTab === 'friends' && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-3">
-              <Users className="h-10 w-10 text-indigo-400" />
-              <h4 className="text-base font-semibold text-white">Creator Friends Center</h4>
-              <p className="text-xs text-slate-400 max-w-sm">
-                Add other teen creators to collaborate, share feedback, and chat about code, art, and 3D printing.
-              </p>
+            <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Users className="h-5 w-5 text-indigo-400" />
+                    <span>Creator Friends Network</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Connect and collaborate strictly with real creators who have signed up.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-xs font-mono text-emerald-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Verified Accounts
+                  </span>
+                </div>
+              </div>
+
+              {/* Network Stats Cards */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 text-center">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                    Connected Friends
+                  </span>
+                  <span className="text-2xl font-bold text-white">
+                    {myFriendships.accepted.length}
+                  </span>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 text-center">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                    Incoming Requests
+                  </span>
+                  <span className={`text-2xl font-bold ${myFriendships.incoming.length > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    {myFriendships.incoming.length}
+                  </span>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 text-center">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                    Sent Requests
+                  </span>
+                  <span className="text-2xl font-bold text-slate-300">
+                    {myFriendships.outgoing.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Highlight incoming requests if present */}
+              {myFriendships.incoming.length > 0 && (
+                <div className="rounded-2xl border border-emerald-500/40 bg-emerald-950/20 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-300 font-semibold text-xs">
+                    <AlertCircle className="h-4 w-4 text-emerald-400" />
+                    <span>Action Required: {myFriendships.incoming.length} Creator(s) want to connect!</span>
+                  </div>
+                  <div className="space-y-2">
+                    {myFriendships.incoming.map(({ friendship, otherUser }) => (
+                      <div
+                        key={friendship.id}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={otherUser.avatarUrl}
+                            alt={otherUser.displayName}
+                            referrerPolicy="no-referrer"
+                            className="h-8 w-8 rounded-full object-cover ring-1 ring-emerald-500/50"
+                          />
+                          <div>
+                            <span className="text-xs font-semibold text-white block">
+                              {otherUser.displayName}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400">
+                              @{otherUser.handle} • ⭐ {otherUser.reputationScore} Rep
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => onAcceptFriendRequest(friendship.id)}
+                            className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 shadow-sm"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            Accept Request
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Connected Friends Quick Chat Grid */}
+              {myFriendships.accepted.length > 0 ? (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-mono uppercase text-slate-400">
+                    Your Connected Friends ({myFriendships.accepted.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {myFriendships.accepted.map(({ friendship, otherUser }) => (
+                      <div
+                        key={friendship.id}
+                        className="flex items-center justify-between p-3 rounded-2xl border border-slate-800 bg-slate-900/50 hover:border-slate-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative shrink-0">
+                            <img
+                              src={otherUser.avatarUrl}
+                              alt={otherUser.displayName}
+                              referrerPolicy="no-referrer"
+                              className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-700"
+                            />
+                            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold text-white block truncate">
+                              {otherUser.displayName}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 truncate block">
+                              @{otherUser.handle}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            onSelectUser(otherUser.id);
+                            setActiveTab('dm');
+                          }}
+                          className="shrink-0 flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 shadow-sm transition-all"
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          <span>Chat</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-800 p-6 text-center space-y-4">
+                  <div className="h-12 w-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mx-auto text-indigo-400">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold text-white">No Friends Connected Yet</h4>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                      Search any registered creator on the left panel to send a friend request. Once accepted, you can chat in real time.
+                    </p>
+                  </div>
+
+                  {registeredCreators.length > 0 && (
+                    <div className="pt-2">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase block mb-2">
+                        Signed-up Creators on locked in.
+                      </span>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        {registeredCreators.slice(0, 4).map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => handleQuickAddFriend(c)}
+                            className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:border-slate-700 hover:bg-slate-800 transition-colors"
+                          >
+                            <img
+                              src={c.avatarUrl}
+                              alt={c.displayName}
+                              className="h-4 w-4 rounded-full"
+                            />
+                            <span>@{c.handle}</span>
+                            <UserPlus className="h-3 w-3 text-indigo-400 ml-1" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Anti-Fabrication Guarantee Notice */}
+              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/40 p-4 space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-slate-300 font-semibold text-xs">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  <span>Real Accounts Communication Policy</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Only accounts that have completed the sign-up process are saved globally in locked in. Non-existing accounts are strictly never generated or fabricated. When you add a creator, they receive your friend request upon sign-in and can accept to enable two-way instant messaging.
+                </p>
+              </div>
             </div>
           )}
 

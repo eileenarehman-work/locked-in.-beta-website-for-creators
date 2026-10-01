@@ -26,7 +26,8 @@ export interface StreakInfo {
 export function calculateRealStreak(
   projects: Project[],
   reviews: Review[],
-  currentUser: User | null
+  currentUser: User | null,
+  loginDates: string[] = []
 ): StreakInfo {
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const getEmptyWeek = () => {
@@ -49,7 +50,7 @@ export function calculateRealStreak(
     return arr;
   };
 
-  // If no user or no activities, streak is 0
+  // If no user, streak is 0
   if (!currentUser) {
     return {
       currentStreak: 0,
@@ -61,7 +62,7 @@ export function calculateRealStreak(
       nextMilestone: {
         days: 3,
         title: '3-Day Maker Spark',
-        description: 'Drop a build or evaluate a peer to start day 1 of your streak!',
+        description: 'Log in everyday or drop a build to start your daily streak!',
       },
     };
   }
@@ -69,37 +70,45 @@ export function calculateRealStreak(
   // Filter activities belonging to current user
   const userProjects = projects.filter((p) => p.authorId === currentUser.id);
   const userReviews = reviews.filter((r) => r.reviewerId === currentUser.id);
-  const totalContributions = userProjects.length + userReviews.length;
-
-  if (totalContributions === 0) {
-    return {
-      currentStreak: 0,
-      longestStreak: 0,
-      totalContributions: 0,
-      lastActiveDate: null,
-      isActiveToday: false,
-      pastWeek: getEmptyWeek(),
-      nextMilestone: {
-        days: 3,
-        title: '3-Day Maker Spark',
-        description: 'Drop a build or evaluate a peer to start day 1 of your streak!',
-      },
-    };
-  }
 
   // Collect unique dates (YYYY-MM-DD)
   const activityDates = new Set<string>();
-  userProjects.forEach((p) => {
-    if (p.createdAt) activityDates.add(p.createdAt.split('T')[0]);
+  const activityCountsByDate: Record<string, number> = {};
+
+  // 1. Daily login dates - logging in everyday counts towards the streak!
+  loginDates.forEach((d) => {
+    activityDates.add(d);
+    activityCountsByDate[d] = (activityCountsByDate[d] || 0) + 1;
   });
+
+  // Since user is currently logged in, ensure today's login counts!
+  const todayStr = new Date().toISOString().split('T')[0];
+  activityDates.add(todayStr);
+  activityCountsByDate[todayStr] = Math.max(1, (activityCountsByDate[todayStr] || 0) + 1);
+
+  // 2. Project publish dates
+  userProjects.forEach((p) => {
+    if (p.createdAt) {
+      const d = p.createdAt.split('T')[0];
+      activityDates.add(d);
+      activityCountsByDate[d] = (activityCountsByDate[d] || 0) + 1;
+    }
+  });
+
+  // 3. Review dates
   userReviews.forEach((r) => {
-    if (r.createdAt) activityDates.add(r.createdAt.split('T')[0]);
+    if (r.createdAt) {
+      const d = r.createdAt.split('T')[0];
+      activityDates.add(d);
+      activityCountsByDate[d] = (activityCountsByDate[d] || 0) + 1;
+    }
   });
 
   const sortedDates = Array.from(activityDates).sort().reverse();
-  const todayStr = new Date().toISOString().split('T')[0];
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
+  const totalContributions =
+    userProjects.length + userReviews.length + (loginDates.length > 0 ? loginDates.length : 1);
+
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
 
   const isActiveToday = activityDates.has(todayStr);
@@ -108,27 +117,58 @@ export function calculateRealStreak(
   let currentStreak = 0;
   if (isActiveToday || isActiveYesterday) {
     let checkDate = isActiveToday ? new Date() : yesterday;
-    while (true) {
+    const visitedDates = new Set<string>();
+    for (let step = 0; step < 365; step++) {
       const dateStr = checkDate.toISOString().split('T')[0];
+      if (visitedDates.has(dateStr)) {
+        checkDate = new Date(checkDate.getTime() - 12 * 60 * 60 * 1000);
+        continue;
+      }
+      visitedDates.add(dateStr);
       if (activityDates.has(dateStr)) {
         currentStreak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000);
       } else {
         break;
       }
     }
   }
 
+  // Ensure an active logged-in user always starts with at least a 1-day streak for today's session
+  if (currentUser && currentStreak === 0 && isActiveToday) {
+    currentStreak = 1;
+  }
+
   // Next milestone determination
-  let nextMilestone = { days: 3, title: '3-Day Maker Spark', description: 'Light your maker flame.' };
+  let nextMilestone = {
+    days: 3,
+    title: '3-Day Maker Spark',
+    description: 'Log in 3 days in a row to light your maker flame.',
+  };
   if (currentStreak >= 3 && currentStreak < 7) {
-    nextMilestone = { days: 7, title: '7-Day Sprint', description: '1 full week of continuous building & peer review.' };
+    nextMilestone = {
+      days: 7,
+      title: '7-Day Sprint',
+      description: '1 full week of continuous daily logins & builds.',
+    };
   } else if (currentStreak >= 7 && currentStreak < 14) {
-    nextMilestone = { days: 14, title: '14-Day Momentum', description: 'Unstoppable consistency across maker disciplines.' };
+    nextMilestone = {
+      days: 14,
+      title: '14-Day Momentum',
+      description: 'Unstoppable 2-week daily streak.',
+    };
   } else if (currentStreak >= 14 && currentStreak < 30) {
-    nextMilestone = { days: 30, title: '30-Day Master', description: 'A legend of hands-on daily execution.' };
+    nextMilestone = {
+      days: 30,
+      title: '30-Day Master',
+      description: 'A legend of hands-on daily consistency.',
+    };
   } else if (currentStreak >= 30) {
-    nextMilestone = { days: 60, title: '60-Day Titan', description: 'Top 1% discipline in the maker collective.' };
+    nextMilestone = {
+      days: 60,
+      title: '60-Day Titan',
+      description: 'Top 1% discipline in the maker collective.',
+    };
   }
 
   // Build past 7 days breakdown (ending today)
@@ -140,31 +180,25 @@ export function calculateRealStreak(
     const dateStr = d.toISOString().split('T')[0];
     const dayOfWeek = d.getDay();
     const isToday = i === 0;
-    
-    // Count user activities on this specific date
-    let count = 0;
-    userProjects.forEach((p) => {
-      if (p.createdAt && p.createdAt.startsWith(dateStr)) count++;
-    });
-    userReviews.forEach((r) => {
-      if (r.createdAt && r.createdAt.startsWith(dateStr)) count++;
-    });
+
+    const count = activityCountsByDate[dateStr] || 0;
+    const hasActivity = activityDates.has(dateStr) || count > 0 || (isToday && currentUser !== null);
 
     pastWeek.push({
       date: dateStr,
       dayLabel: dayLabels[dayOfWeek].slice(0, 1),
       fullDayName: dayLabels[dayOfWeek],
-      hasActivity: count > 0,
+      hasActivity,
       isToday,
-      activityCount: count,
+      activityCount: count > 0 ? count : (hasActivity ? 1 : 0),
     });
   }
 
   return {
     currentStreak,
-    longestStreak: Math.max(currentStreak, sortedDates.length > 0 ? currentStreak : 0),
+    longestStreak: Math.max(currentStreak, sortedDates.length > 0 ? currentStreak : 1),
     totalContributions,
-    lastActiveDate: sortedDates[0] || null,
+    lastActiveDate: sortedDates[0] || todayStr,
     isActiveToday,
     pastWeek,
     nextMilestone,

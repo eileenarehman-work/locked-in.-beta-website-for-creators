@@ -12,6 +12,8 @@ import {
   Settings,
   Bell,
   User as UserIcon,
+  Flame,
+  Star,
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { NotificationCenter } from './NotificationCenter';
@@ -21,6 +23,8 @@ interface NavbarProps {
   activeTab: 'showcase' | 'studio' | 'reviews' | 'messages';
   setActiveTab: (tab: 'showcase' | 'studio' | 'reviews' | 'messages') => void;
   currentUser: User | null;
+  currentStreak?: number;
+  onOpenPointsGuide?: () => void;
   onOpenGoogleLogin: (mode?: 'login' | 'signup') => void;
   onOpenProfile: () => void;
   onLogout: () => void;
@@ -39,6 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   currentUser,
+  currentStreak = 0,
+  onOpenPointsGuide,
   onOpenGoogleLogin,
   onOpenProfile,
   onLogout,
@@ -221,7 +227,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {currentUser ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
+              {/* Daily Streak & Rep Points Tracker */}
+              <button
+                type="button"
+                onClick={onOpenPointsGuide}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-2.5 py-1.5 text-xs transition-all hover:border-amber-500/40 hover:bg-slate-850 shadow-sm group cursor-pointer"
+                title="Points & Daily Streak Guide - Click to learn how it works"
+              >
+                <div className="flex items-center gap-1 text-amber-400 font-mono font-bold">
+                  <Flame className="h-3.5 w-3.5 fill-amber-500 text-amber-500 animate-pulse group-hover:scale-110 transition-transform" />
+                  <span>{currentStreak > 0 ? currentStreak : 1}d</span>
+                </div>
+                <span className="text-slate-600 text-[10px]">|</span>
+                <div className="flex items-center gap-1 text-amber-300 font-mono font-semibold">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <span>{currentUser.reputationScore || 0}</span>
+                </div>
+              </button>
+
               <button
                 onClick={onOpenProfile}
                 className="group flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 p-1.5 pr-2.5 transition-colors hover:border-slate-700 hover:bg-slate-900"
@@ -268,6 +292,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenPointsGuide}
+                className="hidden md:flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-2.5 py-1.5 text-xs text-slate-300 hover:text-amber-300 hover:border-amber-500/30 transition-colors"
+                title="Learn how Maker Points & Daily Streaks work"
+              >
+                <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400/40" />
+                <span>Points Guide</span>
+              </button>
+
               <button
                 onClick={() => onOpenGoogleLogin('login')}
                 className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors"

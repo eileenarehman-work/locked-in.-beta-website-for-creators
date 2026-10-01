@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
 import {
   X,
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Loader2,
   Trophy,
+  Star,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getUnlockedBadgesForUser } from '../utils/badgeSystem';
@@ -154,13 +155,26 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
     }, 1000);
   };
 
+  // Easy exit with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md cursor-pointer animate-in fade-in duration-150"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-xl rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-7 shadow-2xl relative overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-7 shadow-2xl relative overflow-hidden cursor-default"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
@@ -178,9 +192,12 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
 
           <button
             onClick={onClose}
-            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            title="Close (Esc)"
+            aria-label="Close (Esc)"
+            className="flex items-center gap-1.5 rounded-xl border border-slate-700/80 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
+            <span className="text-[10px] font-mono text-slate-400">Esc</span>
           </button>
         </div>
 
@@ -416,8 +433,9 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
                 <Trophy className="h-3.5 w-3.5 text-amber-400" />
                 Earned Maker Badges ({getUnlockedBadgesForUser(currentUser).length})
               </span>
-              <span className="text-[10px] font-mono text-emerald-400 font-semibold">
-                {currentUser.reputationScore} Rep Points
+              <span className="text-[10px] font-mono text-amber-300 font-semibold flex items-center gap-1">
+                <Star className="h-3 w-3 fill-amber-400/40 text-amber-400" />
+                <span>{currentUser.reputationScore} Rep Points</span>
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">

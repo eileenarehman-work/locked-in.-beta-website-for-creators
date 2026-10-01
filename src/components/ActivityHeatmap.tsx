@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HeatmapDay, User, Project, Review, Badge } from '../types';
 import {
   ShieldCheck,
@@ -28,6 +28,8 @@ import {
   EvaluatedBadge,
 } from '../utils/badgeSystem';
 import { VerifiedBadge } from './VerifiedBadge';
+import { PointsGuideModal } from './PointsGuideModal';
+import { storage } from '../mock/initialData';
 
 interface ActivityHeatmapProps {
   days: HeatmapDay[];
@@ -50,9 +52,22 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'streak' | 'heatmap'>('streak');
   const [selectedBadge, setSelectedBadge] = useState<EvaluatedBadge | null>(null);
+  const [isPointsGuideOpen, setIsPointsGuideOpen] = useState(false);
 
-  // Calculate real active streak based on real actions (never fake numbers)
-  const streakInfo = calculateRealStreak(projects, reviews, currentUser);
+  // Easy exit with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedBadge) {
+        setSelectedBadge(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedBadge]);
+
+  // Calculate real active streak based on real actions + daily logins (streak starts counting when you log in everyday)
+  const userLoginDates = currentUser ? storage.getLoginDates(currentUser.id) : [];
+  const streakInfo = calculateRealStreak(projects, reviews, currentUser, userLoginDates);
 
   // Gamified Badges for currentUser
   const userRep = currentUser?.reputationScore || 0;
@@ -288,12 +303,24 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 </div>
               </div>
 
-              {/* User Rep Points Status */}
-              <div className="flex items-center gap-2 rounded-xl bg-slate-950/80 border border-slate-800 px-3 py-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                <span className="text-xs font-mono text-slate-300">
-                  Current Rep: <strong className="text-amber-300">{userRep}</strong>
-                </span>
+              {/* User Rep Points Status with Clickable Guide */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPointsGuideOpen(true)}
+                  className="flex items-center gap-1.5 rounded-xl bg-indigo-600/10 border border-indigo-500/30 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-600/20 transition-all cursor-pointer shadow-sm"
+                  title="Click to view full Points System breakdown"
+                >
+                  <HelpCircle className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>How Points Work</span>
+                </button>
+
+                <div className="flex items-center gap-2 rounded-xl bg-slate-950/80 border border-slate-800 px-3 py-1.5">
+                  <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                  <span className="text-xs font-mono text-slate-300">
+                    Rep: <strong className="text-amber-300">{userRep}</strong>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -384,80 +411,122 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           </div>
 
           {/* Daily Proof-of-Work Quests / Actionable Rep Boosters */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            {/* Quest 1: Drop a Build */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                    <Hammer className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md">
-                    +15 REP
-                  </span>
-                </div>
-                <h5 className="text-xs font-bold text-white">Publish Hands-on Build</h5>
-                <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                  Share your latest hardware, robotics, 3D print, code, or art project.
-                </p>
-              </div>
-
-              {onOpenNewBuild && (
-                <button
-                  type="button"
-                  onClick={onOpenNewBuild}
-                  className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Drop Build</span>
-                </button>
-              )}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between px-1">
+              <h5 className="text-xs font-mono uppercase text-slate-400 font-bold flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-amber-400" />
+                <span>Earn Rep Points & Fuel Your Streak</span>
+              </h5>
+              <button
+                type="button"
+                onClick={() => setIsPointsGuideOpen(true)}
+                className="text-[11px] font-mono text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+              >
+                View Points Guide →
+              </button>
             </div>
 
-            {/* Quest 2: Peer Rubric Review */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md">
-                    +5 REP
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Booster 1: Daily Login */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                      <Flame className="h-4 w-4 fill-amber-500 text-amber-500" />
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                      +10 REP / DAY
+                    </span>
+                  </div>
+                  <h5 className="text-xs font-bold text-white">Daily Login Streak</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                    Log in every day to keep your flame alive. Starts day 1 of your streak!
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1.5 border-t border-slate-800/80">
+                  <span>Today:</span>
+                  <span className="font-semibold text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Active ({streakInfo.currentStreak}d streak)
                   </span>
                 </div>
-                <h5 className="text-xs font-bold text-white">Rubric Peer Evaluation</h5>
-                <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                  Evaluate a fellow creator's project on Clarity, Execution, and Technicality.
-                </p>
               </div>
 
-              <div className="mt-3 text-[11px] font-mono text-slate-400 text-center py-1">
-                Open any project card below to review
+              {/* Booster 2: Drop a Build */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                      <Hammer className="h-4 w-4" />
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                      +25 REP
+                    </span>
+                  </div>
+                  <h5 className="text-xs font-bold text-white">Publish Hands-on Build</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                    Drop your latest 3D print, robotics, hardware, game dev, code, or art project.
+                  </p>
+                </div>
+                {onOpenNewBuild ? (
+                  <button
+                    type="button"
+                    onClick={onOpenNewBuild}
+                    className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Drop Build</span>
+                  </button>
+                ) : (
+                  <div className="mt-3 text-[10px] font-mono text-slate-500 text-center py-1">
+                    Share your builds in Studio
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Quest 3: Verified Creator Status */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                    <ShieldCheck className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                    50 REP MILESTONE
+              {/* Booster 3: Peer Rubric Review */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md">
+                      +20 REP
+                    </span>
+                  </div>
+                  <h5 className="text-xs font-bold text-white">Rubric Peer Review</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                    Evaluate a fellow creator's build on Clarity, Execution, Technicality & Docs.
+                  </p>
+                </div>
+                <div className="mt-3 text-[11px] font-mono text-slate-400 text-center py-1">
+                  Open any build below to review
+                </div>
+              </div>
+
+              {/* Booster 4: Community Upvotes & Verified Status */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                      <ShieldCheck className="h-4 w-4" />
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                      50 REP UNLOCK
+                    </span>
+                  </div>
+                  <h5 className="text-xs font-bold text-white">Verified Creator Seal</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                    Reach 50 Rep to earn the verified creator checkmark on all your projects.
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1.5 border-t border-slate-800/80">
+                  <span>Seal Status:</span>
+                  <span className={userRep >= 50 ? 'font-semibold text-emerald-400' : 'text-slate-400'}>
+                    {userRep >= 50 ? 'Unlocked ✓' : `${Math.max(0, 50 - userRep)} Rep needed`}
                   </span>
                 </div>
-                <h5 className="text-xs font-bold text-white">Verified Creator Seal</h5>
-                <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                  Unlock the verified checkmark and stand out in the Top Builders leaderboard.
-                </p>
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1 border-t border-slate-800">
-                <span>Trust Tier:</span>
-                <span className="font-semibold text-emerald-400">
-                  {currentUser?.trustTier || 'VERIFIED_HUMAN'}
-                </span>
               </div>
             </div>
           </div>
@@ -505,14 +574,23 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
       {/* Badge Inspect Modal */}
       {selectedBadge && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-2xl space-y-4">
+        <div
+          onClick={() => setSelectedBadge(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm cursor-pointer animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-2xl space-y-4 cursor-default"
+          >
             <button
               type="button"
               onClick={() => setSelectedBadge(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              title="Close (Esc)"
+              aria-label="Close (Esc)"
+              className="absolute top-4 right-4 flex items-center gap-1 rounded-xl border border-slate-700/80 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-mono text-slate-400">Esc</span>
             </button>
 
             <div className="flex items-center gap-3">
@@ -546,7 +624,10 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
               </div>
               <div className="flex items-center justify-between text-slate-400">
                 <span>Your Reputation:</span>
-                <span className="text-amber-300 font-bold">{userRep} Rep</span>
+                <span className="text-amber-300 font-bold flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-amber-400/40 text-amber-400" />
+                  <span>{userRep} Rep</span>
+                </span>
               </div>
               <div className="flex items-center justify-between text-slate-400">
                 <span>Status:</span>
@@ -559,13 +640,20 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             <button
               type="button"
               onClick={() => setSelectedBadge(null)}
-              className="w-full rounded-xl bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors"
+              className="w-full rounded-xl bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm"
             >
               Close
             </button>
           </div>
         </div>
       )}
+      {/* Interactive Points Guide Modal */}
+      <PointsGuideModal
+        isOpen={isPointsGuideOpen}
+        onClose={() => setIsPointsGuideOpen(false)}
+        currentUserRep={userRep}
+        currentStreak={streakInfo.currentStreak}
+      />
     </div>
   );
 };

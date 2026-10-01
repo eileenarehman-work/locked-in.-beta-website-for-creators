@@ -1,7 +1,6 @@
-# We Did This 🚀
+# locked in.
 ### Proof-of-Work Project Showcase & Creator Social Platform
-
-**We Did This** is a high-engagement project showcase, social networking, and peer-review platform built for the next generation of builders, coders, roboticists, artists, and creators.
+**locked in.** is a creative network platformed designed for our younger generation to express themselves through personal projects and discovery.
 
 Instead of passive doomscrolling, creators turn their hands-on builds—3D prints, robotics, games, hardware, and art—into verifiable proof-of-work, follow fellow makers, and collaborate in real-time.
 

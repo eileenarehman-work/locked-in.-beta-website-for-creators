@@ -23,6 +23,7 @@ interface TopBuildersSidebarProps {
   onToggleFollow?: (userId: string) => void;
   onOpenProfile: (user: User) => void;
   onOpenLogin?: () => void;
+  onOpenPointsGuide?: () => void;
 }
 
 export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
@@ -32,6 +33,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
   onToggleFollow,
   onOpenProfile,
   onOpenLogin,
+  onOpenPointsGuide,
 }) => {
   // Sort users by reputationScore descending. Real users only!
   const sortedBuilders = [...users]
@@ -92,6 +94,19 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
               <p className="text-[11px] text-slate-400">Ranked by peer reputation & verified builds</p>
             </div>
           </div>
+
+          {onOpenPointsGuide && (
+            <button
+              type="button"
+              onClick={onOpenPointsGuide}
+              className="text-[11px] font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1 hover:underline cursor-pointer"
+              title="Learn how points are calculated"
+            >
+              <Star className="h-3 w-3 fill-amber-400" />
+              <span className="hidden sm:inline">How Points Work</span>
+              <span className="sm:hidden">Points</span>
+            </button>
+          )}
         </div>
 
         {/* Builders List */}

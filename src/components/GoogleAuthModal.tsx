@@ -55,15 +55,13 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(initialMode);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Login state: Just email needed!
-  const [loginEmail, setLoginEmail] = useState(
-    existingUser?.email || 'eileen.a.rehman@gmail.com'
-  );
+  // Login state: Just email needed (empty by default, placeholder xxx@gmail.com)
+  const [loginEmail, setLoginEmail] = useState('');
 
   // Sign up state: Full onboarding with age, handle, avatar, bio & tags
-  const [signupEmail, setSignupEmail] = useState('eileen.a.rehman@gmail.com');
-  const [displayName, setDisplayName] = useState('Eileen Rehman');
-  const [handle, setHandle] = useState('eileen_builds');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [handle, setHandle] = useState('');
   const [age, setAge] = useState<number>(16);
   const [bio, setBio] = useState('Teen builder & creator. Building 3D prints, game modding & robotics.');
   const [avatarUrl, setAvatarUrl] = useState(AVATAR_PRESETS[0]);
@@ -121,6 +119,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     // Check if an account exists for this email
     const registeredUser = storage.getUserByEmail(cleanLoginEmail);
     if (registeredUser) {
+      storage.registerUser(registeredUser);
       onSuccess(registeredUser);
       return;
     }
@@ -128,6 +127,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     // Check currently active user in storage if matching
     const currentActiveUser = storage.getUser();
     if (currentActiveUser && currentActiveUser.email.toLowerCase() === cleanLoginEmail) {
+      storage.registerUser(currentActiveUser);
       onSuccess(currentActiveUser);
       return;
     }
@@ -185,6 +185,9 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       interestTags: selectedTags.length ? selectedTags : ['#makers'],
       createdAt: new Date().toISOString(),
     };
+
+    // Save account globally so other creators can find and communicate with them
+    storage.registerUser(newUser);
 
     onSuccess(newUser);
   };
@@ -245,7 +248,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Sign Up (New Teen)
+            Sign Up
           </button>
         </div>
 
@@ -340,7 +343,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   <input
                     type="email"
                     required
-                    placeholder="eileen.a.rehman@gmail.com"
+                    placeholder="xxx@gmail.com"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
@@ -391,7 +394,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 <input
                   type="email"
                   required
-                  placeholder="e.g. eileen.a.rehman@gmail.com"
+                  placeholder="e.g. xxx@gmail.com"
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
                   className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
@@ -434,7 +437,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
-                  placeholder="Your Name"
+                  placeholder="e.g. Alex Chen"
                   className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
                 />
               </div>
@@ -450,7 +453,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                     value={handle}
                     onChange={(e) => setHandle(e.target.value)}
                     required
-                    placeholder="handle"
+                    placeholder="alex_builds"
                     className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-7 pr-3 py-2 text-xs text-white font-mono focus:border-indigo-500 focus:outline-none"
                   />
                 </div>

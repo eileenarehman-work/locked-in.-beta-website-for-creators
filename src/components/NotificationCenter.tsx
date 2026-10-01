@@ -12,6 +12,7 @@ import {
   Sparkles,
   Star,
   Users,
+  Flame,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -52,6 +53,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         return <UserPlus className="h-4 w-4 text-indigo-400" />;
       case 'invite_accepted':
         return <CheckCircle2 className="h-4 w-4 text-amber-400" />;
+      case 'streak_milestone':
+        return <Flame className="h-4 w-4 text-amber-400 fill-amber-400/40" />;
       default:
         return <Bell className="h-4 w-4 text-slate-400" />;
     }
@@ -64,6 +67,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       case 'new_follower':
         return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
       case 'invite_accepted':
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'streak_milestone':
         return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       default:
         return 'bg-slate-800 text-slate-300 border-slate-700';

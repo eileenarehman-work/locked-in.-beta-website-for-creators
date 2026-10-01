@@ -23,6 +23,8 @@ import { GoogleAuthModal } from './components/GoogleAuthModal';
 import { UserProfileSettings } from './components/UserProfileSettings';
 import { CreatorProfileModal } from './components/CreatorProfileModal';
 import { IntroLanding } from './components/IntroLanding';
+import { PointsGuideModal } from './components/PointsGuideModal';
+import { calculateRealStreak } from './utils/streakUtils';
 import {
   ShieldCheck,
   Compass,
@@ -67,6 +69,7 @@ export default function App() {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [selectedProfileUser, setSelectedProfileUser] = useState<User | null>(null);
+  const [isPointsGuideOpen, setIsPointsGuideOpen] = useState(false);
 
   // Filters & Search
   const [selectedTag, setSelectedTag] = useState<string>('#all');
@@ -115,10 +118,45 @@ export default function App() {
     storage.saveNotifications(notifications);
   }, [notifications]);
 
+  // Daily login & streak tracking: starts counting when you log in everyday!
+  useEffect(() => {
+    if (!currentUser) return;
+    const { loginDates, isNewDayLogin } = storage.recordDailyLogin(currentUser.id);
+    if (isNewDayLogin) {
+      // Award 10 Rep points for logging in today!
+      const updatedUser: User = {
+        ...currentUser,
+        reputationScore: (currentUser.reputationScore || 0) + 10,
+      };
+      setCurrentUser(updatedUser);
+      storage.setUser(updatedUser);
+
+      const streak = calculateRealStreak(projects, reviews, updatedUser, loginDates);
+      const streakNotif: AppNotification = {
+        id: `login_streak_${Date.now()}`,
+        type: 'streak_milestone',
+        title: `🔥 Day ${streak.currentStreak} Daily Streak!`,
+        message: `Welcome back! Daily login recorded (+10 Rep points awarded). Keep your streak flame burning!`,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+      setNotifications((prev) => [streakNotif, ...prev]);
+    }
+  }, [currentUser?.id]);
+
+  const userLoginDates = useMemo(() => {
+    return currentUser ? storage.getLoginDates(currentUser.id) : [];
+  }, [currentUser]);
+
+  const streakInfo = useMemo(() => {
+    return calculateRealStreak(projects, reviews, currentUser, userLoginDates);
+  }, [projects, reviews, currentUser, userLoginDates]);
+
   const heatmapDays = generateUserHeatmapData(
     projects.length + reviews.length,
     projects,
-    reviews
+    reviews,
+    userLoginDates
   );
 
   // Dynamic custom hashtags extracted from all builds + starter hashtags
@@ -419,51 +457,177 @@ export default function App() {
 
   // Friend Requests
   const handleAcceptFriendRequest = (friendshipId: string) => {
+    let acceptedFriend: User | null = null;
     setFriendships((prev) => {
       const next = { ...prev };
       for (const key in next) {
         if (next[key].id === friendshipId) {
           next[key] = { ...next[key], status: 'ACCEPTED' };
+          if (currentUser) {
+            acceptedFriend =
+              next[key].userId === currentUser.id
+                ? next[key].friend
+                : next[key].sender || storage.getUserById(next[key].userId);
+          }
+        }
+      }
+      return next;
+    });
+
+    if (currentUser && acceptedFriend) {
+      const newNotif: AppNotification = {
+        id: `notif_${Date.now()}`,
+        type: 'new_follower',
+        title: 'Friend Request Accepted!',
+        message: `${currentUser.displayName} (@${currentUser.handle}) accepted your friend request! You can now send direct messages.`,
+        actor: {
+          id: currentUser.id,
+          name: currentUser.displayName,
+          handle: currentUser.handle,
+          avatarUrl: currentUser.avatarUrl,
+        },
+        targetType: 'message',
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications((prev) => [newNotif, ...prev]);
+    }
+  };
+
+  const handleDeclineOrRemoveFriend = (friendshipId: string) => {
+    setFriendships((prev) => {
+      const next = { ...prev };
+      delete next[friendshipId];
+      for (const k in next) {
+        if (next[k].id === friendshipId) {
+          delete next[k];
         }
       }
       return next;
     });
   };
 
-  const handleSendFriendRequest = (friendHandle: string) => {
-    if (!currentUser) return;
-    const cleanHandle = friendHandle.replace(/^@/, '').toLowerCase();
+  const handleSendFriendRequest = (friendHandleOrId: string) => {
+    if (!currentUser) return { success: false, error: 'Please sign in to add friends.' };
+    const clean = friendHandleOrId.replace(/^@/, '').trim().toLowerCase();
+    if (!clean) return { success: false, error: 'Please enter a valid handle.' };
+
+    // Search strictly among registered accounts that have completed the sign up process
+    const allUsers = storage.getAllUsers();
+    const targetUser = allUsers.find(
+      (u) =>
+        (u.handle || '').replace(/^@/, '').trim().toLowerCase() === clean ||
+        u.id.toLowerCase() === clean ||
+        (u.displayName || '').trim().toLowerCase() === clean
+    );
+
+    if (!targetUser) {
+      // STRICTLY DO NOT CREATE A DUMMY USER!
+      return {
+        success: false,
+        error: `No registered account found for "@${clean}". Only users who have signed up can be added as friends.`,
+      };
+    }
+
+    if (targetUser.id === currentUser.id) {
+      return {
+        success: false,
+        error: 'You cannot send a friend request to yourself.',
+      };
+    }
+
+    // Check if friendship already exists
+    const existingEntry = Object.entries(friendships).find(
+      ([, f]) =>
+        (f.userId === currentUser.id && f.friendId === targetUser.id) ||
+        (f.userId === targetUser.id && f.friendId === currentUser.id)
+    );
+
+    if (existingEntry) {
+      const [, existing] = existingEntry;
+      if (existing.status === 'ACCEPTED') {
+        return {
+          success: false,
+          error: `You and @${targetUser.handle} are already friends!`,
+        };
+      }
+      if (existing.userId === currentUser.id) {
+        return {
+          success: false,
+          error: `Friend request to @${targetUser.handle} has already been sent and is pending.`,
+        };
+      }
+      // Target already sent request to currentUser -> accept it!
+      handleAcceptFriendRequest(existing.id);
+      return {
+        success: true,
+        message: `@${targetUser.handle} already sent you a request! You are now friends!`,
+      };
+    }
+
+    const friendshipId = `fr_${currentUser.id}_${targetUser.id}`;
     const newFriendship: Friendship = {
-      id: `fr_${Date.now()}`,
+      id: friendshipId,
       userId: currentUser.id,
-      friendId: `usr_${cleanHandle}`,
+      friendId: targetUser.id,
       status: 'PENDING',
       createdAt: new Date().toISOString(),
-      friend: {
-        id: `usr_${cleanHandle}`,
-        email: `${cleanHandle}@gmail.com`,
-        googleId: `g_${cleanHandle}`,
-        age: 16,
-        handle: cleanHandle,
-        displayName: cleanHandle.charAt(0).toUpperCase() + cleanHandle.slice(1),
-        avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanHandle}`,
-        bio: 'Teen builder on We Did This',
-        reputationScore: 10,
-        trustTier: 'VERIFIED_HUMAN',
-        interestTags: ['#makers'],
-        createdAt: new Date().toISOString(),
-      },
+      friend: targetUser,
+      sender: currentUser,
     };
+
     setFriendships((prev) => ({
       ...prev,
-      [cleanHandle]: newFriendship,
+      [friendshipId]: newFriendship,
     }));
+
+    // Notification for recipient
+    const newNotif: AppNotification = {
+      id: `notif_${Date.now()}`,
+      type: 'new_follower',
+      title: 'Friend Request',
+      message: `${currentUser.displayName} (@${currentUser.handle}) sent you a friend request.`,
+      actor: {
+        id: currentUser.id,
+        name: currentUser.displayName,
+        handle: currentUser.handle,
+        avatarUrl: currentUser.avatarUrl,
+      },
+      targetType: 'message',
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+
+    return {
+      success: true,
+      message: `Friend request sent to @${targetUser.handle}! When they accept, you will be able to communicate.`,
+    };
   };
 
   // Auth Handlers
   const handleAuthSuccess = (user: User) => {
-    setCurrentUser(user);
-    storage.setUser(user);
+    // Record login for today and start/advance daily streak
+    const { loginDates, isNewDayLogin } = storage.recordDailyLogin(user.id);
+    let userToSet = user;
+    if (isNewDayLogin) {
+      userToSet = {
+        ...user,
+        reputationScore: (user.reputationScore || 0) + 10,
+      };
+      const streak = calculateRealStreak(projects, reviews, userToSet, loginDates);
+      const streakNotif: AppNotification = {
+        id: `login_streak_${Date.now()}`,
+        type: 'streak_milestone',
+        title: `🔥 Day ${streak.currentStreak} Streak Active!`,
+        message: `Welcome back! Daily login recorded (+10 Rep points awarded). Keep your streak flame burning!`,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+      setNotifications((prev) => [streakNotif, ...prev]);
+    }
+    setCurrentUser(userToSet);
+    storage.setUser(userToSet);
     setIsGoogleModalOpen(false);
     setViewMode('app');
   };
@@ -494,21 +658,47 @@ export default function App() {
   };
 
   // Build conversations map from real messages & friendships
-  const activeConversations: Record<string, User> = {};
-  if (currentUser) {
-    // Add all accepted friends
+  const activeConversations: Record<string, User> = useMemo(() => {
+    const activeMap: Record<string, User> = {};
+    if (!currentUser) return activeMap;
+
+    const allUsers = storage.getAllUsers();
+    const userMap = new Map<string, User>();
+    allUsers.forEach((u) => userMap.set(u.id, u));
+    allRealUsers.forEach((u) => userMap.set(u.id, u));
+
+    // 1. Add all accepted friends
     Object.values(friendships).forEach((f) => {
       if (f.status === 'ACCEPTED') {
-        activeConversations[f.friend.id] = f.friend;
+        const otherId = f.userId === currentUser.id ? f.friendId : f.userId;
+        const other = userMap.get(otherId) || (f.userId === currentUser.id ? f.friend : f.sender);
+        if (other && other.id !== currentUser.id) {
+          activeMap[other.id] = other;
+        }
       }
     });
-    // Add any users from DM history
+
+    // 2. Add any users from DM history (both received and sent)
     messages.forEach((m) => {
-      if (m.senderId !== currentUser.id && !activeConversations[m.senderId]) {
-        activeConversations[m.senderId] = m.sender;
+      if (m.senderId === currentUser.id && m.recipientId !== currentUser.id) {
+        const other = userMap.get(m.recipientId);
+        if (other) activeMap[other.id] = other;
+      } else if (m.recipientId === currentUser.id && m.senderId !== currentUser.id) {
+        const other = m.sender || userMap.get(m.senderId);
+        if (other) activeMap[other.id] = other;
       }
     });
-  }
+
+    // 3. If a user was directly selected (e.g. from Project Detail or Creator Profile "Message")
+    if (selectedDmUserId && selectedDmUserId !== currentUser.id) {
+      const target = userMap.get(selectedDmUserId);
+      if (target) {
+        activeMap[target.id] = target;
+      }
+    }
+
+    return activeMap;
+  }, [currentUser, friendships, messages, selectedDmUserId, allRealUsers]);
 
   // Notification Center Handlers
   const handleMarkNotificationAsRead = (id: string) => {
@@ -588,6 +778,8 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         currentUser={currentUser}
+        currentStreak={streakInfo.currentStreak}
+        onOpenPointsGuide={() => setIsPointsGuideOpen(true)}
         onOpenGoogleLogin={(mode = 'login') => {
           setAuthModalMode(mode);
           setIsGoogleModalOpen(true);
@@ -843,6 +1035,7 @@ export default function App() {
                   followingUserIds={followingUserIds}
                   onToggleFollow={handleToggleFollow}
                   onOpenProfile={(u) => setSelectedProfileUser(u)}
+                  onOpenPointsGuide={() => setIsPointsGuideOpen(true)}
                   onOpenLogin={() => {
                     setAuthModalMode('signup');
                     setIsGoogleModalOpen(true);
@@ -1019,7 +1212,9 @@ export default function App() {
               onCreateGroupRoom={handleCreateGroupRoom}
               onUpdateInviteStatus={handleUpdateInviteStatus}
               onAcceptFriendRequest={handleAcceptFriendRequest}
+              onDeclineFriendRequest={handleDeclineOrRemoveFriend}
               onSendFriendRequest={handleSendFriendRequest}
+              allRegisteredUsers={allRealUsers}
               selectedUserId={selectedDmUserId}
               onSelectUser={setSelectedDmUserId}
             />
@@ -1122,6 +1317,14 @@ export default function App() {
           onClose={() => setIsProfileSettingsOpen(false)}
         />
       )}
+
+      {/* Points & Daily Streak Guide Modal */}
+      <PointsGuideModal
+        isOpen={isPointsGuideOpen}
+        onClose={() => setIsPointsGuideOpen(false)}
+        currentUserRep={currentUser?.reputationScore || 0}
+        currentStreak={streakInfo.currentStreak}
+      />
     </div>
   );
 }

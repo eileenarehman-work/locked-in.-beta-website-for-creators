@@ -116,6 +116,7 @@ export interface Friendship {
   status: FriendshipStatus;
   createdAt: string;
   friend: User;
+  sender?: User;
 }
 
 export type ChatRoomType = 'DIRECT' | 'GROUP';
@@ -159,7 +160,8 @@ export type NotificationType =
   | 'new_follower'
   | 'invite_accepted'
   | 'new_like'
-  | 'new_project';
+  | 'new_project'
+  | 'streak_milestone';
 
 export interface AppNotification {
   id: string;
