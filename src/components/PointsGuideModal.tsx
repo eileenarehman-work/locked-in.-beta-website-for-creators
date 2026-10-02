@@ -54,7 +54,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
       ? { title: 'Crafty Bee', goal: 100, icon: Trophy, color: 'text-sky-400' }
       : currentUserRep < 250
       ? { title: 'Wonder Maker', goal: 250, icon: Sparkles, color: 'text-indigo-400' }
-      : { title: 'Superstar', goal: 500, icon: Star, color: 'text-amber-400' };
+      : { title: 'locked in', goal: 500, icon: Star, color: 'text-amber-400' };
 
   const repRemaining = Math.max(0, nextTarget.goal - currentUserRep);
   const progressPercent = Math.min(100, Math.round((currentUserRep / nextTarget.goal) * 100));
@@ -335,7 +335,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                   <div className="flex items-center justify-center text-amber-400">
                     <Star className="h-6 w-6 fill-amber-400" />
                   </div>
-                  <span className="text-xs font-bold text-white block">Superstar</span>
+                  <span className="text-xs font-bold text-white block">locked in</span>
                   <span className="text-[11px] font-mono font-bold text-amber-300 block">500 Points</span>
                   <p className="text-[10px] text-slate-400">Gold tier crown + recognized beloved creator of the workshop.</p>
                 </div>
@@ -375,7 +375,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">3.</span>
-                    <span><strong>Missed a day?</strong> If you miss a day, your points and badges are safe! You just restart a fresh streak when you log in again.</span>
+                    <span><strong>Missed a day?</strong> If you miss a day, you start a new streak.</span>
                   </div>
                 </div>
               </div>
@@ -408,7 +408,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
               onClick={onClose}
               className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-md shadow-indigo-600/30"
             >
-              Got It, Let's Build! 🚀
+              Got It, Let's Lock In Now
             </button>
           </div>
         </motion.div>

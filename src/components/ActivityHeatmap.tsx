@@ -304,9 +304,6 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                       {unlockedBadges.length} / {milestoneBadges.length} UNLOCKED
                     </span>
                   </h4>
-                  <p className="text-[11px] text-slate-400">
-                    Earned automatically through community milestones & rubric reviews
-                  </p>
                 </div>
               </div>
 
@@ -316,7 +313,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                   type="button"
                   onClick={() => setIsPointsGuideOpen(true)}
                   className="flex items-center gap-1.5 rounded-xl bg-indigo-600/10 border border-indigo-500/30 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-600/20 transition-all cursor-pointer shadow-sm"
-                  title="Click to view full Points System breakdown"
+                  title="Click for more info about points!"
                 >
                   <HelpCircle className="h-3.5 w-3.5 text-indigo-400" />
                   <span>How Points Work</span>

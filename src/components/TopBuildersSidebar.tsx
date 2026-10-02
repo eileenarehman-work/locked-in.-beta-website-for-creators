@@ -248,40 +248,12 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
         {sortedBuilders.length > 0 && (
           <div className="mt-3.5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
             <span className="flex items-center gap-1 text-slate-400">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-              <span>100% Real human makers</span>
             </span>
             <span className="font-mono text-indigo-400">
               {sortedBuilders.length} {sortedBuilders.length === 1 ? 'builder' : 'builders'} total
             </span>
           </div>
         )}
-      </div>
-
-      {/* Gamified Points & Daily Missions Helper Card */}
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-4 space-y-2.5 text-xs">
-        <div className="flex items-center gap-1.5 font-bold text-slate-200">
-          <TrendingUp className="h-3.5 w-3.5 text-indigo-400" />
-          <span>How Points Are Earned</span>
-        </div>
-        <ul className="space-y-1.5 text-[11px] text-slate-400 leading-snug">
-          <li className="flex items-start gap-1.5">
-            <span className="text-amber-400 font-mono font-bold shrink-0">+10 Pts</span>
-            <span>Daily Login: log in daily to maintain your streak flame.</span>
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-emerald-400 font-mono font-bold shrink-0">+15 Pts</span>
-            <span>Daily Review Bonus: complete your 1st community review each day!</span>
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-indigo-400 font-mono font-bold shrink-0">+25 Pts</span>
-            <span>Peer Review: score a peer's build with the 4-part rubric.</span>
-          </li>
-          <li className="flex items-start gap-1.5">
-            <span className="text-sky-400 font-mono font-bold shrink-0">+30 Pts</span>
-            <span>Publish Build: drop an open-source project or prototype.</span>
-          </li>
-        </ul>
       </div>
     </aside>
   );
