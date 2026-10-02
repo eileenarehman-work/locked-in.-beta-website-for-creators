@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, AppNotification, NotificationType } from '../types';
+import { User, AppNotification } from '../types';
 import {
   ShieldCheck,
   Plus,
@@ -7,11 +7,9 @@ import {
   MessageSquare,
   Compass,
   Terminal,
-  FileCode2,
   LogOut,
   Settings,
   Bell,
-  User as UserIcon,
   Flame,
   Star,
 } from 'lucide-react';
@@ -19,9 +17,11 @@ import { Logo } from './Logo';
 import { NotificationCenter } from './NotificationCenter';
 import { VerifiedBadge } from './VerifiedBadge';
 
+export type NavTabType = 'feed' | 'streak' | 'studio' | 'reviews' | 'messages';
+
 interface NavbarProps {
-  activeTab: 'showcase' | 'studio' | 'reviews' | 'messages';
-  setActiveTab: (tab: 'showcase' | 'studio' | 'reviews' | 'messages') => void;
+  activeTab: NavTabType;
+  setActiveTab: (tab: NavTabType) => void;
   currentUser: User | null;
   currentStreak?: number;
   onOpenPointsGuide?: () => void;
@@ -81,88 +81,108 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [isNotificationOpen]);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Zone 1: Brand Logo (No 'W' block - dynamic maker spark emblem) */}
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-800/90 bg-slate-950/90 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8 flex-nowrap gap-2 sm:gap-4">
+        {/* Zone 1: Brand Logo - Clicking puts user into Intro tab */}
+        <div className="flex items-center shrink-0">
           <button
-            onClick={() => setActiveTab('showcase')}
-            className="flex items-center gap-2 text-left transition-opacity hover:opacity-90"
+            type="button"
+            onClick={() => {
+              if (onShowIntro) {
+                onShowIntro();
+              } else {
+                setActiveTab('feed');
+              }
+            }}
+            className="flex h-9 items-center gap-2 text-left transition-opacity hover:opacity-90 cursor-pointer shrink-0"
+            title="Click to view Intro & Welcome"
           >
             <Logo size="md" />
           </button>
         </div>
 
-        {/* Zone 2: Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-300">
-          {onShowIntro && (
-            <button
-              onClick={onShowIntro}
-              className="flex items-center gap-1 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/50 transition-colors whitespace-nowrap"
-            >
-              <Sparkles className="h-4 w-4 text-amber-400" />
-              Intro Page
-            </button>
-          )}
-
+        {/* Zone 2: Navigation Links - Short, uncluttered tabs */}
+        <nav className="hidden lg:flex items-center gap-1 sm:gap-1.5 text-sm font-medium text-slate-300 shrink-0 flex-nowrap">
+          {/* 1. Feed Tab */}
           <button
-            onClick={() => setActiveTab('showcase')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${
-              activeTab === 'showcase'
-                ? 'bg-slate-800/80 text-white font-semibold shadow-inner'
-                : 'hover:text-white hover:bg-slate-900/50'
+            type="button"
+            onClick={() => setActiveTab('feed')}
+            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+              activeTab === 'feed'
+                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
             }`}
           >
-            <Compass className="h-4 w-4 text-indigo-400" />
-            Project Feed
+            <Compass className={`h-4 w-4 ${activeTab === 'feed' ? 'text-indigo-400' : 'text-slate-400'}`} />
+            <span>Feed</span>
           </button>
 
+          {/* 2. Streak Tab */}
           <button
+            type="button"
+            onClick={() => setActiveTab('streak')}
+            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+              activeTab === 'streak'
+                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+            }`}
+          >
+            <Flame className={`h-4 w-4 ${activeTab === 'streak' ? 'text-amber-400 fill-amber-400/40' : 'text-slate-400'}`} />
+            <span>Streak</span>
+          </button>
+
+          {/* 3. Post Tab */}
+          <button
+            type="button"
             onClick={() => {
               if (!currentUser) {
-                onOpenGoogleLogin();
+                onOpenGoogleLogin('signup');
               } else {
                 setActiveTab('studio');
               }
             }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${
+            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'studio'
-                ? 'bg-slate-800/80 text-white font-semibold shadow-inner'
-                : 'hover:text-white hover:bg-slate-900/50'
+                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
             }`}
           >
-            <Terminal className="h-4 w-4 text-emerald-400" />
-            Post
+            <Terminal className={`h-4 w-4 ${activeTab === 'studio' ? 'text-emerald-400' : 'text-slate-400'}`} />
+            <span>Post</span>
           </button>
 
+          {/* 4. Reviews Tab */}
           <button
+            type="button"
             onClick={() => setActiveTab('reviews')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${
+            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'reviews'
-                ? 'bg-slate-800/80 text-white font-semibold shadow-inner'
-                : 'hover:text-white hover:bg-slate-900/50'
+                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
             }`}
           >
-            <ShieldCheck className="h-4 w-4 text-cyan-400" />
-            Reviews
+            <ShieldCheck className={`h-4 w-4 ${activeTab === 'reviews' ? 'text-cyan-400' : 'text-slate-400'}`} />
+            <span>Reviews</span>
           </button>
 
+          {/* 5. Chat Tab */}
           <button
+            type="button"
             onClick={() => {
               if (!currentUser) {
-                onOpenGoogleLogin();
+                onOpenGoogleLogin('login');
               } else {
                 setActiveTab('messages');
               }
             }}
-            className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${
+            className={`relative flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'messages'
-                ? 'bg-slate-800/80 text-white font-semibold shadow-inner'
-                : 'hover:text-white hover:bg-slate-900/50'
+                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
             }`}
           >
-            <MessageSquare className="h-4 w-4 text-amber-400" />
-            Chat & Friends
+            <MessageSquare className={`h-4 w-4 ${activeTab === 'messages' ? 'text-indigo-300' : 'text-slate-400'}`} />
+            <span>Chat</span>
             {unreadCount > 0 && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">
                 {unreadCount}
@@ -171,15 +191,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Actions & User Status */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Notification Center Trigger with Badge Counter */}
-          <div className="relative" ref={notificationRef}>
+        {/* Zone 3: Actions & User Status - Pixel-Perfect Horizontal Alignment */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap">
+          {/* Notification Center Trigger */}
+          <div className="relative shrink-0" ref={notificationRef}>
             <button
+              type="button"
               onClick={() => setIsNotificationOpen((prev) => !prev)}
-              className={`relative flex items-center justify-center rounded-xl p-2 transition-all ${
+              className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all cursor-pointer shrink-0 ${
                 isNotificationOpen
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40 shadow-md shadow-indigo-500/10'
+                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800/90 bg-slate-900/60'
               }`}
               title="Notification Center"
@@ -211,28 +232,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
+          {/* Quick Post / Drop Build CTA */}
           <button
+            type="button"
             onClick={() => {
               if (!currentUser) {
-                onOpenGoogleLogin();
+                onOpenGoogleLogin('signup');
               } else {
                 onNewProject();
               }
             }}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 transition-all hover:bg-indigo-500 active:scale-95 whitespace-nowrap"
+            className="flex h-9 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 sm:px-3.5 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 transition-all hover:bg-indigo-500 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Drop Build</span>
-            <span className="sm:hidden">Drop</span>
+            <span className="hidden sm:inline">Post Build</span>
+            <span className="sm:hidden">Post</span>
           </button>
 
           {currentUser ? (
-            <div className="flex items-center gap-2">
-              {/* Daily Streak & Rep Points Tracker */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap">
+              {/* Daily Streak & Points Tracker Button */}
               <button
                 type="button"
                 onClick={onOpenPointsGuide}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-2.5 py-1.5 text-xs transition-all hover:border-amber-500/40 hover:bg-slate-850 shadow-sm group cursor-pointer"
+                className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-2.5 sm:px-3 text-xs transition-all hover:border-amber-500/40 hover:bg-slate-850 shadow-sm group cursor-pointer shrink-0"
                 title="Points & Daily Streak Guide - Click to learn how it works"
               >
                 <div className="flex items-center gap-1 text-amber-400 font-mono font-bold">
@@ -242,60 +265,60 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="text-slate-600 text-[10px]">|</span>
                 <div className="flex items-center gap-1 text-amber-300 font-mono font-semibold">
                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span>{currentUser.reputationScore || 0}</span>
+                  <span>{currentUser.reputationScore || 0} pts</span>
                 </div>
               </button>
 
+              {/* Account Profile Chip - Single-Line Laser Straight Horizontal Alignment */}
               <button
+                type="button"
                 onClick={onOpenProfile}
-                className="group flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 p-1.5 pr-2.5 transition-colors hover:border-slate-700 hover:bg-slate-900"
+                className="group flex h-9 items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-2 sm:px-2.5 transition-colors hover:border-slate-700 hover:bg-slate-900 cursor-pointer shrink-0"
                 title="Edit Your Creator Profile & Pic"
               >
                 <img
                   src={currentUser.avatarUrl}
                   alt={currentUser.displayName}
                   referrerPolicy="no-referrer"
-                  className="h-7 w-7 rounded-full object-cover ring-1 ring-emerald-500/50"
+                  className="h-6 w-6 rounded-full object-cover ring-1 ring-emerald-500/50 shrink-0"
                 />
-                <div className="hidden sm:flex flex-col text-left">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-medium text-slate-200 group-hover:text-white truncate max-w-[85px]">
-                      @{currentUser.handle}
-                    </span>
-                    <VerifiedBadge
-                      size="xs"
-                      reputationScore={currentUser.reputationScore}
-                    />
-                  </div>
-                  <span className="text-[10px] text-emerald-400 flex items-center gap-0.5 font-mono">
-                    <ShieldCheck className="h-3 w-3" />
-                    Human 100%
+                <div className="hidden sm:flex items-center gap-1 leading-none">
+                  <span className="text-xs font-semibold text-slate-200 group-hover:text-white truncate max-w-[90px]">
+                    @{currentUser.handle}
                   </span>
+                  <VerifiedBadge
+                    size="xs"
+                    reputationScore={currentUser.reputationScore}
+                  />
                 </div>
               </button>
 
+              {/* Profile Settings */}
               <button
+                type="button"
                 onClick={onOpenProfile}
-                className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-900 transition-colors cursor-pointer shrink-0"
                 title="Profile Settings & Avatar Upload"
               >
                 <Settings className="h-4 w-4" />
               </button>
 
+              {/* Logout */}
               <button
+                type="button"
                 onClick={onLogout}
-                className="rounded-lg p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-900 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-900/60 text-slate-400 hover:text-rose-400 hover:bg-slate-900 hover:border-rose-500/30 transition-colors cursor-pointer shrink-0"
                 title="Log out of account"
               >
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 type="button"
                 onClick={onOpenPointsGuide}
-                className="hidden md:flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-2.5 py-1.5 text-xs text-slate-300 hover:text-amber-300 hover:border-amber-500/30 transition-colors"
+                className="hidden md:flex h-9 items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-xs text-slate-300 hover:text-amber-300 hover:border-amber-500/30 transition-colors cursor-pointer shrink-0"
                 title="Learn how Maker Points & Daily Streaks work"
               >
                 <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400/40" />
@@ -303,21 +326,93 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <button
+                type="button"
                 onClick={() => onOpenGoogleLogin('login')}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors"
+                className="flex h-9 items-center px-3 sm:px-3.5 rounded-xl border border-slate-700 bg-slate-900/90 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
               >
                 <span>Log In</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => onOpenGoogleLogin('signup')}
-                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all"
+                className="flex h-9 items-center px-3 sm:px-3.5 rounded-xl bg-indigo-600 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all cursor-pointer shrink-0"
               >
                 <span>Sign Up</span>
               </button>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Mobile Navigation Strip (Ensures tabs are easily accessible on small screens) */}
+      <div className="lg:hidden flex items-center justify-around border-t border-slate-800/80 bg-slate-950 px-2 py-1.5 text-[11px] font-medium text-slate-400 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab('feed')}
+          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
+            activeTab === 'feed' ? 'text-indigo-400 font-bold' : 'hover:text-white'
+          }`}
+        >
+          <Compass className="h-4 w-4" />
+          <span>Feed</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('streak')}
+          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
+            activeTab === 'streak' ? 'text-amber-400 font-bold' : 'hover:text-white'
+          }`}
+        >
+          <Flame className="h-4 w-4" />
+          <span>Streak</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (!currentUser) {
+              onOpenGoogleLogin('signup');
+            } else {
+              setActiveTab('studio');
+            }
+          }}
+          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
+            activeTab === 'studio' ? 'text-emerald-400 font-bold' : 'hover:text-white'
+          }`}
+        >
+          <Terminal className="h-4 w-4" />
+          <span>Post</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('reviews')}
+          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
+            activeTab === 'reviews' ? 'text-cyan-400 font-bold' : 'hover:text-white'
+          }`}
+        >
+          <ShieldCheck className="h-4 w-4" />
+          <span>Reviews</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (!currentUser) {
+              onOpenGoogleLogin('login');
+            } else {
+              setActiveTab('messages');
+            }
+          }}
+          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
+            activeTab === 'messages' ? 'text-indigo-300 font-bold' : 'hover:text-white'
+          }`}
+        >
+          <MessageSquare className="h-4 w-4" />
+          <span>Chat</span>
+        </button>
       </div>
     </header>
   );

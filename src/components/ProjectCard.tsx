@@ -201,11 +201,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               reputationScore={project.author.reputationScore}
             />
             {project.author.reputationScore >= 150 ? (
-              <span title="Top Reviewer Badge Earned" className="text-amber-400 flex items-center">
+              <span title="Helpful Heart Badge Earned" className="text-amber-400 flex items-center">
                 <Star className="h-3 w-3 fill-amber-400/40" />
               </span>
             ) : project.author.reputationScore >= 100 ? (
-              <span title="Pro Builder Badge Earned" className="text-amber-400 flex items-center">
+              <span title="Crafty Bee Badge Earned" className="text-amber-400 flex items-center">
                 <Trophy className="h-3 w-3" />
               </span>
             ) : null}

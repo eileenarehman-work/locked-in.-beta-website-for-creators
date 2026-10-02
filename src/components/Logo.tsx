@@ -17,10 +17,10 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 'md', showTex
   const currentSize = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+    <div className={`flex items-center gap-2.5 shrink-0 ${className}`}>
       {/* Dynamic Maker Spark Emblem (Replaces the old 'W' block) */}
       <div
-        className={`relative flex ${currentSize.box} items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/30 ring-1 ring-white/20`}
+        className={`relative flex ${currentSize.box} items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 shrink-0`}
       >
         <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950/80 backdrop-blur-xs">
           <svg

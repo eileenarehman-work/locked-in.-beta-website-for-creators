@@ -435,7 +435,7 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
               </span>
               <span className="text-[10px] font-mono text-amber-300 font-semibold flex items-center gap-1">
                 <Star className="h-3 w-3 fill-amber-400/40 text-amber-400" />
-                <span>{currentUser.reputationScore} Rep Points</span>
+                <span>{currentUser.reputationScore} Points</span>
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">

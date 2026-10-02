@@ -32,8 +32,8 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 align-middle select-none ${className}`}
-      title={`Verified Creator • Proof-of-Work threshold reached (${reputationScore} Rep Score)`}
+      className={`inline-flex items-center gap-1 select-none ${className}`}
+      title={`Verified Creator • Proof-of-Work threshold reached (${reputationScore} Points)`}
       aria-label="Verified Creator"
     >
       {/* Iconic 8-point scalloped verified badge */}

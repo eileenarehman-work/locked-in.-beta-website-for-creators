@@ -228,7 +228,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   </div>
                   <span className="text-xs text-slate-400 flex items-center gap-1 font-mono">
                     <Star className="h-3 w-3 text-amber-400 fill-amber-400/40" />
-                    Reputation {project.author.reputationScore}
+                    {project.author.reputationScore} Points
                   </span>
                 </div>
               </button>
@@ -292,7 +292,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Technical Specification
+              Specs
             </button>
             <button
               onClick={() => setActiveTab('milestones')}
@@ -302,7 +302,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Milestones ({project.milestones.length})
+              Milestones
             </button>
             <button
               onClick={() => setActiveTab('reviews')}
@@ -312,7 +312,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              100% Human Peer Reviews ({reviews.length})
+              Reviews
             </button>
           </div>
 

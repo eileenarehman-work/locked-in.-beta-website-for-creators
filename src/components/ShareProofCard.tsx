@@ -170,7 +170,7 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
                   <span>@{project.author.handle}</span>
                   <span>·</span>
                   <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400/40" />
-                  <span>{project.author.reputationScore} Rep</span>
+                  <span>{project.author.reputationScore} Points</span>
                 </span>
               </div>
             </div>

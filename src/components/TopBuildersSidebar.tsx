@@ -201,7 +201,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
                     </div>
                   </div>
 
-                  {/* Right: Reputation & Action */}
+                  {/* Right: Points & Action */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="text-right">
                       <div className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-xs font-mono font-bold text-amber-300">
@@ -209,7 +209,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
                         <span>{builder.reputationScore || 0}</span>
                       </div>
                       <div className="text-[9px] font-mono text-slate-500 text-right pr-0.5">
-                        Rep
+                        Points
                       </div>
                     </div>
 
@@ -258,24 +258,28 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
         )}
       </div>
 
-      {/* Gamified Reputation & Rubric Rules Helper Card */}
+      {/* Gamified Points & Daily Missions Helper Card */}
       <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-4 space-y-2.5 text-xs">
         <div className="flex items-center gap-1.5 font-bold text-slate-200">
           <TrendingUp className="h-3.5 w-3.5 text-indigo-400" />
-          <span>How Reputation is Earned</span>
+          <span>How Points Are Earned</span>
         </div>
         <ul className="space-y-1.5 text-[11px] text-slate-400 leading-snug">
           <li className="flex items-start gap-1.5">
-            <span className="text-emerald-400 font-mono font-bold">+15 Rep</span>
-            <span>Publish a verified build with working prototype photos or code.</span>
+            <span className="text-amber-400 font-mono font-bold shrink-0">+10 Pts</span>
+            <span>Daily Login: log in daily to maintain your streak flame.</span>
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-indigo-400 font-mono font-bold">+5 Rep</span>
-            <span>Write a detailed 4-part rubric review (Clarity, Execution, Technicality).</span>
+            <span className="text-emerald-400 font-mono font-bold shrink-0">+15 Pts</span>
+            <span>Daily Review Bonus: complete your 1st community review each day!</span>
           </li>
           <li className="flex items-start gap-1.5">
-            <span className="text-amber-400 font-mono font-bold">Badges</span>
-            <span>Unlock 'Pro Builder', 'Top Reviewer', and milestone perks automatically.</span>
+            <span className="text-indigo-400 font-mono font-bold shrink-0">+25 Pts</span>
+            <span>Peer Review: score a peer's build with the 4-part rubric.</span>
+          </li>
+          <li className="flex items-start gap-1.5">
+            <span className="text-sky-400 font-mono font-bold shrink-0">+30 Pts</span>
+            <span>Publish Build: drop an open-source project or prototype.</span>
           </li>
         </ul>
       </div>

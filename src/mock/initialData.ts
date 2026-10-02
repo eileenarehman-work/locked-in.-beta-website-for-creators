@@ -23,6 +23,7 @@ const STORAGE_KEYS = {
   LIKED_PROJECTS: 'wedidthis_liked_projects',
   NOTIFICATIONS: 'wedidthis_notifications',
   LOGIN_DATES: 'lockedin_login_dates',
+  DAILY_REVIEW_DATES: 'lockedin_daily_review_dates',
   CLEARED_ACCOUNTS_FLAG: 'wedidthis_strict_zero_fabricated_rule_v4',
 };
 
@@ -380,6 +381,38 @@ export const storage = {
       return { loginDates: existing, isNewDayLogin: false };
     } catch {
       return { loginDates: [], isNewDayLogin: false };
+    }
+  },
+  getDailyReviewDates: (userId: string): string[] => {
+    try {
+      const data = localStorage.getItem(`${STORAGE_KEYS.DAILY_REVIEW_DATES}_${userId}`);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+  recordDailyReview: (userId: string): { reviewDates: string[]; isNewDayReview: boolean } => {
+    try {
+      const existing = storage.getDailyReviewDates(userId);
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isNewDayReview = !existing.includes(todayStr);
+      if (isNewDayReview) {
+        const updated = [todayStr, ...existing.filter((d) => d !== todayStr)];
+        localStorage.setItem(`${STORAGE_KEYS.DAILY_REVIEW_DATES}_${userId}`, JSON.stringify(updated));
+        return { reviewDates: updated, isNewDayReview: true };
+      }
+      return { reviewDates: existing, isNewDayReview: false };
+    } catch {
+      return { reviewDates: [], isNewDayReview: false };
+    }
+  },
+  hasCompletedDailyReviewToday: (userId: string): boolean => {
+    try {
+      const dates = storage.getDailyReviewDates(userId);
+      const todayStr = new Date().toISOString().split('T')[0];
+      return dates.includes(todayStr);
+    } catch {
+      return false;
     }
   },
   clearAll: () => {

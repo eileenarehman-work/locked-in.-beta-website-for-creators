@@ -134,7 +134,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           </p>
         </div>
 
-        {/* Tab Switcher */}
+        {/* Tab Switcher - Short, punchy tab names */}
         <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-950 p-1 text-xs font-semibold">
           <button
             type="button"
@@ -146,7 +146,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             }`}
           >
             <Flame className="h-3.5 w-3.5 text-amber-400" />
-            <span>Streak & Badges</span>
+            <span>Streak</span>
           </button>
           <button
             type="button"
@@ -158,7 +158,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             }`}
           >
             <GitCommit className="h-3.5 w-3.5 text-indigo-400" />
-            <span>84-Day Map</span>
+            <span>Activity</span>
           </button>
         </div>
       </div>
@@ -199,9 +199,18 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                   </div>
                   <p className="text-xs text-slate-300 mt-1 leading-snug max-w-md">
                     {streakInfo.currentStreak > 0
-                      ? `🔥 Your flame is active! Continue building daily to hit the ${streakInfo.nextMilestone.title}.`
-                      : 'No active streak yet. Publish a build or review a peer project today to ignite Day 1!'}
+                      ? `🔥 Your flame is burning bright! Daily login points double and grow by +2 each day.`
+                      : 'No active streak yet. Log in daily or publish a build to ignite Day 1!'}
                   </p>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 text-[11px] font-mono font-semibold text-amber-300">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      Today's Bonus: +{streakInfo.todayBonus} Pts
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-slate-900 border border-slate-800 px-2.5 py-1 text-[11px] font-mono text-slate-400">
+                      Tomorrow: +{streakInfo.nextDayBonus} Pts
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -290,13 +299,13 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
-                    <span>Maker Reputation Badges</span>
+                    <span>Maker Points Badges</span>
                     <span className="rounded bg-indigo-500/20 border border-indigo-500/40 px-1.5 py-0.2 text-[9px] font-mono font-bold text-indigo-300">
                       {unlockedBadges.length} / {milestoneBadges.length} UNLOCKED
                     </span>
                   </h4>
                   <p className="text-[11px] text-slate-400">
-                    Earned automatically through community reputation milestones & rubric reviews
+                    Earned automatically through community milestones & rubric reviews
                   </p>
                 </div>
               </div>
@@ -316,7 +325,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 <div className="flex items-center gap-2 rounded-xl bg-slate-950/80 border border-slate-800 px-3 py-1.5">
                   <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
                   <span className="text-xs font-mono text-slate-300">
-                    Rep: <strong className="text-amber-300">{userRep}</strong>
+                    Points: <strong className="text-amber-300">{userRep}</strong>
                   </span>
                 </div>
               </div>
@@ -363,7 +372,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                       <span className="capitalize text-slate-400">{badge.tier}</span>
                       <span>·</span>
                       <span className={badge.isUnlocked ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-                        {badge.isUnlocked ? 'Earned' : `${badge.minReputationScore} Rep`}
+                        {badge.isUnlocked ? 'Earned' : `${badge.minReputationScore} Pts`}
                       </span>
                     </div>
 
@@ -390,7 +399,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                     Next Badge in Reach: <span className="text-white">{nextMilestone.badge.name}</span>
                   </span>
                   <span className="text-indigo-300 font-bold">
-                    Need {nextMilestone.remaining} more Rep points
+                    Need {nextMilestone.remaining} more Points
                   </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
@@ -413,7 +422,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             <div className="flex items-center justify-between px-1">
               <h5 className="text-xs font-mono uppercase text-slate-400 font-bold flex items-center gap-1.5">
                 <Zap className="h-3.5 w-3.5 text-amber-400" />
-                <span>Earn Rep Points & Fuel Your Streak</span>
+                <span>Earn Points & Fuel Your Daily Streak</span>
               </h5>
               <button
                 type="button"
@@ -433,12 +442,12 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                       <Flame className="h-4 w-4 fill-amber-500 text-amber-500" />
                     </span>
                     <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                      +10 REP / DAY
+                      +10 PTS / DAY
                     </span>
                   </div>
                   <h5 className="text-xs font-bold text-white">Daily Login Streak</h5>
                   <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                    Log in every day to keep your flame alive. Starts day 1 of your streak!
+                    Log in every day to keep your flame alive and earn 10 points daily.
                   </p>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1.5 border-t border-slate-800/80">
@@ -450,18 +459,42 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 </div>
               </div>
 
-              {/* Booster 2: Drop a Build */}
+              {/* Booster 2: Daily Community Review Bonus */}
               <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                      <Hammer className="h-4 w-4" />
+                      <CheckCircle2 className="h-4 w-4" />
                     </span>
                     <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md">
-                      +25 REP
+                      +15 BONUS / DAY
                     </span>
                   </div>
-                  <h5 className="text-xs font-bold text-white">Publish Hands-on Build</h5>
+                  <h5 className="text-xs font-bold text-white">Daily Review Bonus</h5>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                    Complete your 1st community review each day to earn +15 bonus points!
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1.5 border-t border-slate-800/80">
+                  <span>Mission:</span>
+                  <span className="font-semibold text-indigo-300">
+                    +25 pts + 15 bonus
+                  </span>
+                </div>
+              </div>
+
+              {/* Booster 3: Drop a Build */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400">
+                      <Hammer className="h-4 w-4" />
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md">
+                      +30 PTS
+                    </span>
+                  </div>
+                  <h5 className="text-xs font-bold text-white">Publish Build</h5>
                   <p className="text-[11px] text-slate-400 mt-1 leading-snug">
                     Drop your latest 3D print, robotics, hardware, game dev, code, or art project.
                   </p>
@@ -482,28 +515,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 )}
               </div>
 
-              {/* Booster 3: Peer Rubric Review */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </span>
-                    <span className="text-[10px] font-mono font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md">
-                      +20 REP
-                    </span>
-                  </div>
-                  <h5 className="text-xs font-bold text-white">Rubric Peer Review</h5>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                    Evaluate a fellow creator's build on Clarity, Execution, Technicality & Docs.
-                  </p>
-                </div>
-                <div className="mt-3 text-[11px] font-mono text-slate-400 text-center py-1">
-                  Open any build below to review
-                </div>
-              </div>
-
-              {/* Booster 4: Community Upvotes & Verified Status */}
+              {/* Booster 4: Verified Creator Status */}
               <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 flex flex-col justify-between hover:border-slate-700 transition-all">
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -511,18 +523,18 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                       <ShieldCheck className="h-4 w-4" />
                     </span>
                     <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                      50 REP UNLOCK
+                      50 PTS UNLOCK
                     </span>
                   </div>
                   <h5 className="text-xs font-bold text-white">Verified Creator Seal</h5>
                   <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                    Reach 50 Rep to earn the verified creator checkmark on all your projects.
+                    Reach 50 Points to earn the verified creator checkmark on all your projects.
                   </p>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1.5 border-t border-slate-800/80">
                   <span>Seal Status:</span>
                   <span className={userRep >= 50 ? 'font-semibold text-emerald-400' : 'text-slate-400'}>
-                    {userRep >= 50 ? 'Unlocked ✓' : `${Math.max(0, 50 - userRep)} Rep needed`}
+                    {userRep >= 50 ? 'Unlocked ✓' : `${Math.max(0, 50 - userRep)} Points needed`}
                   </span>
                 </div>
               </div>
@@ -617,19 +629,19 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 space-y-1.5 text-xs font-mono">
               <div className="flex items-center justify-between text-slate-400">
                 <span>Unlock Threshold:</span>
-                <span className="text-white font-bold">{selectedBadge.minReputationScore} Rep</span>
+                <span className="text-white font-bold">{selectedBadge.minReputationScore} Points</span>
               </div>
               <div className="flex items-center justify-between text-slate-400">
-                <span>Your Reputation:</span>
+                <span>Your Points:</span>
                 <span className="text-amber-300 font-bold flex items-center gap-1">
                   <Star className="h-3 w-3 fill-amber-400/40 text-amber-400" />
-                  <span>{userRep} Rep</span>
+                  <span>{userRep} Points</span>
                 </span>
               </div>
               <div className="flex items-center justify-between text-slate-400">
                 <span>Status:</span>
                 <span className={selectedBadge.isUnlocked ? 'text-emerald-400 font-bold' : 'text-amber-400'}>
-                  {selectedBadge.isUnlocked ? '✓ Unlocked & Displayed on Profile' : `Locked (${selectedBadge.remainingRep} Rep needed)`}
+                  {selectedBadge.isUnlocked ? '✓ Unlocked & Displayed on Profile' : `Locked (${selectedBadge.remainingRep} Points needed)`}
                 </span>
               </div>
             </div>

@@ -155,6 +155,8 @@ export interface HeatmapDay {
   level: 0 | 1 | 2 | 3 | 4;
 }
 
+export type NavTabType = 'feed' | 'streak' | 'studio' | 'reviews' | 'messages';
+
 export type NotificationType =
   | 'new_review'
   | 'new_follower'

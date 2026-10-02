@@ -10,6 +10,7 @@ import {
   GroupChatMessage,
   AppNotification,
   NotificationType,
+  NavTabType,
 } from './types';
 import { Navbar } from './components/Navbar';
 import { ProjectCard } from './components/ProjectCard';
@@ -24,7 +25,7 @@ import { UserProfileSettings } from './components/UserProfileSettings';
 import { CreatorProfileModal } from './components/CreatorProfileModal';
 import { IntroLanding } from './components/IntroLanding';
 import { PointsGuideModal } from './components/PointsGuideModal';
-import { calculateRealStreak } from './utils/streakUtils';
+import { calculateRealStreak, calculateStreakLoginBonus } from './utils/streakUtils';
 import {
   ShieldCheck,
   Compass,
@@ -40,6 +41,10 @@ import {
   Gamepad2,
   Code2,
   Music,
+  Flame,
+  Star,
+  CheckCircle2,
+  Zap,
 } from 'lucide-react';
 
 export default function App() {
@@ -60,7 +65,7 @@ export default function App() {
   );
   // Notification Center State (tracks reviews, followers, and collaboration invites)
   const [notifications, setNotifications] = useState<AppNotification[]>(() => storage.getNotifications());
-  const [activeTab, setActiveTab] = useState<'showcase' | 'studio' | 'reviews' | 'messages'>('showcase');
+  const [activeTab, setActiveTab] = useState<NavTabType>('feed');
 
   // Modals
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -123,20 +128,22 @@ export default function App() {
     if (!currentUser) return;
     const { loginDates, isNewDayLogin } = storage.recordDailyLogin(currentUser.id);
     if (isNewDayLogin) {
-      // Award 10 Rep points for logging in today!
+      // Streak points double / increase by 2 each consecutive login day for engagement
+      const streak = calculateRealStreak(projects, reviews, currentUser, loginDates);
+      const streakBonus = calculateStreakLoginBonus(streak.currentStreak);
+
       const updatedUser: User = {
         ...currentUser,
-        reputationScore: (currentUser.reputationScore || 0) + 10,
+        reputationScore: (currentUser.reputationScore || 0) + streakBonus,
       };
       setCurrentUser(updatedUser);
       storage.setUser(updatedUser);
 
-      const streak = calculateRealStreak(projects, reviews, updatedUser, loginDates);
       const streakNotif: AppNotification = {
         id: `login_streak_${Date.now()}`,
         type: 'streak_milestone',
-        title: `🔥 Day ${streak.currentStreak} Daily Streak!`,
-        message: `Welcome back! Daily login recorded (+10 Rep points awarded). Keep your streak flame burning!`,
+        title: `🔥 Day ${streak.currentStreak} Daily Streak Active!`,
+        message: `Welcome back! Daily streak recorded (+${streakBonus} Points awarded). Keep logging in everyday — streak rewards double and grow by +2 each day!`,
         createdAt: new Date().toISOString(),
         read: false,
       };
@@ -147,6 +154,10 @@ export default function App() {
   const userLoginDates = useMemo(() => {
     return currentUser ? storage.getLoginDates(currentUser.id) : [];
   }, [currentUser]);
+
+  const hasCompletedDailyReviewToday = useMemo(() => {
+    return currentUser ? storage.hasCompletedDailyReviewToday(currentUser.id) : false;
+  }, [currentUser, reviews]);
 
   const streakInfo = useMemo(() => {
     return calculateRealStreak(projects, reviews, currentUser, userLoginDates);
@@ -334,8 +345,32 @@ export default function App() {
     };
     setNotifications((prev) => [newNotif, ...prev]);
 
-    // Update reputation
-    setCurrentUser((prev) => (prev ? { ...prev, reputationScore: prev.reputationScore + 25 } : null));
+    // Check if this is the user's first community review today (Daily Community Review Bonus!)
+    const { isNewDayReview } = storage.recordDailyReview(currentUser.id);
+    const bonusPoints = isNewDayReview ? 15 : 0;
+    const baseReviewPoints = 25;
+    const totalPointsEarned = baseReviewPoints + bonusPoints;
+
+    // Update reputation score with base + bonus
+    const updatedUser: User = {
+      ...currentUser,
+      reputationScore: (currentUser.reputationScore || 0) + totalPointsEarned,
+    };
+    setCurrentUser(updatedUser);
+    storage.setUser(updatedUser);
+
+    // If first review today, trigger bonus achievement notification!
+    if (isNewDayReview) {
+      const bonusNotif: AppNotification = {
+        id: `bonus_review_${Date.now()}`,
+        type: 'streak_milestone',
+        title: '🌟 Daily Review Bonus (+15 Points)!',
+        message: `Daily mission complete! You reviewed a community build today and earned +15 Bonus Points (+${totalPointsEarned} Points total for this review). Thank you for supporting fellow makers!`,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+      setNotifications((prev) => [bonusNotif, ...prev]);
+    }
   };
 
   // Upvote Review
@@ -353,7 +388,7 @@ export default function App() {
   // Publish Project
   const handlePublishProject = (newProject: Project) => {
     setProjects((prev) => [newProject, ...prev]);
-    setActiveTab('showcase');
+    setActiveTab('feed');
     setSelectedProject(newProject);
   };
 
@@ -611,16 +646,17 @@ export default function App() {
     const { loginDates, isNewDayLogin } = storage.recordDailyLogin(user.id);
     let userToSet = user;
     if (isNewDayLogin) {
+      const streak = calculateRealStreak(projects, reviews, user, loginDates);
+      const streakBonus = calculateStreakLoginBonus(streak.currentStreak);
       userToSet = {
         ...user,
-        reputationScore: (user.reputationScore || 0) + 10,
+        reputationScore: (user.reputationScore || 0) + streakBonus,
       };
-      const streak = calculateRealStreak(projects, reviews, userToSet, loginDates);
       const streakNotif: AppNotification = {
         id: `login_streak_${Date.now()}`,
         type: 'streak_milestone',
         title: `🔥 Day ${streak.currentStreak} Streak Active!`,
-        message: `Welcome back! Daily login recorded (+10 Rep points awarded). Keep your streak flame burning!`,
+        message: `Welcome back! Daily login recorded (+${streakBonus} Points awarded). Keep your streak alive — daily login points double and grow by +2 each day!`,
         createdAt: new Date().toISOString(),
         read: false,
       };
@@ -725,7 +761,7 @@ export default function App() {
         }
       }
       if (projects.length > 0) setSelectedProject(projects[0]);
-      setActiveTab('showcase');
+      setActiveTab('feed');
     } else if (notif.targetType === 'profile') {
       if (notif.actor?.id) {
         const allUsers = storage.getAllUsers();
@@ -806,25 +842,29 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 pb-16">
-        {activeTab === 'showcase' && (
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-            {/* Clean Showcase Hero Banner */}
-            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 p-6 sm:p-10 backdrop-blur-md relative overflow-hidden">
+        {/* 1. Dedicated Community Feed Tab (like YouTube or Instagram) */}
+        {activeTab === 'feed' && (
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+            {/* Feed Header Banner */}
+            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 p-5 sm:p-7 backdrop-blur-md relative overflow-hidden">
               <div className="absolute top-0 right-0 h-64 w-64 bg-indigo-500/10 blur-3xl pointer-events-none rounded-full" />
-              <div className="relative z-10 max-w-3xl space-y-3">
-                <div className="flex items-center gap-2 text-xs font-mono text-indigo-400">
-                  <Sparkles className="h-4 w-4 text-amber-400" />
-                  <span>CREATOR SHOWCASE & BUILDS</span>
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-2xl">
+                  <div className="flex items-center gap-2 text-xs font-mono text-indigo-400">
+                    <Compass className="h-4 w-4 text-indigo-400" />
+                    <span className="font-bold uppercase tracking-wider">Community Feed</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] text-emerald-400 font-mono">Live Creations</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                    Explore What Creators Are Building
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    The real-time social feed for hardware, 3D prints, robots, games, apps, and code. Follow builders, drop reactions, and write constructive peer reviews.
+                  </p>
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Show What You Built. Connect With Creators.
-                </h1>
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  The home for creators building hardware, 3D prints, robots, games, apps, and art.
-                  Upload your progress, follow fellow makers, and collaborate in real-time.
-                </p>
 
-                <div className="pt-2 flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                   <button
                     onClick={() => {
                       if (!currentUser) {
@@ -834,84 +874,37 @@ export default function App() {
                         setActiveTab('studio');
                       }
                     }}
-                    className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors"
+                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors cursor-pointer"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Drop Your Build</span>
+                    <span>Drop Build</span>
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (!currentUser) {
-                        setAuthModalMode('login');
-                        setIsGoogleModalOpen(true);
-                      } else {
-                        setActiveTab('messages');
-                      }
-                    }}
-                    className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
+                    onClick={() => setActiveTab('streak')}
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-3.5 py-2 text-xs font-semibold text-amber-300 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
+                    title="View Daily Streak Hub"
                   >
-                    <Users className="h-4 w-4 text-emerald-400" />
-                    <span>Channels & DMs</span>
+                    <Flame className="h-4 w-4 fill-amber-500 text-amber-500" />
+                    <span>Streak</span>
                   </button>
-
-                  {!currentUser && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setAuthModalMode('login');
-                          setIsGoogleModalOpen(true);
-                        }}
-                        className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
-                      >
-                        <span>Log In</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setAuthModalMode('signup');
-                          setIsGoogleModalOpen(true);
-                        }}
-                        className="flex items-center gap-1.5 rounded-xl bg-white text-slate-900 px-3.5 py-2 text-xs font-bold hover:bg-slate-100 transition-colors shadow-md"
-                      >
-                        <span>Sign Up</span>
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Real Contribution Heatmap & Engaging Streak Hub */}
-            <ActivityHeatmap
-              days={heatmapDays}
-              totalContributions={projects.length + reviews.length}
-              currentUser={currentUser}
-              projects={projects}
-              reviews={reviews}
-              onOpenNewBuild={() => {
-                if (!currentUser) {
-                  setAuthModalMode('signup');
-                  setIsGoogleModalOpen(true);
-                } else {
-                  setActiveTab('studio');
-                }
-              }}
-              onOpenProfile={(u) => setSelectedProfileUser(u)}
-            />
-
-            {/* Main Showcase Layout: Feed + Top Builders Sidebar */}
+            {/* Main Feed Layout: Feed + Top Builders Sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Main Feed Column (8 cols on desktop) */}
               <div className="lg:col-span-8 space-y-6">
                 {/* Filter Bar & Search */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
                   {/* Feed Sort & Custom YouTube-Style Hashtags */}
                   <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                     <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-medium">
                       <button
                         onClick={() => setFeedSort('trending')}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${
-                          feedSort === 'trending' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                          feedSort === 'trending' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
                         }`}
                       >
                         <TrendingUp className="h-3.5 w-3.5" />
@@ -919,8 +912,8 @@ export default function App() {
                       </button>
                       <button
                         onClick={() => setFeedSort('recent')}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${
-                          feedSort === 'recent' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                          feedSort === 'recent' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
                         }`}
                       >
                         <Clock className="h-3.5 w-3.5" />
@@ -935,8 +928,8 @@ export default function App() {
                             setFeedSort('following');
                           }
                         }}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${
-                          feedSort === 'following' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                          feedSort === 'following' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
                         }`}
                       >
                         <UserCheck className="h-3.5 w-3.5" />
@@ -950,7 +943,7 @@ export default function App() {
                     <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 max-w-full">
                       <button
                         onClick={() => setSelectedTag('#all')}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap ${
+                        className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
                           selectedTag === '#all'
                             ? 'bg-slate-800 text-indigo-300 border border-indigo-500/50 font-semibold'
                             : 'border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
@@ -962,7 +955,7 @@ export default function App() {
                         <button
                           key={tag}
                           onClick={() => setSelectedTag(selectedTag === tag ? '#all' : tag)}
-                          className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap ${
+                          className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
                             selectedTag === tag
                               ? 'bg-slate-800 text-indigo-300 border border-indigo-500/50 font-semibold'
                               : 'border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
@@ -995,15 +988,14 @@ export default function App() {
                     </div>
                     <h3 className="text-lg font-bold text-white">No Builds in This Feed Yet</h3>
                     <p className="text-xs text-slate-400 max-w-md mx-auto">
-                      We stripped out all fake accounts and bot posts. You have a completely clean slate!
-                      Publish the first project in Art, 3D Printing, Game Dev, Robotics, or Code.
+                      Publish the first project in Art, 3D Printing, Game Dev, Robotics, or Code!
                     </p>
                     <button
                       onClick={() => {
                         if (!currentUser) setIsGoogleModalOpen(true);
                         else setActiveTab('studio');
                       }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30"
+                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30 cursor-pointer"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Drop Your Build Now 🚀</span>
@@ -1027,8 +1019,59 @@ export default function App() {
                 )}
               </div>
 
-              {/* Top Builders Sidebar Column (4 cols on desktop) */}
+              {/* Sidebar Column (4 cols on desktop) */}
               <div className="lg:col-span-4 space-y-6">
+                {/* Daily Community Review Quest Booster Card */}
+                <div className="rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-950 p-5 space-y-3.5 shadow-xl relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                        <Star className="h-4 w-4 fill-amber-400" />
+                      </span>
+                      <div>
+                        <h3 className="text-xs font-bold text-white tracking-tight">
+                          Daily Review Mission
+                        </h3>
+                        <span className="text-[10px] font-mono text-emerald-400">
+                          +15 Bonus Points Today
+                        </span>
+                      </div>
+                    </div>
+                    {hasCompletedDailyReviewToday ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-300">
+                        <CheckCircle2 className="h-3 w-3" />
+                        COMPLETED
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-300 animate-pulse">
+                        AVAILABLE
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Complete your first community review for any project today to earn a <strong className="text-amber-300">+15 Bonus Points</strong> reward in addition to standard review points (+40 Points total)!
+                  </p>
+
+                  <div className="pt-1 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (filteredProjects.length > 0) {
+                          setSelectedProject(filteredProjects[0]);
+                        } else {
+                          setActiveTab('reviews');
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 py-2 text-xs font-semibold text-white shadow-sm transition-all cursor-pointer"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>{hasCompletedDailyReviewToday ? 'Review Another Build' : 'Complete Daily Review (+15 Pts)'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Top Builders Sidebar */}
                 <TopBuildersSidebar
                   users={allRealUsers}
                   currentUser={currentUser}
@@ -1043,6 +1086,67 @@ export default function App() {
                 />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* 2. Dedicated Streak & Hub Tab */}
+        {activeTab === 'streak' && (
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+            {/* Streak & Daily Missions Hero Card */}
+            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-64 w-64 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="flex items-center gap-2 text-xs font-mono text-amber-400">
+                    <Flame className="h-4 w-4 fill-amber-400 text-amber-400 animate-pulse" />
+                    <span className="font-bold tracking-wider">DAILY STREAK & MAKER HUB</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak Active 🔥
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    Build daily habits. Check in everyday for +10 points, write a daily community review for a +15 bonus, and unlock verified proof-of-work badges.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsPointsGuideOpen(true)}
+                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm cursor-pointer"
+                  >
+                    <Star className="h-4 w-4 fill-amber-400" />
+                    <span>How Points Work</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('feed')}
+                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors cursor-pointer"
+                  >
+                    <Compass className="h-4 w-4" />
+                    <span>Back to Feed</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Real Contribution Heatmap & Engaging Streak Hub */}
+            <ActivityHeatmap
+              days={heatmapDays}
+              totalContributions={projects.length + reviews.length}
+              currentUser={currentUser}
+              projects={projects}
+              reviews={reviews}
+              onOpenNewBuild={() => {
+                if (!currentUser) {
+                  setAuthModalMode('signup');
+                  setIsGoogleModalOpen(true);
+                } else {
+                  setActiveTab('studio');
+                }
+              }}
+              onOpenProfile={(u) => setSelectedProfileUser(u)}
+            />
           </div>
         )}
 
@@ -1266,13 +1370,17 @@ export default function App() {
         />
       )}
 
-      {/* Creator Profile Modal with Follow / Unfollow */}
+      {/* Creator Profile Modal with Follow / Unfollow & Friend / Unfriend */}
       {selectedProfileUser && (
         <CreatorProfileModal
           profileUser={selectedProfileUser}
           currentUser={currentUser}
           projects={projects}
           reviews={reviews}
+          friendships={friendships}
+          onUnfriend={handleDeclineOrRemoveFriend}
+          onSendFriendRequest={handleSendFriendRequest}
+          onAcceptFriendRequest={handleAcceptFriendRequest}
           isFollowing={followingUserIds.has(selectedProfileUser.id)}
           followerCount={followingUserIds.has(selectedProfileUser.id) ? 1 : 0}
           followingCount={selectedProfileUser.id === currentUser?.id ? followingUserIds.size : 0}

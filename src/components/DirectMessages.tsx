@@ -32,6 +32,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Trash2,
+  UserMinus,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { storage } from '../mock/initialData';
@@ -229,6 +230,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
     }
   };
 
+  const handleUnfriend = (friendshipId: string, handleOrName: string) => {
+    if (onDeclineFriendRequest) {
+      onDeclineFriendRequest(friendshipId);
+      setFriendSuccessMsg(`Unfriended ${handleOrName}. You can add them back anytime.`);
+      setTimeout(() => setFriendSuccessMsg(null), 4000);
+    }
+  };
+
   const handleCreateChannelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChannelName.trim()) return;
@@ -262,7 +271,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 activeTab === 'dm' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Direct Chats
+              DMs
             </button>
             <button
               onClick={() => setActiveTab('group')}
@@ -270,7 +279,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 activeTab === 'group' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Groups ({chatRooms.length})
+              Groups
             </button>
             <button
               onClick={() => setActiveTab('friends')}
@@ -278,7 +287,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 activeTab === 'friends' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span>Friends ({myFriendships.accepted.length})</span>
+              <span>Friends</span>
               {myFriendships.incoming.length > 0 && (
                 <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-[10px] font-bold text-slate-950 animate-pulse">
                   {myFriendships.incoming.length}
@@ -735,12 +744,23 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               onSelectUser(otherUser.id);
                               setActiveTab('dm');
                             }}
-                            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm"
+                            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm cursor-pointer"
                             title="Direct Message"
                           >
                             <MessageSquare className="h-3 w-3" />
                             Message
                           </button>
+                          {onDeclineFriendRequest && (
+                            <button
+                              type="button"
+                              onClick={() => handleUnfriend(friendship.id, `@${otherUser.handle}`)}
+                              className="flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              title={`Unfriend @${otherUser.handle}`}
+                            >
+                              <UserMinus className="h-3 w-3" />
+                              <span className="hidden xl:inline">Unfriend</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -782,6 +802,20 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       <Circle className="h-2 w-2 fill-emerald-400" />
                       Live Chat
                     </span>
+                    {onDeclineFriendRequest && myFriendships.accepted.some((f) => f.otherUser.id === activePeer.id) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const f = myFriendships.accepted.find((fr) => fr.otherUser.id === activePeer.id);
+                          if (f) handleUnfriend(f.friendship.id, `@${activePeer.handle}`);
+                        }}
+                        className="flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-[11px] font-medium text-slate-400 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title={`Unfriend @${activePeer.handle}`}
+                      >
+                        <UserMinus className="h-3 w-3" />
+                        <span>Unfriend</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1041,14 +1075,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               {otherUser.displayName}
                             </span>
                             <span className="text-[10px] font-mono text-slate-400">
-                              @{otherUser.handle} • ⭐ {otherUser.reputationScore} Rep
+                              @{otherUser.handle} • ⭐ {otherUser.reputationScore} Points
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => onAcceptFriendRequest(friendship.id)}
-                            className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 shadow-sm"
+                            className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 shadow-sm cursor-pointer"
                           >
                             <Check className="h-3.5 w-3.5" />
                             Accept Request
@@ -1087,21 +1121,34 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               {otherUser.displayName}
                             </span>
                             <span className="text-[10px] font-mono text-slate-400 truncate block">
-                              @{otherUser.handle}
+                              @{otherUser.handle} • ⭐ {otherUser.reputationScore} Points
                             </span>
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => {
-                            onSelectUser(otherUser.id);
-                            setActiveTab('dm');
-                          }}
-                          className="shrink-0 flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 shadow-sm transition-all"
-                        >
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          <span>Chat</span>
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                          <button
+                            onClick={() => {
+                              onSelectUser(otherUser.id);
+                              setActiveTab('dm');
+                            }}
+                            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            <span>Chat</span>
+                          </button>
+                          {onDeclineFriendRequest && (
+                            <button
+                              type="button"
+                              onClick={() => handleUnfriend(friendship.id, `@${otherUser.handle}`)}
+                              className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900/80 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              title={`Unfriend @${otherUser.handle}`}
+                            >
+                              <UserMinus className="h-3.5 w-3.5" />
+                              <span>Unfriend</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

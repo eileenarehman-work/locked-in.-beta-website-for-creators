@@ -37,13 +37,27 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
       {/* Top Navigation */}
       <header className="relative z-20 mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <Logo size="lg" />
+          <button
+            type="button"
+            onClick={onEnterApp}
+            className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer text-left"
+            title="Return to Feed"
+          >
+            <Logo size="lg" />
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={onEnterApp}
+            className="rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all flex items-center gap-1.5"
+          >
+            <Compass className="h-3.5 w-3.5 text-indigo-400" />
+            <span>Feed</span>
+          </button>
           <button
             onClick={() => onOpenGoogleLogin('login')}
-            className="rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-all"
+            className="rounded-xl border border-slate-700 bg-slate-900/90 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-all"
           >
             Log In
           </button>

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { User, Project, Review, Badge } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { User, Project, Review, Badge, Friendship } from '../types';
 import {
   X,
   UserPlus,
+  UserMinus,
   UserCheck,
   MessageSquare,
   Sparkles,
@@ -23,6 +24,7 @@ import {
   Zap,
   Check,
   Share2,
+  Clock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { VerifiedBadge, VERIFIED_REPUTATION_THRESHOLD } from './VerifiedBadge';
@@ -41,7 +43,11 @@ interface CreatorProfileModalProps {
   isFollowing: boolean;
   followerCount: number;
   followingCount: number;
+  friendships?: Record<string, Friendship>;
   onToggleFollow: (userId: string) => void;
+  onSendFriendRequest?: (handleOrId: string) => void;
+  onUnfriend?: (friendshipId: string) => void;
+  onAcceptFriendRequest?: (friendshipId: string) => void;
   onOpenMessage: (user: User) => void;
   onOpenProject: (project: Project) => void;
   onEditOwnProfile: () => void;
@@ -56,7 +62,11 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
   isFollowing,
   followerCount,
   followingCount,
+  friendships,
   onToggleFollow,
+  onSendFriendRequest,
+  onUnfriend,
+  onAcceptFriendRequest,
   onOpenMessage,
   onOpenProject,
   onEditOwnProfile,
@@ -64,6 +74,19 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'builds' | 'badges' | 'reviews'>('builds');
   const [isHoveringFollow, setIsHoveringFollow] = useState(false);
+  const [friendActionMsg, setFriendActionMsg] = useState<string | null>(null);
+
+  // Friendship relation
+  const userFriendship = useMemo(() => {
+    if (!currentUser || !friendships || currentUser.id === profileUser.id) return null;
+    return (
+      Object.values(friendships).find(
+        (f) =>
+          (f.userId === currentUser.id && f.friendId === profileUser.id) ||
+          (f.friendId === currentUser.id && f.userId === profileUser.id)
+      ) || null
+    );
+  }, [currentUser, profileUser.id, friendships]);
 
   // Easy exit with Escape key
   useEffect(() => {
@@ -169,6 +192,66 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                     <MessageSquare className="h-4 w-4 text-amber-400" />
                     <span>Message</span>
                   </button>
+
+                  {/* Friend / Unfriend Button */}
+                  {currentUser && (
+                    <>
+                      {userFriendship?.status === 'ACCEPTED' ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onUnfriend && userFriendship) {
+                              onUnfriend(userFriendship.id);
+                              setFriendActionMsg(`Unfriended @${profileUser.handle}`);
+                              setTimeout(() => setFriendActionMsg(null), 3000);
+                            }
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-950/20 text-rose-300 hover:bg-rose-900/30 px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer group"
+                          title={`Unfriend @${profileUser.handle}`}
+                        >
+                          <UserMinus className="h-4 w-4 text-rose-400 group-hover:scale-110 transition-transform" />
+                          <span>Unfriend</span>
+                        </button>
+                      ) : userFriendship?.status === 'PENDING' ? (
+                        userFriendship.userId === currentUser.id ? (
+                          <span className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-xs font-medium text-slate-400">
+                            <Clock className="h-3.5 w-3.5 text-amber-400" />
+                            <span>Request Sent</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (onAcceptFriendRequest && userFriendship) {
+                                onAcceptFriendRequest(userFriendship.id);
+                                setFriendActionMsg(`Accepted friend request!`);
+                                setTimeout(() => setFriendActionMsg(null), 3000);
+                              }
+                            }}
+                            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors shadow-sm"
+                          >
+                            <Check className="h-4 w-4" />
+                            <span>Accept Friend</span>
+                          </button>
+                        )
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onSendFriendRequest) {
+                              onSendFriendRequest(profileUser.handle);
+                              setFriendActionMsg(`Friend request sent to @${profileUser.handle}!`);
+                              setTimeout(() => setFriendActionMsg(null), 3000);
+                            }
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
+                        >
+                          <UserPlus className="h-4 w-4 text-indigo-400" />
+                          <span>Add Friend</span>
+                        </button>
+                      )}
+                    </>
+                  )}
 
                   <button
                     onClick={() => onToggleFollow(profileUser.id)}
@@ -282,11 +365,11 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                     </span>
                     <div>
                       <span className="font-semibold text-white">Next Milestone: {nextMilestone.badge.name}</span>
-                      <span className="text-[10px] font-mono text-slate-400 ml-1.5">({nextMilestone.badge.minReputationScore} Rep required)</span>
+                      <span className="text-[10px] font-mono text-slate-400 ml-1.5">({nextMilestone.badge.minReputationScore} Points required)</span>
                     </div>
                   </div>
                   <span className="font-mono text-indigo-300 font-semibold tabular-nums text-[11px]">
-                    {profileUser.reputationScore} / {nextMilestone.badge.minReputationScore} Rep
+                    {profileUser.reputationScore} / {nextMilestone.badge.minReputationScore} Points
                   </span>
                 </div>
                 {/* Progress bar */}
@@ -299,9 +382,9 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                   />
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-slate-400">
-                  <span>Earn +25 Rep per peer review & +30 Rep per published build</span>
+                  <span>Earn +25 Points per peer review (+15 daily review bonus) & +30 Points per build</span>
                   <span className="text-emerald-400 font-medium font-mono">
-                    {nextMilestone.remaining} Rep to unlock
+                    {nextMilestone.remaining} Points to unlock
                   </span>
                 </div>
               </div>
@@ -315,7 +398,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                     Master Tier Reached
                   </span>
                   <p className="text-[11px] text-slate-300 leading-snug mt-0.5">
-                    All badges unlocked... congrats! ({profileUser.reputationScore} reputation points). A legendary leader of the platform.
+                    All badges unlocked... congrats! ({profileUser.reputationScore} points). A legendary leader of the platform.
                   </p>
                 </div>
               </div>
@@ -347,7 +430,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                 <Star className="h-3.5 w-3.5 fill-amber-400/40 text-amber-400" />
                 {profileUser.reputationScore}
               </span>
-              <span className="text-[11px] font-mono text-slate-400">Rep</span>
+              <span className="text-[11px] font-mono text-slate-400">Points</span>
             </div>
           </div>
 
@@ -362,7 +445,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
               }`}
             >
               <Layers className="h-3.5 w-3.5" />
-              <span>Builds ({userProjects.length})</span>
+              <span>Builds</span>
             </button>
             <button
               onClick={() => setActiveTab('badges')}
@@ -373,7 +456,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
               }`}
             >
               <Trophy className="h-3.5 w-3.5 text-amber-400" />
-              <span>Badges ({unlockedBadges.length}/{milestoneBadges.length})</span>
+              <span>Badges</span>
             </button>
             <button
               onClick={() => setActiveTab('reviews')}
@@ -384,7 +467,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
               }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Reviews Written ({userReviews.length})</span>
+              <span>Reviews</span>
             </button>
           </div>
 
@@ -491,7 +574,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                     <span>Badges unlock as you submit verified builds and constructive peer reviews.</span>
                   </div>
                   <span className="font-mono text-emerald-400 font-semibold text-[11px]">
-                    {profileUser.reputationScore} Total Rep
+                    {profileUser.reputationScore} Total Points
                   </span>
                 </div>
 
@@ -543,7 +626,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded-md bg-slate-800 px-2 py-0.5 text-[9px] font-mono text-slate-400 border border-slate-700">
                                 <Lock className="h-2.5 w-2.5 text-slate-500" />
-                                {badge.minReputationScore} REP
+                                {badge.minReputationScore} PTS
                               </span>
                             )}
                           </div>
@@ -570,7 +653,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                               />
                             </div>
                             <span className="text-[9px] font-mono text-indigo-300 block text-right">
-                              {badge.remainingRep} Rep remaining
+                              {badge.remainingRep} Points remaining
                             </span>
                           </div>
                         )}

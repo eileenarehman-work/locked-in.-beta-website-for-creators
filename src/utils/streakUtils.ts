@@ -21,6 +21,26 @@ export interface StreakInfo {
     title: string;
     description: string;
   };
+  todayBonus: number;
+  nextDayBonus: number;
+}
+
+/**
+ * Calculates the engagement streak login bonus.
+ * Streak points double or increase by 2 each time the user logs in consecutively.
+ * Day 1 = 2 pts
+ * Day 2 = 4 pts (doubled!)
+ * Day 3 = 8 pts (doubled!)
+ * Day 4 = 16 pts (doubled!)
+ * Day 5 = 32 pts (doubled!)
+ * Day 6+ = +2 pts per consecutive day (34, 36, 38...)
+ */
+export function calculateStreakLoginBonus(currentStreak: number): number {
+  const streak = Math.max(1, currentStreak);
+  if (streak <= 5) {
+    return Math.pow(2, streak);
+  }
+  return 32 + (streak - 5) * 2;
 }
 
 export function calculateRealStreak(
@@ -64,6 +84,8 @@ export function calculateRealStreak(
         title: '3-Day Maker Spark',
         description: 'Log in everyday or drop a build to start your daily streak!',
       },
+      todayBonus: 2,
+      nextDayBonus: 4,
     };
   }
 
@@ -194,6 +216,9 @@ export function calculateRealStreak(
     });
   }
 
+  const todayBonus = calculateStreakLoginBonus(currentStreak);
+  const nextDayBonus = calculateStreakLoginBonus(currentStreak + 1);
+
   return {
     currentStreak,
     longestStreak: Math.max(currentStreak, sortedDates.length > 0 ? currentStreak : 1),
@@ -202,5 +227,7 @@ export function calculateRealStreak(
     isActiveToday,
     pastWeek,
     nextMilestone,
+    todayBonus,
+    nextDayBonus,
   };
 }
