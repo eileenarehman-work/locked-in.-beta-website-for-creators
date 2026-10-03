@@ -1105,7 +1105,7 @@ export default function App() {
                     Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak Active 🔥
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    Build daily habits. Check in everyday for +10 points, write a daily community review for a +15 bonus, and unlock verified proof-of-work badges.
+                    Build daily habits. Check in everyday to grow your daily streak points, write community reviews, and unlock badges from 'just a baby' to 'locked in'.
                   </p>
                 </div>
 
@@ -1183,13 +1183,13 @@ export default function App() {
                   Peer Reviews
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  100% human feedback from real creators. No AI accounts or fake ratings.
+                  Constructive feedback and rubric evaluations from fellow creators.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-800/60 bg-emerald-950/20 px-3 py-1.5 text-xs font-mono text-emerald-400">
-                <ShieldCheck className="h-4 w-4" />
-                <span>Zero AI Reviews Policy</span>
+              <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-mono text-slate-300">
+                <Sparkles className="h-4 w-4 text-indigo-400" />
+                <span>Rubric Evaluations</span>
               </div>
             </div>
 

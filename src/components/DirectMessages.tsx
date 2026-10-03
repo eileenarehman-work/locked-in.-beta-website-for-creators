@@ -792,7 +792,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                         <span className="font-mono text-xs text-slate-400">(@{activePeer.handle})</span>
                       </h4>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        {activePeer.bio || 'Verified teen creator'}
+                        {activePeer.bio || 'Teen maker & builder'}
                       </span>
                     </div>
                   </div>
@@ -1017,7 +1017,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-xs font-mono text-emerald-400 flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Verified Accounts
+                    Real Creators
                   </span>
                 </div>
               </div>

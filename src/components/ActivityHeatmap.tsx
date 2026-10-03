@@ -546,7 +546,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           <div className="flex items-center justify-between text-xs font-mono text-slate-400">
             <span>84-Day Activity Telemetry</span>
             <span className="text-emerald-400">
-              {totalContributions} total verified builds & rubric reviews
+              {totalContributions} total builds & reviews
             </span>
           </div>
 
@@ -555,7 +555,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
               {days.map((day, idx) => (
                 <div
                   key={idx}
-                  title={`${day.date}: ${day.count} verified builds / reviews`}
+                  title={`${day.date}: ${day.count} builds / reviews`}
                   className={`h-3.5 w-3.5 rounded-sm transition-all hover:scale-125 cursor-pointer ${getLevelColor(
                     day.level
                   )}`}

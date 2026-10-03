@@ -120,7 +120,7 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
 
             <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1 font-semibold">
               <Sparkles className="h-2.5 w-2.5 text-amber-300" />
-              <span>{project.qualities?.[0] || 'Verified Proof-of-Work'}</span>
+              <span>{project.qualities?.[0] || 'Working Prototype'}</span>
             </span>
           </div>
 

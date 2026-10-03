@@ -91,7 +91,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
                   LEADERBOARD
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-400">Ranked by peer reputation & verified builds</p>
+              <p className="text-[11px] text-slate-400">Ranked by community reputation & builds</p>
             </div>
           </div>
 
@@ -116,7 +116,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
               <Sparkles className="h-5 w-5 text-indigo-400 mx-auto" />
               <p className="text-xs font-semibold text-slate-200">Leaderboard is Open</p>
               <p className="text-[11px] text-slate-400 leading-snug">
-                Publish a verified build or write a rubric review to take the #1 spot!
+                Publish a build or write a rubric review to take the #1 spot!
               </p>
               {!currentUser && onOpenLogin && (
                 <button
@@ -247,8 +247,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
         {/* View all builders / info footer */}
         {sortedBuilders.length > 0 && (
           <div className="mt-3.5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-            <span className="flex items-center gap-1 text-slate-400">
-            </span>
+            <span>Community Leaderboard</span>
             <span className="font-mono text-indigo-400">
               {sortedBuilders.length} {sortedBuilders.length === 1 ? 'builder' : 'builders'} total
             </span>

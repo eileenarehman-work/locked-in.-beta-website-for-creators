@@ -409,7 +409,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   <Calendar className="h-3.5 w-3.5 text-indigo-400" />
                   Age Verification (13+ Required) <span className="text-rose-400">*</span>
                 </label>
-                <span className="text-[10px] font-mono text-emerald-400">Teen Safety Verified</span>
+                <span className="text-[10px] font-mono text-indigo-400">Teen Community</span>
               </div>
               <input
                 type="number"
@@ -588,7 +588,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all disabled:opacity-40"
               >
                 <Check className="h-4 w-4" />
-                <span>Create Verified Account</span>
+                <span>Create Account</span>
               </button>
             </div>
           </form>

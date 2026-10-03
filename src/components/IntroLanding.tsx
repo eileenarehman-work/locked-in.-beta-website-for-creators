@@ -37,33 +37,19 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
       {/* Top Navigation */}
       <header className="relative z-20 mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onEnterApp}
-            className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer text-left"
-            title="Return to Feed"
-          >
-            <Logo size="lg" />
-          </button>
+          <Logo size="lg" />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
           <button
-            onClick={onEnterApp}
-            className="rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all flex items-center gap-1.5"
-          >
-            <Compass className="h-3.5 w-3.5 text-indigo-400" />
-            <span>Feed</span>
-          </button>
-          <button
             onClick={() => onOpenGoogleLogin('login')}
-            className="rounded-xl border border-slate-700 bg-slate-900/90 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-all"
+            className="rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
           >
             Log In
           </button>
           <button
             onClick={() => onOpenGoogleLogin('signup')}
-            className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all"
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all cursor-pointer"
           >
             Sign Up
           </button>
@@ -143,40 +129,48 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
             <div className="absolute inset-0 -z-10 rounded-2xl bg-indigo-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
           </motion.button>
 
-          {/* Quick Enter Sandbox */}
+          {/* Log In to Explore CTA */}
           <button
-            onClick={onEnterApp}
-            className="flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 px-6 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-md hover:bg-slate-800 hover:text-white transition-all"
+            onClick={() => onOpenGoogleLogin('login')}
+            className="flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 px-6 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-md hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
           >
-            <span>Explore Live Builds & Chat</span>
+            <span>Log In to Explore Community</span>
             <ArrowRight className="h-4 w-4 text-indigo-400" />
           </button>
         </motion.div>
 
-        {/* Value Proposition Pills */}
-        <div className="pt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/50 p-4">
-            <ShieldCheck className="h-5 w-5 text-emerald-400 mb-2" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Zero Synthetic Bots</h4>
-            <p className="text-[11px] text-slate-400 mt-1">100% human creators. Even if starting with 1 user, zero fake filler profiles.</p>
+        {/* Engaging Advertising Value Points */}
+        <div className="pt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
+          <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-b from-indigo-950/30 to-slate-900/40 p-4 space-y-1.5 shadow-sm hover:border-indigo-500/40 transition-colors">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-2">
+              <Code2 className="h-5 w-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white tracking-tight">Showcase Your Passion</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">Put your hardware, 3D prints, games, and code in front of makers who truly understand the craft.</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/50 p-4">
-            <Users className="h-5 w-5 text-indigo-400 mb-2" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Real Social Hub</h4>
-            <p className="text-[11px] text-slate-400 mt-1">DMs, friend requests, group chat channels, and drag-and-drop S3 media uploads.</p>
+          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-950/30 to-slate-900/40 p-4 space-y-1.5 shadow-sm hover:border-amber-500/40 transition-colors">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 mb-2">
+              <Flame className="h-5 w-5 fill-amber-400/30" />
+            </div>
+            <h4 className="text-sm font-bold text-white tracking-tight">Lock In & Level Up</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">Double your streak points each day, unlock lovable badges from 'just a baby' to 'locked in', and climb the ranks.</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/50 p-4">
-            <CheckCircle2 className="h-5 w-5 text-cyan-400 mb-2" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">4-Part Rubrics</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Clarity, Execution, Technicality, and Documentation peer reviews.</p>
+          <div className="rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-950/30 to-slate-900/40 p-4 space-y-1.5 shadow-sm hover:border-sky-500/40 transition-colors">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 mb-2">
+              <MessageSquare className="h-5 w-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white tracking-tight">Build Squads & Chat</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">Direct message creators, share progress photos, hang out in channels, and collaborate on big ideas.</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800/80 bg-slate-900/50 p-4">
-            <Sparkles className="h-5 w-5 text-amber-400 mb-2" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Gemini Copilots</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Strictly internal AI assistants for README drafting and review quality pre-screening.</p>
+          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-950/30 to-slate-900/40 p-4 space-y-1.5 shadow-sm hover:border-emerald-500/40 transition-colors">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 mb-2">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white tracking-tight">Real Peer Feedback</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">Receive thoughtful, high-signal peer reviews on your builds so you can sharpen your skills and ship better.</p>
           </div>
         </div>
       </section>
@@ -192,10 +186,10 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
               </h2>
             </div>
             <button
-              onClick={onEnterApp}
-              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+              onClick={() => onOpenGoogleLogin('login')}
+              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
             >
-              <span>Explore all builds</span>
+              <span>Log in to view all builds</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -205,7 +199,7 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
               {featuredProjects.slice(0, 3).map((project) => (
                 <div
                   key={project.id}
-                  onClick={onEnterApp}
+                  onClick={() => onOpenGoogleLogin('login')}
                   className="group cursor-pointer rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:shadow-xl hover:shadow-indigo-500/5"
                 >
                   <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-950 mb-3 border border-slate-800 relative">
@@ -219,10 +213,10 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
                     ) : (
                       <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-950/50 text-xs text-slate-300 font-medium p-4 text-center">
                         <Sparkles className="h-5 w-5 text-indigo-400 mb-1" />
-                        <span>{project.qualities?.[0] || 'Verified Proof-of-Work'}</span>
+                        <span>{project.qualities?.[0] || 'Working Prototype'}</span>
                       </div>
                     )}
-                    {/* Actual Qualities Overlay Tag */}
+                    {/* Qualities Overlay Tag */}
                     <div className="absolute top-2 left-2 z-10">
                       <span className="inline-flex items-center gap-1 rounded-md bg-slate-950/85 backdrop-blur-md px-2 py-0.5 text-[9px] font-semibold text-emerald-300 border border-emerald-500/40 shadow-sm">
                         <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />
@@ -246,9 +240,8 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
                         <span className="text-sky-400 font-bold">✓</span>
                       )}
                     </span>
-                    <span className="text-emerald-400 font-mono flex items-center gap-1">
-                      <ShieldCheck className="h-3 w-3" />
-                      Verified Human
+                    <span className="text-slate-400 font-mono text-[11px]">
+                      {project.viewsCount || 0} views
                     </span>
                   </div>
                 </div>

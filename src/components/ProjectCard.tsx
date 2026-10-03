@@ -103,7 +103,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-950 p-4 text-center">
               <Sparkles className="h-6 w-6 text-indigo-400 mb-1.5 opacity-80" />
               <span className="text-xs font-semibold text-indigo-200">
-                {project.qualities?.[0] || 'Verified Proof-of-Work'}
+                {project.qualities?.[0] || 'Working Prototype'}
               </span>
               <span className="text-[10px] font-mono text-slate-400 mt-0.5">
                 {project.tags[0] || '#makers'}

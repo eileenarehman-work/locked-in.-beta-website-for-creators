@@ -162,7 +162,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-950 text-center p-6">
                 <Sparkles className="h-8 w-8 text-indigo-400 mb-2" />
-                <span className="text-sm font-bold text-white">{project.qualities?.[0] || 'Verified Proof-of-Work'}</span>
+                <span className="text-sm font-bold text-white">{project.qualities?.[0] || 'Working Prototype'}</span>
               </div>
             )}
 
@@ -326,9 +326,6 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                     <Sparkles className="h-4 w-4 text-amber-400" />
                     Actual Build Qualities & Maker Highlights
                   </span>
-                  <span className="text-[10px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
-                    100% Peer Verified
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -388,7 +385,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             </div>
           )}
 
-          {/* Tab 3: 100% Human Peer Reviews */}
+          {/* Tab 3: Reviews */}
           {activeTab === 'reviews' && (
             <div className="space-y-8">
               {/* Existing Reviews List */}
@@ -396,16 +393,16 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                    Verified Human Reviews ({reviews.length})
+                    Reviews ({reviews.length})
                   </h3>
                   <span className="text-xs font-mono text-slate-400">
-                    Zero Synthetic / AI Reviews Policy
+                    Constructive Peer Rubrics
                   </span>
                 </div>
 
                 {reviews.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-800 p-8 text-center text-slate-400 text-sm">
-                    No peer reviews yet. Be the first verified human builder to evaluate this proof-of-work.
+                    No peer reviews yet. Be the first to evaluate this project build!
                   </div>
                 ) : (
                   reviews.map((rev) => (
@@ -491,7 +488,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   <ShieldCheck className="h-8 w-8 text-indigo-400 mx-auto" />
                   <h4 className="text-sm font-semibold text-white">Sign In to Leave a Peer Review</h4>
                   <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                    Reviews are submitted by real, verified human creators. Sign in with Google to evaluate this build with 4-part rubrics.
+                    Sign in with Google to evaluate this build with our 4-part rubrics.
                   </p>
                   {onOpenGoogleLogin && (
                     <button
@@ -509,7 +506,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-indigo-400" />
                       <h4 className="text-sm font-semibold text-white">
-                        Submit Verified Peer Review (Gemini Pre-Screened)
+                        Submit Peer Review
                       </h4>
                     </div>
                     <span className="text-xs font-mono text-indigo-300">
@@ -665,8 +662,8 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                     disabled={!evalResult || !evalResult.isApproved}
                     className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors disabled:opacity-40 shadow-sm shadow-emerald-600/30"
                   >
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    <span>Publish Verified Review</span>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Publish Review</span>
                   </button>
                 </div>
               </div>

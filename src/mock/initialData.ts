@@ -24,14 +24,15 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'wedidthis_notifications',
   LOGIN_DATES: 'lockedin_login_dates',
   DAILY_REVIEW_DATES: 'lockedin_daily_review_dates',
-  CLEARED_ACCOUNTS_FLAG: 'wedidthis_strict_zero_fabricated_rule_v4',
+  CLEARED_ACCOUNTS_FLAG: 'lockedin_strict_zero_fabricated_reviews_v5',
 };
 
-// Immediate purge of any legacy fake seed accounts, fabricated notifications, and dummy builds
+// Immediate purge of any legacy fake seed accounts, fabricated reviews, fabricated notifications, and dummy builds
 if (typeof window !== 'undefined') {
   try {
     if (!localStorage.getItem(STORAGE_KEYS.CLEARED_ACCOUNTS_FLAG)) {
-      // Purge all fabricated notifications: zero notifications by default
+      // Purge all fabricated reviews & notifications: zero fabricated reviews by default
+      localStorage.removeItem(STORAGE_KEYS.REVIEWS);
       localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
 
       // Clean existing projects to remove any fake seed builds
@@ -245,7 +246,26 @@ export const storage = {
   getReviews: (): Review[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-      return data ? JSON.parse(data) : [];
+      if (!data) return [];
+      const parsed: Review[] = JSON.parse(data);
+      const allUsers = storage.getAllUsers();
+      const userIds = new Set(allUsers.map((u) => u.id));
+      const projects = storage.getProjects();
+      const projectIds = new Set(projects.map((p) => p.id));
+
+      // Strictly purge any fabricated reviews: reviewer and target project MUST exist in real database
+      const valid = parsed.filter(
+        (r) =>
+          r &&
+          r.id &&
+          !r.id.startsWith('fake_') &&
+          userIds.has(r.reviewerId) &&
+          projectIds.has(r.projectId)
+      );
+      if (valid.length !== parsed.length) {
+        localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(valid));
+      }
+      return valid;
     } catch {
       return [];
     }

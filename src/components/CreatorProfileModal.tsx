@@ -309,7 +309,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                 <span className="text-xs font-mono text-indigo-400">@{profileUser.handle}</span>
                 {profileUser.reputationScore >= VERIFIED_REPUTATION_THRESHOLD && (
                   <span className="text-[10px] text-sky-400 font-mono flex items-center gap-1 font-medium">
-                    • Verified Peer Reviewer
+                    • Peer Reviewer
                   </span>
                 )}
               </div>
@@ -523,8 +523,8 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                           {/* Quick Rubric / Proof indicator (top-right) */}
                           <div className="absolute top-2 right-2 z-10">
                             <span className="inline-flex items-center gap-1 rounded-md bg-indigo-950/85 backdrop-blur-md px-1.5 py-0.5 text-[9px] font-mono font-medium text-indigo-300 border border-indigo-500/30">
-                              <ShieldCheck className="h-3 w-3 text-sky-400" />
-                              <span>Verified Build</span>
+                              <Sparkles className="h-3 w-3 text-sky-400" />
+                              <span>Build</span>
                             </span>
                           </div>
                         </div>
@@ -571,7 +571,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                 <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-300 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-amber-400" />
-                    <span>Badges unlock as you submit verified builds and constructive peer reviews.</span>
+                    <span>Badges unlock as you publish builds and write constructive peer reviews.</span>
                   </div>
                   <span className="font-mono text-emerald-400 font-semibold text-[11px]">
                     {profileUser.reputationScore} Total Points

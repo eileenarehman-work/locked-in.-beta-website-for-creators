@@ -294,7 +294,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
               <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5 flex items-start gap-3">
                 <Sparkles className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                 <div className="text-[11px] text-slate-300 leading-relaxed">
-                  <strong className="text-white">Quick Example:</strong> Log in today (+10 pts) + complete your first daily community review (+35 pts) = <strong className="text-amber-400">45 points in 1 day!</strong> You are just 5 points away from the <strong className="text-emerald-400">Verified Human Badge</strong>!
+                  <strong className="text-white">Quick Example:</strong> Log in today (+2 pts) + complete your first daily community review (+15 pts) = <strong className="text-amber-400">17 points in 1 day!</strong> You are on your way towards the <strong className="text-emerald-400">Friendly Star Badge</strong>!
                 </div>
               </div>
             </div>
@@ -310,7 +310,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                   </div>
                   <span className="text-xs font-bold text-white block">Friendly Star</span>
                   <span className="text-[11px] font-mono font-bold text-emerald-300 block">50 Points</span>
-                  <p className="text-[10px] text-slate-400">Official verified creator seal next to your handle on all builds & chat.</p>
+                  <p className="text-[10px] text-slate-400">Creator star seal next to your handle on all builds & chat.</p>
                 </div>
 
                 <div className="rounded-2xl border border-sky-500/30 bg-sky-950/20 p-3.5 text-center space-y-1.5">
