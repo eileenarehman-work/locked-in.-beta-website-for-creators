@@ -29,24 +29,6 @@ const STORAGE_KEYS = {
   CLEARED_ACCOUNTS_FLAG: 'lockedin_strict_zero_fabricated_reviews_v6',
 };
 
-// Permanent canonical account for Eileen to guarantee @eileen_locks_in can always log in
-export const EILEEN_DEFAULT_ACCOUNT: User = {
-  id: 'user_eileen_locks_in',
-  email: 'eileen.a.rehman@gmail.com',
-  password: '117190er',
-  googleId: 'google_eileen_locks_in',
-  age: 17,
-  handle: 'eileen_locks_in',
-  displayName: 'Eileen',
-  avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=Circuit',
-  bio: 'Teen builder & creator. Building 3D prints, game modding & robotics.',
-  reputationScore: 120,
-  trustTier: 'VERIFIED_HUMAN',
-  interestTags: ['#robotics', '#3dprinting', '#coding'],
-  badges: [],
-  createdAt: '2024-01-15T00:00:00.000Z',
-};
-
 // Immediate purge of any legacy fake seed accounts, fabricated reviews, fabricated notifications, and dummy builds
 if (typeof window !== 'undefined') {
   try {

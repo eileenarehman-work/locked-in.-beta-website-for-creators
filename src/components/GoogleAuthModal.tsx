@@ -148,12 +148,12 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       return;
     }
 
-    // Validate password (internally for @eileen_locks_in: '117190er')
-    const isPasswordValid = storage.validateUserPassword(user, loginPassword);
-    if (!isPasswordValid) {
-      setAuthError('Incorrect password. Please try again.');
-      return;
-    }
+    // Validate password against user record
+const isPasswordValid = storage.validateUserPassword(user, loginPassword);
+if (!isPasswordValid) {
+  setAuthError('Incorrect password. Please try again.');
+  return;
+}
 
     storage.registerUser(user);
     onSuccess(user);
