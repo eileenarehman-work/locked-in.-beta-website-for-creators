@@ -50,7 +50,6 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   onOpenNewBuild,
   onOpenProfile,
 }) => {
-  const [activeTab, setActiveTab] = useState<'streak' | 'heatmap'>('streak');
   const [selectedBadge, setSelectedBadge] = useState<EvaluatedBadge | null>(null);
   const [isPointsGuideOpen, setIsPointsGuideOpen] = useState(false);
 
@@ -118,7 +117,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       <div className="absolute top-0 right-1/4 h-36 w-64 bg-amber-500/5 blur-3xl pointer-events-none rounded-full" />
       <div className="absolute bottom-0 left-1/4 h-36 w-64 bg-indigo-500/5 blur-3xl pointer-events-none rounded-full" />
 
-      {/* Header with Mode Switching Tabs */}
+      {/* Header - Streak & Gamified Points Hub */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4 mb-5 relative z-10">
         <div>
           <div className="flex items-center gap-2">
@@ -128,44 +127,24 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             </h3>
             <span className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-mono font-medium text-emerald-400 flex items-center gap-1">
               <ShieldCheck className="h-3 w-3" />
+              <span>Streak Hub</span>
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
+            Build consecutive daily habits, double login rewards, and unlock milestone badges.
           </p>
         </div>
 
-        {/* Tab Switcher - Short, punchy tab names */}
-        <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-950 p-1 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setActiveTab('streak')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === 'streak'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Flame className="h-3.5 w-3.5 text-amber-400" />
-            <span>Streak</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('heatmap')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === 'heatmap'
-                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <GitCommit className="h-3.5 w-3.5 text-indigo-400" />
-            <span>Activity</span>
-          </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-1.5 text-xs font-mono font-bold text-amber-300 shadow-sm">
+            <Flame className="h-4 w-4 fill-amber-400 text-amber-400 animate-pulse" />
+            <span>{streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Day Streak</span>
+          </div>
         </div>
       </div>
 
-      {/* Tab 1: Engaging Gamified Streak & Badges Hub */}
-      {activeTab === 'streak' && (
-        <div className="space-y-6 relative z-10">
+      {/* Gamified Streak & Badges Hub */}
+      <div className="space-y-6 relative z-10">
           {/* Main Streak Banner + 7-Day Rolling Flame Tracker */}
           <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/30 via-slate-900 to-slate-950 p-4 sm:p-5 relative overflow-hidden shadow-xl shadow-amber-950/20">
             {/* Top row: Flame hero & Streak Count */}
@@ -538,45 +517,6 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Tab 2: Accurate 84-Day Telemetry Grid */}
-      {activeTab === 'heatmap' && (
-        <div className="space-y-4 relative z-10">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>84-Day Activity Telemetry</span>
-            <span className="text-emerald-400">
-              {totalContributions} total builds & reviews
-            </span>
-          </div>
-
-          <div className="overflow-x-auto pb-2">
-            <div className="inline-grid grid-rows-7 grid-flow-col gap-1.5">
-              {days.map((day, idx) => (
-                <div
-                  key={idx}
-                  title={`${day.date}: ${day.count} builds / reviews`}
-                  className={`h-3.5 w-3.5 rounded-sm transition-all hover:scale-125 cursor-pointer ${getLevelColor(
-                    day.level
-                  )}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-slate-800/80">
-            <div className="flex items-center gap-1.5">
-              <span>Less</span>
-              <span className="h-2.5 w-2.5 rounded-sm bg-slate-900 border border-slate-800" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-900/60 border border-emerald-800" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-700/80 border border-emerald-600" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500 border border-emerald-400" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-400 border border-emerald-300" />
-              <span>More</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Badge Inspect Modal */}
       {selectedBadge && (

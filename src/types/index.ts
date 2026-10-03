@@ -14,6 +14,7 @@ export interface Badge {
 export interface User {
   id: string;
   email: string;
+  password?: string;
   googleId: string;
   age: number;
   handle: string;

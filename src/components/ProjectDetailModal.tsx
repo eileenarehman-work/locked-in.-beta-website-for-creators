@@ -249,16 +249,16 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
               {project.demoUrl && (
                 <a
                   href={project.demoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors shadow-sm"
                 >
                   <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
-                  Live System
+                  <span>Live System</span>
                 </a>
               )}
               {project.repoUrl && (
@@ -266,54 +266,76 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   href={project.repoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors shadow-sm"
                 >
                   <Github className="h-3.5 w-3.5 text-slate-300" />
-                  Source Code
+                  <span>Source Code</span>
                 </a>
               )}
               <button
                 onClick={() => onOpenMessageWithAuthor(project.author)}
-                className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm shadow-indigo-600/30"
+                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm shadow-indigo-600/30 cursor-pointer"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
-                Collaborate / DM
+                <span>Collaborate / DM</span>
               </button>
             </div>
           </div>
 
-          {/* Section Navigation Tabs */}
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                activeTab === 'overview'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Specs
-            </button>
-            <button
-              onClick={() => setActiveTab('milestones')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                activeTab === 'milestones'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Milestones
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                activeTab === 'reviews'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Reviews
-            </button>
+          {/* Section Navigation Tabs - Generously spaced segmented bar */}
+          <div className="my-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+            <div className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-950/80 p-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  activeTab === 'overview'
+                    ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                }`}
+              >
+                <span>Specs</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('milestones')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  activeTab === 'milestones'
+                    ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                }`}
+              >
+                <span>Milestones</span>
+                {project.milestones && project.milestones.length > 0 && (
+                  <span className="rounded-full bg-slate-700/80 px-1.5 py-0.2 text-[10px] font-mono text-slate-300">
+                    {project.milestones.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('reviews')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  activeTab === 'reviews'
+                    ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                }`}
+              >
+                <span>Reviews</span>
+                {reviews.length > 0 && (
+                  <span className="rounded-full bg-indigo-500/20 border border-indigo-500/30 px-1.5 py-0.2 text-[10px] font-mono text-indigo-300">
+                    {reviews.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-400">
+              <span className="flex items-center gap-1 text-slate-400">
+                <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                <span>+25 pts / review</span>
+              </span>
+            </div>
           </div>
 
           {/* Tab 1: Overview */}

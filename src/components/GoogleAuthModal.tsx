@@ -15,6 +15,8 @@ import {
   Calendar,
   CheckCircle,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -55,11 +57,15 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(initialMode);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Login state: Just email needed (empty by default, placeholder xxx@gmail.com)
+  // Login state: Email & Password
   const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  // Sign up state: Full onboarding with age, handle, avatar, bio & tags
+  // Sign up state: Full onboarding with password, age, handle, avatar, bio & tags
   const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
   const [age, setAge] = useState<number>(16);
@@ -109,41 +115,61 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     }, 600);
   };
 
-  // 1. SIMPLE LOGIN: Strictly 1 account per email
+  // 1. SIMPLE LOGIN: Strictly 1 account per email or @handle with password check
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    const cleanLoginEmail = loginEmail.trim().toLowerCase();
-    if (!cleanLoginEmail) return;
+    const cleanInput = loginEmail.trim().toLowerCase();
+    if (!cleanInput) return;
 
-    // Check if an account exists for this email
-    const registeredUser = storage.getUserByEmail(cleanLoginEmail);
-    if (registeredUser) {
-      storage.registerUser(registeredUser);
-      onSuccess(registeredUser);
+    if (!loginPassword) {
+      setAuthError('Please enter your password.');
       return;
     }
 
-    // Check currently active user in storage if matching
-    const currentActiveUser = storage.getUser();
-    if (currentActiveUser && currentActiveUser.email.toLowerCase() === cleanLoginEmail) {
-      storage.registerUser(currentActiveUser);
-      onSuccess(currentActiveUser);
+    // Check by handle or email using findUserByHandleOrEmail (internally resolves @eileen_locks_in)
+    let user = storage.findUserByHandleOrEmail(cleanInput);
+
+    if (!user) {
+      const currentActiveUser = storage.getUser();
+      if (
+        currentActiveUser &&
+        (currentActiveUser.email.toLowerCase() === cleanInput ||
+          currentActiveUser.handle.replace(/^@/, '').toLowerCase() === cleanInput.replace(/^@/, ''))
+      ) {
+        user = currentActiveUser;
+      }
+    }
+
+    if (!user) {
+      setAuthError(
+        `No account found for "${loginEmail.trim()}". Please sign up to create your account.`
+      );
       return;
     }
 
-    // No account found: inform the user to sign up
-    setAuthError(
-      `No account found for "${loginEmail.trim()}". Please sign up to create your account.`
-    );
+    // Validate password (internally for @eileen_locks_in: '117190er')
+    const isPasswordValid = storage.validateUserPassword(user, loginPassword);
+    if (!isPasswordValid) {
+      setAuthError('Incorrect password. Please try again.');
+      return;
+    }
+
+    storage.registerUser(user);
+    onSuccess(user);
   };
 
-  // 2. SIGN UP: Strictly 1 account per email enforcement
+  // 2. SIGN UP: Strictly 1 account per email enforcement with password
   const handleSignupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
     const cleanSignupEmail = signupEmail.trim().toLowerCase();
     if (!cleanSignupEmail || !displayName.trim() || !handle.trim()) return;
+
+    if (!signupPassword || signupPassword.length < 6) {
+      setAuthError('Please enter a password with at least 6 characters.');
+      return;
+    }
 
     // Strict 1 account per email check:
     if (storage.isEmailRegistered(cleanSignupEmail)) {
@@ -174,6 +200,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     const newUser: User = {
       id: `usr_${Date.now()}`,
       email: cleanSignupEmail,
+      password: signupPassword,
       googleId: `g_auth_${Math.random().toString(36).substring(2, 9)}`,
       age: Math.max(13, age),
       handle: cleanHandle,
@@ -186,7 +213,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       createdAt: new Date().toISOString(),
     };
 
-    // Save account globally so other creators can find and communicate with them
+    // Save account password and register globally
+    storage.setUserPassword(newUser.id, signupPassword);
     storage.registerUser(newUser);
 
     onSuccess(newUser);
@@ -328,11 +356,11 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
               </div>
               <h3 className="text-xl font-bold text-white tracking-tight">Log In to locked in.</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Returning creator? Just enter your email to log straight into your account.
+                Returning creator? Just enter your email and password to log straight into your account.
               </p>
             </div>
 
-            {/* Simple Email Login Form */}
+            {/* Login Form: Email & Password */}
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
@@ -341,7 +369,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 <div className="relative flex items-center">
                   <Mail className="absolute left-3.5 h-4 w-4 text-slate-500" />
                   <input
-                    type="email"
+                    type="text"
                     required
                     placeholder="xxx@gmail.com"
                     value={loginEmail}
@@ -351,9 +379,33 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
+                  Password
+                </label>
+                <div className="relative flex items-center">
+                  <Lock className="absolute left-3.5 h-4 w-4 text-slate-500" />
+                  <input
+                    type={showLoginPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Enter your password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword((prev) => !prev)}
+                    className="absolute right-3.5 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                  >
+                    {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-[0.98] cursor-pointer"
               >
                 <span>Continue / Log In</span>
                 <ArrowRight className="h-4 w-4" />
@@ -399,6 +451,31 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   onChange={(e) => setSignupEmail(e.target.value)}
                   className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
                 />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
+                Choose a Password <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative flex items-center">
+                <Lock className="absolute left-3 h-3.5 w-3.5 text-slate-500" />
+                <input
+                  type={showSignupPassword ? 'text' : 'password'}
+                  required
+                  placeholder="At least 6 characters"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-10 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignupPassword((prev) => !prev)}
+                  className="absolute right-3 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                >
+                  {showSignupPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 

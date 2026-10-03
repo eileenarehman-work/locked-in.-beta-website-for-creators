@@ -693,6 +693,19 @@ export default function App() {
     storage.setUser(null);
   };
 
+  const handleDeleteAccount = (userId: string) => {
+    storage.deleteUserAccount(userId);
+    if (currentUser?.id === userId) {
+      setCurrentUser(null);
+      storage.setUser(null);
+    }
+    // Refresh all reactive state
+    setProjects(storage.getProjects());
+    setReviews(storage.getReviews());
+    setIsProfileSettingsOpen(false);
+    setSelectedProfileUser(null);
+  };
+
   // Build conversations map from real messages & friendships
   const activeConversations: Record<string, User> = useMemo(() => {
     const activeMap: Record<string, User> = {};
@@ -892,135 +905,178 @@ export default function App() {
               </div>
             </div>
 
-            {/* Main Feed Layout: Feed + Top Builders Sidebar */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Main Feed Column (8 cols on desktop) */}
-              <div className="lg:col-span-8 space-y-6">
-                {/* Filter Bar & Search */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-                  {/* Feed Sort & Custom YouTube-Style Hashtags */}
-                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-medium">
-                      <button
-                        onClick={() => setFeedSort('trending')}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                          feedSort === 'trending' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <TrendingUp className="h-3.5 w-3.5" />
-                        Trending
-                      </button>
-                      <button
-                        onClick={() => setFeedSort('recent')}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                          feedSort === 'recent' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <Clock className="h-3.5 w-3.5" />
-                        Recent
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (!currentUser) {
-                            setAuthModalMode('login');
-                            setIsGoogleModalOpen(true);
-                          } else {
-                            setFeedSort('following');
-                          }
-                        }}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                          feedSort === 'following' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <UserCheck className="h-3.5 w-3.5" />
-                        Following
-                      </button>
-                    </div>
+            {/* Real Social Discovery & Showcase Feed - Strictly Just Feeds */}
+            <div className="space-y-6">
+              {/* Filter Bar & Search */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                {/* Feed Sort & Custom YouTube-Style Hashtags */}
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-medium">
+                    <button
+                      onClick={() => setFeedSort('trending')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                        feedSort === 'trending' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      Trending
+                    </button>
+                    <button
+                      onClick={() => setFeedSort('recent')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                        feedSort === 'recent' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Clock className="h-3.5 w-3.5" />
+                      Recent
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!currentUser) {
+                          setAuthModalMode('login');
+                          setIsGoogleModalOpen(true);
+                        } else {
+                          setFeedSort('following');
+                        }
+                      }}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                        feedSort === 'following' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <UserCheck className="h-3.5 w-3.5" />
+                      Following
+                    </button>
+                  </div>
 
-                    <div className="h-4 w-px bg-slate-800 hidden sm:block" />
+                  <div className="h-4 w-px bg-slate-800 hidden sm:block" />
 
-                    {/* Custom Hashtags (YouTube / Instagram style) */}
-                    <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 max-w-full">
+                  {/* Custom Hashtags */}
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 max-w-full">
+                    <button
+                      onClick={() => setSelectedTag('#all')}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
+                        selectedTag === '#all'
+                          ? 'bg-slate-800 text-indigo-300 border border-indigo-500/50 font-semibold'
+                          : 'border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      All Builds
+                    </button>
+                    {allCustomHashtags.map((tag) => (
                       <button
-                        onClick={() => setSelectedTag('#all')}
+                        key={tag}
+                        onClick={() => setSelectedTag(selectedTag === tag ? '#all' : tag)}
                         className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
-                          selectedTag === '#all'
+                          selectedTag === tag
                             ? 'bg-slate-800 text-indigo-300 border border-indigo-500/50 font-semibold'
                             : 'border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
                         }`}
                       >
-                        All Builds
+                        {tag}
                       </button>
-                      {allCustomHashtags.map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => setSelectedTag(selectedTag === tag ? '#all' : tag)}
-                          className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
-                            selectedTag === tag
-                              ? 'bg-slate-800 text-indigo-300 border border-indigo-500/50 font-semibold'
-                              : 'border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Search Bar */}
-                  <div className="relative w-full md:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-                    <input
-                      type="text"
-                      placeholder="Search builds, makers, #tags..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900 pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-                    />
+                    ))}
                   </div>
                 </div>
 
-                {/* Projects Feed */}
-                {filteredProjects.length === 0 ? (
-                  <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center space-y-4">
-                    <div className="mx-auto h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                      <Sparkles className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-bold text-white">No Builds in This Feed Yet</h3>
-                    <p className="text-xs text-slate-400 max-w-md mx-auto">
-                      Publish the first project in Art, 3D Printing, Game Dev, Robotics, or Code!
-                    </p>
-                    <button
-                      onClick={() => {
-                        if (!currentUser) setIsGoogleModalOpen(true);
-                        else setActiveTab('studio');
-                      }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30 cursor-pointer"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Drop Your Build Now 🚀</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredProjects.map((project) => (
-                      <ProjectCard
-                        key={project.id}
-                        project={project}
-                        onOpenProject={(p) => setSelectedProject(p)}
-                        onShareProject={(p) => setShareProject(p)}
-                        onToggleLike={handleToggleLike}
-                        isLiked={likedProjectIds.has(project.id)}
-                        onOpenAuthorProfile={(author) => setSelectedProfileUser(author)}
-                        onSelectTag={(tag) => setSelectedTag(tag)}
-                      />
-                    ))}
-                  </div>
-                )}
+                {/* Search Bar */}
+                <div className="relative w-full md:w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search builds, makers, #tags..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
               </div>
 
-              {/* Sidebar Column (4 cols on desktop) */}
-              <div className="lg:col-span-4 space-y-6">
+              {/* Projects Feed Grid - Just Feeds */}
+              {filteredProjects.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center space-y-4">
+                  <div className="mx-auto h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">No Builds in This Feed Yet</h3>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto">
+                    Publish the first project in Art, 3D Printing, Game Dev, Robotics, or Code!
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (!currentUser) setIsGoogleModalOpen(true);
+                      else setActiveTab('studio');
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30 cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Drop Your Build Now 🚀</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredProjects.map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      onOpenProject={(p) => setSelectedProject(p)}
+                      onShareProject={(p) => setShareProject(p)}
+                      onToggleLike={handleToggleLike}
+                      isLiked={likedProjectIds.has(project.id)}
+                      onOpenAuthorProfile={(author) => setSelectedProfileUser(author)}
+                      onSelectTag={(tag) => setSelectedTag(tag)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 2. Dedicated Points & Streak Hub Tab (Streak, Badges, Leaderboard, Daily Missions) */}
+        {activeTab === 'streak' && (
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+            {/* Streak & Daily Missions Hero Card */}
+            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-64 w-64 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="flex items-center gap-2 text-xs font-mono text-amber-400">
+                    <Flame className="h-4 w-4 fill-amber-400 text-amber-400 animate-pulse" />
+                    <span className="font-bold tracking-wider">DAILY STREAK & MAKER POINTS HUB</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak Active 🔥
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    Build daily habits. Check in everyday to grow your daily streak points, complete daily review missions, unlock badges, and climb the builder leaderboard.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsPointsGuideOpen(true)}
+                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm cursor-pointer"
+                  >
+                    <Star className="h-4 w-4 fill-amber-400" />
+                    <span>How Points Work</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('feed')}
+                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors cursor-pointer"
+                  >
+                    <Compass className="h-4 w-4" />
+                    <span>Back to Feed</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* All Points Stuff Layout: Streak & Badges Hub (8 cols) + Leaderboard (4 cols) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column (8 cols): Daily Review Mission + Streak & Badges Hub */}
+              <div className="lg:col-span-8 space-y-6">
                 {/* Daily Community Review Quest Booster Card */}
                 <div className="rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-950 p-5 space-y-3.5 shadow-xl relative overflow-hidden">
                   <div className="flex items-center justify-between">
@@ -1071,7 +1127,27 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Top Builders Sidebar */}
+                {/* Real Streak & Badges Hub */}
+                <ActivityHeatmap
+                  days={heatmapDays}
+                  totalContributions={projects.length + reviews.length}
+                  currentUser={currentUser}
+                  projects={projects}
+                  reviews={reviews}
+                  onOpenNewBuild={() => {
+                    if (!currentUser) {
+                      setAuthModalMode('signup');
+                      setIsGoogleModalOpen(true);
+                    } else {
+                      setActiveTab('studio');
+                    }
+                  }}
+                  onOpenProfile={(u) => setSelectedProfileUser(u)}
+                />
+              </div>
+
+              {/* Right Column (4 cols): Leaderboard (Top Builders) */}
+              <div className="lg:col-span-4 space-y-6">
                 <TopBuildersSidebar
                   users={allRealUsers}
                   currentUser={currentUser}
@@ -1086,67 +1162,6 @@ export default function App() {
                 />
               </div>
             </div>
-          </div>
-        )}
-
-        {/* 2. Dedicated Streak & Hub Tab */}
-        {activeTab === 'streak' && (
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-            {/* Streak & Daily Missions Hero Card */}
-            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 h-64 w-64 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2 max-w-2xl">
-                  <div className="flex items-center gap-2 text-xs font-mono text-amber-400">
-                    <Flame className="h-4 w-4 fill-amber-400 text-amber-400 animate-pulse" />
-                    <span className="font-bold tracking-wider">DAILY STREAK & MAKER HUB</span>
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak Active 🔥
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    Build daily habits. Check in everyday to grow your daily streak points, write community reviews, and unlock badges from 'just a baby' to 'locked in'.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsPointsGuideOpen(true)}
-                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm cursor-pointer"
-                  >
-                    <Star className="h-4 w-4 fill-amber-400" />
-                    <span>How Points Work</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('feed')}
-                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors cursor-pointer"
-                  >
-                    <Compass className="h-4 w-4" />
-                    <span>Back to Feed</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Real Contribution Heatmap & Engaging Streak Hub */}
-            <ActivityHeatmap
-              days={heatmapDays}
-              totalContributions={projects.length + reviews.length}
-              currentUser={currentUser}
-              projects={projects}
-              reviews={reviews}
-              onOpenNewBuild={() => {
-                if (!currentUser) {
-                  setAuthModalMode('signup');
-                  setIsGoogleModalOpen(true);
-                } else {
-                  setActiveTab('studio');
-                }
-              }}
-              onOpenProfile={(u) => setSelectedProfileUser(u)}
-            />
           </div>
         )}
 
@@ -1423,6 +1438,7 @@ export default function App() {
           currentUser={currentUser}
           onUpdateUser={handleUpdateUserProfile}
           onClose={() => setIsProfileSettingsOpen(false)}
+          onDeleteAccount={handleDeleteAccount}
         />
       )}
 

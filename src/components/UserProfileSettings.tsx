@@ -12,14 +12,17 @@ import {
   Loader2,
   Trophy,
   Star,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getUnlockedBadgesForUser } from '../utils/badgeSystem';
+import { storage } from '../mock/initialData';
 
 interface UserProfileSettingsProps {
   currentUser: User;
   onUpdateUser: (updatedUser: User) => void;
   onClose: () => void;
+  onDeleteAccount?: (userId: string) => void;
 }
 
 const AVATAR_PRESETS = [
@@ -47,6 +50,7 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
   currentUser,
   onUpdateUser,
   onClose,
+  onDeleteAccount,
 }) => {
   const [displayName, setDisplayName] = useState(currentUser.displayName);
   const [handle, setHandle] = useState(currentUser.handle);
@@ -55,6 +59,7 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl);
   const [interestTags, setInterestTags] = useState<string[]>(currentUser.interestTags);
   const [tagInput, setTagInput] = useState('');
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   // S3 Upload simulation & state
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -449,6 +454,66 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
                 </span>
               ))}
             </div>
+          </div>
+
+          {/* Account Danger Zone: Delete Account */}
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-950/15 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h5 className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                  <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Delete Account</span>
+                </h5>
+                <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                  Permanently delete @{currentUser.handle}, including all builds, reviews, and points.
+                </p>
+              </div>
+
+              {!isConfirmingDelete && (
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingDelete(true)}
+                  className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/25 transition-colors cursor-pointer shrink-0"
+                >
+                  Delete Account
+                </button>
+              )}
+            </div>
+
+            {isConfirmingDelete && (
+              <div className="rounded-xl border border-rose-500/40 bg-rose-950/40 p-3.5 space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-start gap-2.5 text-xs text-rose-200">
+                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">
+                    Are you sure you want to permanently delete your account? This action cannot be undone. All your posts, peer reviews, and reputation points will be removed permanently.
+                  </span>
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-1 border-t border-rose-500/20">
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmingDelete(false)}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onDeleteAccount) {
+                        onDeleteAccount(currentUser.id);
+                      } else {
+                        storage.deleteUserAccount(currentUser.id);
+                        onClose();
+                      }
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 transition-colors shadow-sm shadow-rose-600/30 cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Yes, Permanently Delete</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Save Button */}

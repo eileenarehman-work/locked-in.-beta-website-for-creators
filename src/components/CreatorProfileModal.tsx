@@ -25,6 +25,7 @@ import {
   Check,
   Share2,
   Clock,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { VerifiedBadge, VERIFIED_REPUTATION_THRESHOLD } from './VerifiedBadge';
@@ -170,16 +171,29 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
               {isSelf ? (
-                <button
-                  onClick={() => {
-                    onClose();
-                    onEditOwnProfile();
-                  }}
-                  className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700 transition-colors"
-                >
-                  <Settings className="h-4 w-4 text-indigo-400" />
-                  <span>Edit Profile</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onEditOwnProfile();
+                    }}
+                    className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700 transition-colors cursor-pointer"
+                  >
+                    <Settings className="h-4 w-4 text-indigo-400" />
+                    <span>Edit Profile</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onEditOwnProfile();
+                    }}
+                    className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-900/30 transition-colors cursor-pointer"
+                    title="Account Settings & Delete Account"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                    <span>Delete</span>
+                  </button>
+                </div>
               ) : (
                 <>
                   <button

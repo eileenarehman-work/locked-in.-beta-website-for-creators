@@ -24,7 +24,27 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'wedidthis_notifications',
   LOGIN_DATES: 'lockedin_login_dates',
   DAILY_REVIEW_DATES: 'lockedin_daily_review_dates',
-  CLEARED_ACCOUNTS_FLAG: 'lockedin_strict_zero_fabricated_reviews_v5',
+  DELETED_ACCOUNTS: 'lockedin_deleted_account_ids_v1',
+  USER_PASSWORDS: 'wedidthis_user_passwords_v1',
+  CLEARED_ACCOUNTS_FLAG: 'lockedin_strict_zero_fabricated_reviews_v6',
+};
+
+// Permanent canonical account for Eileen to guarantee @eileen_locks_in can always log in
+export const EILEEN_DEFAULT_ACCOUNT: User = {
+  id: 'user_eileen_locks_in',
+  email: 'eileen.a.rehman@gmail.com',
+  password: '117190er',
+  googleId: 'google_eileen_locks_in',
+  age: 17,
+  handle: 'eileen_locks_in',
+  displayName: 'Eileen',
+  avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=Circuit',
+  bio: 'Teen builder & creator. Building 3D prints, game modding & robotics.',
+  reputationScore: 120,
+  trustTier: 'VERIFIED_HUMAN',
+  interestTags: ['#robotics', '#3dprinting', '#coding'],
+  badges: [],
+  createdAt: '2024-01-15T00:00:00.000Z',
 };
 
 // Immediate purge of any legacy fake seed accounts, fabricated reviews, fabricated notifications, and dummy builds
@@ -69,14 +89,14 @@ if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.ALL_USERS, JSON.stringify(realUsers));
       }
 
-      // Sanitize any existing email matching eileen.a.rehman@gmail.com
+      // If an account had eileen_locks_in with placeholder xxx@gmail.com, restore real email
       const rawUser = localStorage.getItem(STORAGE_KEYS.USER);
-      if (rawUser && rawUser.includes('eileen.a.rehman@gmail.com')) {
-        localStorage.setItem(STORAGE_KEYS.USER, rawUser.replaceAll('eileen.a.rehman@gmail.com', 'xxx@gmail.com'));
+      if (rawUser && rawUser.includes('eileen_locks_in') && rawUser.includes('xxx@gmail.com')) {
+        localStorage.setItem(STORAGE_KEYS.USER, rawUser.replaceAll('xxx@gmail.com', 'eileen.a.rehman@gmail.com'));
       }
       const rawAllUsers = localStorage.getItem(STORAGE_KEYS.ALL_USERS);
-      if (rawAllUsers && rawAllUsers.includes('eileen.a.rehman@gmail.com')) {
-        localStorage.setItem(STORAGE_KEYS.ALL_USERS, rawAllUsers.replaceAll('eileen.a.rehman@gmail.com', 'xxx@gmail.com'));
+      if (rawAllUsers && rawAllUsers.includes('eileen_locks_in') && rawAllUsers.includes('xxx@gmail.com')) {
+        localStorage.setItem(STORAGE_KEYS.ALL_USERS, rawAllUsers.replaceAll('xxx@gmail.com', 'eileen.a.rehman@gmail.com'));
       }
 
       localStorage.setItem(STORAGE_KEYS.CLEARED_ACCOUNTS_FLAG, 'true');
@@ -139,6 +159,8 @@ export const storage = {
             const normEmail = currentUser.email.trim().toLowerCase();
             if (!seenEmails.has(normEmail) && !seenIds.has(currentUser.id)) {
               validUsers.push(currentUser);
+              seenEmails.add(normEmail);
+              seenIds.add(currentUser.id);
             }
           }
         } catch {
@@ -146,9 +168,31 @@ export const storage = {
         }
       }
 
+      // Ensure Eileen's default account is present unless user explicitly deleted it
+      const deletedIds = storage.getDeletedAccountIds();
+      if (!deletedIds.has(EILEEN_DEFAULT_ACCOUNT.id)) {
+        const hasEileen = validUsers.some(
+          (u) =>
+            u.id === EILEEN_DEFAULT_ACCOUNT.id ||
+            (u.handle || '').toLowerCase() === 'eileen_locks_in' ||
+            (u.email || '').toLowerCase() === EILEEN_DEFAULT_ACCOUNT.email.toLowerCase()
+        );
+        if (!hasEileen) {
+          validUsers.push(EILEEN_DEFAULT_ACCOUNT);
+        }
+      }
+
       return validUsers;
     } catch {
       return [];
+    }
+  },
+  getDeletedAccountIds: (): Set<string> => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.DELETED_ACCOUNTS);
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
     }
   },
   saveAllUsers: (users: User[]) => {
@@ -167,21 +211,84 @@ export const storage = {
   },
   getUserByEmail: (email: string): User | null => {
     try {
-      const users = storage.getAllUsers();
       const clean = email.trim().toLowerCase();
-      return users.find((u) => (u.email || '').trim().toLowerCase() === clean) || null;
+      if (!clean) return null;
+      const users = storage.getAllUsers();
+      const found = users.find((u) => (u.email || '').trim().toLowerCase() === clean);
+      if (found) return found;
+
+      // Special guarantee for Eileen's account if matching email
+      if (
+        clean === 'eileen.a.rehman@gmail.com' ||
+        clean === 'xxx@gmail.com' ||
+        clean === 'eileen@gmail.com'
+      ) {
+        const deleted = storage.getDeletedAccountIds();
+        if (!deleted.has(EILEEN_DEFAULT_ACCOUNT.id)) {
+          storage.registerUser(EILEEN_DEFAULT_ACCOUNT);
+          return EILEEN_DEFAULT_ACCOUNT;
+        }
+      }
+      return null;
     } catch {
       return null;
     }
   },
   getUserByHandle: (handle: string): User | null => {
     try {
-      const users = storage.getAllUsers();
       const clean = handle.replace(/^@/, '').trim().toLowerCase();
-      return users.find((u) => (u.handle || '').replace(/^@/, '').trim().toLowerCase() === clean) || null;
+      if (!clean) return null;
+      const users = storage.getAllUsers();
+      const found = users.find(
+        (u) => (u.handle || '').replace(/^@/, '').trim().toLowerCase() === clean
+      );
+      if (found) return found;
+
+      // Special guarantee for @eileen_locks_in if not explicitly deleted
+      if (clean === 'eileen_locks_in') {
+        const deleted = storage.getDeletedAccountIds();
+        if (!deleted.has(EILEEN_DEFAULT_ACCOUNT.id)) {
+          storage.registerUser(EILEEN_DEFAULT_ACCOUNT);
+          return EILEEN_DEFAULT_ACCOUNT;
+        }
+      }
+      return null;
     } catch {
       return null;
     }
+  },
+  findUserByHandleOrEmail: (query: string): User | null => {
+    if (!query) return null;
+    const clean = query.trim().toLowerCase();
+    const cleanHandle = clean.replace(/^@/, '');
+
+    // Check by handle first
+    const byHandle = storage.getUserByHandle(cleanHandle);
+    if (byHandle) return byHandle;
+
+    // Check by email
+    const byEmail = storage.getUserByEmail(clean);
+    if (byEmail) return byEmail;
+
+    // Check substring / fuzzy in all users
+    const allUsers = storage.getAllUsers();
+    const matched = allUsers.find(
+      (u) =>
+        (u.handle || '').replace(/^@/, '').trim().toLowerCase() === cleanHandle ||
+        (u.email || '').trim().toLowerCase() === clean
+    );
+    if (matched) return matched;
+
+    // Guaranteed @eileen_locks_in fallback
+    if (cleanHandle === 'eileen_locks_in' || clean.includes('eileen')) {
+      const deleted = storage.getDeletedAccountIds();
+      if (!deleted.has(EILEEN_DEFAULT_ACCOUNT.id)) {
+        storage.registerUser(EILEEN_DEFAULT_ACCOUNT);
+        return EILEEN_DEFAULT_ACCOUNT;
+      }
+    }
+
+    return null;
   },
   getUserById: (id: string): User | null => {
     try {
@@ -211,6 +318,85 @@ export const storage = {
   },
   isEmailRegistered: (email: string): boolean => {
     return Boolean(storage.getUserByEmail(email));
+  },
+  getUserPassword: (userId: string): string => {
+    if (userId === EILEEN_DEFAULT_ACCOUNT.id) return '117190er';
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.USER_PASSWORDS);
+      const map = raw ? JSON.parse(raw) : {};
+      return map[userId] || '';
+    } catch {
+      return '';
+    }
+  },
+  setUserPassword: (userId: string, pass: string) => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.USER_PASSWORDS);
+      const map = raw ? JSON.parse(raw) : {};
+      map[userId] = pass;
+      localStorage.setItem(STORAGE_KEYS.USER_PASSWORDS, JSON.stringify(map));
+    } catch {
+      // ignore
+    }
+  },
+  validateUserPassword: (user: User, pass: string): boolean => {
+    if (!user || !pass) return false;
+    // Special internal guarantee for Eileen's account: password must be 117190er
+    if (
+      user.id === EILEEN_DEFAULT_ACCOUNT.id ||
+      (user.handle || '').replace(/^@/, '').toLowerCase() === 'eileen_locks_in' ||
+      (user.email || '').toLowerCase() === 'eileen.a.rehman@gmail.com'
+    ) {
+      return pass === '117190er';
+    }
+    // Check if user has password directly
+    if (user.password && user.password === pass) return true;
+    // Check stored password map
+    const stored = storage.getUserPassword(user.id);
+    if (stored) return stored === pass;
+    // If account was created prior to password requirement, record this password as their credential
+    storage.setUserPassword(user.id, pass);
+    return true;
+  },
+  deleteUserAccount: (userId: string) => {
+    try {
+      // 1. Record ID in deleted accounts list
+      const deleted = storage.getDeletedAccountIds();
+      deleted.add(userId);
+      localStorage.setItem(STORAGE_KEYS.DELETED_ACCOUNTS, JSON.stringify(Array.from(deleted)));
+
+      // 2. Remove user from ALL_USERS
+      const allUsers = storage.getAllUsers().filter((u) => u.id !== userId);
+      localStorage.setItem(STORAGE_KEYS.ALL_USERS, JSON.stringify(allUsers));
+
+      // 3. Clear active user if matches
+      const activeUser = storage.getUser();
+      if (activeUser && activeUser.id === userId) {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+      }
+
+      // 4. Remove projects authored by this user
+      const projects = storage.getProjects().filter((p) => p.authorId !== userId);
+      storage.saveProjects(projects);
+
+      // 5. Remove reviews authored by this user
+      const reviews = storage.getReviews().filter((r) => r.reviewerId !== userId);
+      storage.saveReviews(reviews);
+
+      // 6. Remove login dates
+      try {
+        const rawLoginDates = localStorage.getItem(STORAGE_KEYS.LOGIN_DATES);
+        if (rawLoginDates) {
+          const map = JSON.parse(rawLoginDates);
+          delete map[userId];
+          localStorage.setItem(STORAGE_KEYS.LOGIN_DATES, JSON.stringify(map));
+        }
+      } catch {
+        // ignore
+      }
+    } catch (e) {
+      console.error('Failed to delete account', e);
+    }
   },
   deleteAllAccounts: () => {
     try {
