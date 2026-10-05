@@ -7,6 +7,7 @@ import {
   User,
   Friendship,
   ChatRoom,
+  ChatMember,
   GroupChatMessage,
   AppNotification,
   NotificationType,
@@ -426,25 +427,116 @@ export default function App() {
     }));
   };
 
+  // Auto-sync currentUser into existing community rooms if not already member
+  useEffect(() => {
+    if (currentUser) {
+      setChatRooms((prev) => {
+        let changed = false;
+        const updated = prev.map((room) => {
+          if (!room.members || room.members.length === 0) {
+            changed = true;
+            return {
+              ...room,
+              members: [
+                {
+                  roomId: room.id,
+                  userId: currentUser.id,
+                  role: 'ADMIN' as const,
+                  user: currentUser,
+                },
+              ],
+            };
+          }
+          if (!room.members.some((m) => m.userId === currentUser.id)) {
+            changed = true;
+            return {
+              ...room,
+              members: [
+                ...room.members,
+                {
+                  roomId: room.id,
+                  userId: currentUser.id,
+                  role: 'MEMBER' as const,
+                  user: currentUser,
+                },
+              ],
+            };
+          }
+          return room;
+        });
+        return changed ? updated : prev;
+      });
+    }
+  }, [currentUser]);
+
   // Create Group Room
-  const handleCreateGroupRoom = (name: string, description: string) => {
+  const handleCreateGroupRoom = (name: string, description: string, initialMembers?: User[]) => {
     if (!currentUser) return;
+    const roomId = `room_${Date.now()}`;
+    const membersList: ChatMember[] = [
+      {
+        roomId,
+        userId: currentUser.id,
+        role: 'ADMIN',
+        user: currentUser,
+      },
+    ];
+    if (initialMembers && initialMembers.length > 0) {
+      initialMembers.forEach((u) => {
+        if (u.id !== currentUser.id && !membersList.some((m) => m.userId === u.id)) {
+          membersList.push({
+            roomId,
+            userId: u.id,
+            role: 'MEMBER',
+            user: u,
+          });
+        }
+      });
+    }
     const newRoom: ChatRoom = {
-      id: `room_${Date.now()}`,
+      id: roomId,
       type: 'GROUP',
       name,
       description,
-      members: [
-        {
-          roomId: `room_${Date.now()}`,
-          userId: currentUser.id,
-          role: 'ADMIN',
-          user: currentUser,
-        },
-      ],
+      members: membersList,
       createdAt: new Date().toISOString(),
     };
     setChatRooms((prev) => [newRoom, ...prev]);
+  };
+
+  const handleAddGroupMember = (roomId: string, user: User) => {
+    setChatRooms((prev) =>
+      prev.map((room) => {
+        if (room.id === roomId) {
+          if (room.members.some((m) => m.userId === user.id)) return room;
+          const newMember = {
+            roomId,
+            userId: user.id,
+            role: 'MEMBER' as const,
+            user,
+          };
+          return {
+            ...room,
+            members: [...room.members, newMember],
+          };
+        }
+        return room;
+      })
+    );
+  };
+
+  const handleRemoveGroupMember = (roomId: string, userId: string) => {
+    setChatRooms((prev) =>
+      prev.map((room) => {
+        if (room.id === roomId) {
+          return {
+            ...room,
+            members: room.members.filter((m) => m.userId !== userId),
+          };
+        }
+        return room;
+      })
+    );
   };
 
   // Update Collaboration Invite
@@ -1329,6 +1421,8 @@ export default function App() {
               onSendMessage={handleSendMessage}
               onSendGroupMessage={handleSendGroupMessage}
               onCreateGroupRoom={handleCreateGroupRoom}
+              onAddGroupMember={handleAddGroupMember}
+              onRemoveGroupMember={handleRemoveGroupMember}
               onUpdateInviteStatus={handleUpdateInviteStatus}
               onAcceptFriendRequest={handleAcceptFriendRequest}
               onDeclineFriendRequest={handleDeclineOrRemoveFriend}
