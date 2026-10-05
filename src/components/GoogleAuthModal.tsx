@@ -184,7 +184,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       displayName: displayName.trim(),
       avatarUrl,
       bio: bio.trim(),
-      reputationScore: 25,
+      reputationScore: 0,
       trustTier: 'VERIFIED_HUMAN',
       interestTags: selectedTags.length ? selectedTags : ['#makers'],
       createdAt: new Date().toISOString(),

@@ -26,21 +26,11 @@ export interface StreakInfo {
 }
 
 /**
- * Calculates the engagement streak login bonus.
- * Streak points double or increase by 2 each time the user logs in consecutively.
- * Day 1 = 2 pts
- * Day 2 = 4 pts (doubled!)
- * Day 3 = 8 pts (doubled!)
- * Day 4 = 16 pts (doubled!)
- * Day 5 = 32 pts (doubled!)
- * Day 6+ = +2 pts per consecutive day (34, 36, 38...)
+ * Calculates the daily streak login bonus.
+ * Users get 2 points everyday for logging in and keeping their streak active.
  */
-export function calculateStreakLoginBonus(currentStreak: number): number {
-  const streak = Math.max(1, currentStreak);
-  if (streak <= 5) {
-    return Math.pow(2, streak);
-  }
-  return 32 + (streak - 5) * 2;
+export function calculateStreakLoginBonus(_currentStreak?: number): number {
+  return 2;
 }
 
 export function calculateRealStreak(

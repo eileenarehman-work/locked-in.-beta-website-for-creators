@@ -178,7 +178,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                   </div>
                   <p className="text-xs text-slate-300 mt-1 leading-snug max-w-md">
                     {streakInfo.currentStreak > 0
-                      ? `🔥 Your flame is burning bright! Daily login points double and grow by +2 each day.`
+                      ? `🔥 Your flame is burning bright! Earn +2 points every day you check in and keep your streak alive.`
                       : 'No active streak yet. Log in daily or publish a build to ignite Day 1!'}
                   </p>
                   <div className="mt-2.5 flex flex-wrap items-center gap-2">

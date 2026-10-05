@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Project, ProjectStatus, User } from '../types';
 import { generateProjectDraft, assignSmartTags } from '../services/geminiService';
 import { storage } from '../mock/initialData';
@@ -24,6 +24,8 @@ import {
   PlusCircle,
   Check,
   FolderOpen,
+  Cloud,
+  RotateCcw,
 } from 'lucide-react';
 
 interface ProjectStudioProps {
@@ -45,10 +47,18 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
   currentUser,
   onPublishProject,
 }) => {
+  const AUTOSAVE_STORAGE_KEY = `lockedin_studio_autosave_${currentUser.id}`;
+
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [savedDrafts, setSavedDrafts] = useState<Project[]>([]);
   const [isDraftsModalOpen, setIsDraftsModalOpen] = useState(false);
   const [draftToast, setDraftToast] = useState<string | null>(null);
+
+  // Auto-save & recovery states
+  const [lastAutoSavedAt, setLastAutoSavedAt] = useState<Date | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [hasRecoveredAutoSave, setHasRecoveredAutoSave] = useState(false);
+  const isInitialMount = useRef(true);
 
   const [title, setTitle] = useState('');
   const [tagline, setTagline] = useState('');
@@ -70,12 +80,123 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
 
-  // Load user drafts on mount
+  // Load user drafts and check for auto-saved cache on mount
   useEffect(() => {
     if (currentUser?.id) {
       setSavedDrafts(storage.getDrafts(currentUser.id));
+
+      // Attempt to recover auto-saved project from localStorage
+      try {
+        const cached = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+        if (cached) {
+          const data = JSON.parse(cached);
+          const hasData = Boolean(
+            data &&
+            (data.title ||
+              data.markdown ||
+              data.tagline ||
+              (data.uploadedImages && data.uploadedImages.length > 0) ||
+              data.demoUrl ||
+              data.repoUrl)
+          );
+
+          if (hasData) {
+            setTitle(data.title || '');
+            setTagline(data.tagline || '');
+            if (data.category) setCategory(data.category);
+            setMarkdown(data.markdown || '');
+            if (data.tags && data.tags.length) setTags(data.tags);
+            if (data.uploadedImages && data.uploadedImages.length) setUploadedImages(data.uploadedImages);
+            setDemoUrl(data.demoUrl || '');
+            setRepoUrl(data.repoUrl || '');
+            setCurrentDraftId(data.currentDraftId || null);
+            const savedTime = data.savedAt ? new Date(data.savedAt) : new Date();
+            setLastAutoSavedAt(savedTime);
+            setHasRecoveredAutoSave(true);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load auto-saved cache', err);
+      }
     }
-  }, [currentUser?.id]);
+  }, [currentUser?.id, AUTOSAVE_STORAGE_KEY]);
+
+  // Prevent accidental navigation when form has uncommitted content
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (title.trim() || markdown.trim() || tagline.trim() || uploadedImages.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [title, markdown, tagline, uploadedImages.length]);
+
+  // Periodic & Debounced Auto-Save: caches inputs to localStorage
+  useEffect(() => {
+    // Avoid re-saving immediately on the first render before hydration
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const hasContent = Boolean(
+      title.trim() ||
+      tagline.trim() ||
+      markdown.trim() ||
+      uploadedImages.length > 0 ||
+      demoUrl.trim() ||
+      repoUrl.trim()
+    );
+
+    if (!hasContent) {
+      // If form is empty, clear auto-save
+      try {
+        localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+      } catch {}
+      setLastAutoSavedAt(null);
+      return;
+    }
+
+    setIsAutoSaving(true);
+    const timer = setTimeout(() => {
+      try {
+        const now = new Date();
+        const autoSavePayload = {
+          title,
+          tagline,
+          category,
+          markdown,
+          tags,
+          uploadedImages,
+          demoUrl,
+          repoUrl,
+          currentDraftId,
+          savedAt: now.toISOString(),
+        };
+        localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(autoSavePayload));
+        setLastAutoSavedAt(now);
+      } catch (err) {
+        console.error('Auto-save write failed', err);
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [
+    title,
+    tagline,
+    category,
+    markdown,
+    tags,
+    uploadedImages,
+    demoUrl,
+    repoUrl,
+    currentDraftId,
+    AUTOSAVE_STORAGE_KEY,
+  ]);
 
   const showToast = (msg: string) => {
     setDraftToast(msg);
@@ -104,7 +225,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Save current project state as draft
+  // Save current project state as explicit named draft
   const handleSaveDraft = () => {
     const draftTitle = title.trim() || 'Untitled Draft';
     const draftId = currentDraftId || `draft_${Date.now()}`;
@@ -144,6 +265,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
     storage.saveDraft(draftProject);
     setCurrentDraftId(draftId);
     setSavedDrafts(storage.getDrafts(currentUser.id));
+    setLastAutoSavedAt(new Date());
     showToast(`Draft "${draftTitle}" saved! You can resume editing anytime.`);
   };
 
@@ -165,10 +287,32 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
     setRepoUrl(draft.repoUrl || '');
     setStatus('DRAFT');
     setIsDraftsModalOpen(false);
+    setHasRecoveredAutoSave(false);
+    setLastAutoSavedAt(new Date());
+
+    // Update auto-save cache immediately with loaded draft
+    try {
+      localStorage.setItem(
+        AUTOSAVE_STORAGE_KEY,
+        JSON.stringify({
+          title: draft.title,
+          tagline: draft.tagline,
+          category: draft.qualities?.[0] || TEEN_CATEGORIES[0].label,
+          markdown: draft.contentMarkdown,
+          tags: draft.tags,
+          uploadedImages: draft.mediaUrls,
+          demoUrl: draft.demoUrl || '',
+          repoUrl: draft.repoUrl || '',
+          currentDraftId: draft.id,
+          savedAt: new Date().toISOString(),
+        })
+      );
+    } catch {}
+
     showToast(`Loaded "${draft.title}". Continue editing!`);
   };
 
-  // Delete a draft
+  // Delete an explicit draft
   const handleDeleteDraft = (draftId: string, draftTitle: string, e: React.MouseEvent) => {
     e.stopPropagation();
     storage.deleteDraft(draftId);
@@ -181,6 +325,11 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
 
   // Clear form and start a fresh blank project
   const handleStartFresh = () => {
+    try {
+      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+    } catch {}
+    setHasRecoveredAutoSave(false);
+    setLastAutoSavedAt(null);
     setCurrentDraftId(null);
     setTitle('');
     setTagline('');
@@ -289,6 +438,13 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
       setSavedDrafts(storage.getDrafts(currentUser.id));
     }
 
+    // Clear auto-save cache once published
+    try {
+      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+    } catch {}
+    setLastAutoSavedAt(null);
+    setHasRecoveredAutoSave(false);
+
     onPublishProject(newProject);
     setStatus('PUBLISHED');
     showToast('Your project is now live on the feed!');
@@ -304,10 +460,50 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
         </div>
       )}
 
+      {/* Recovered Auto-Save Banner */}
+      {hasRecoveredAutoSave && (
+        <div className="mb-6 rounded-2xl border border-indigo-500/40 bg-gradient-to-r from-indigo-950/60 via-slate-900 to-indigo-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+              <Cloud className="h-4 w-4" />
+            </span>
+            <div>
+              <span className="font-semibold text-white text-sm block">
+                Recovered in-progress work!
+              </span>
+              <span className="text-slate-300 text-xs">
+                Auto-saved from your previous session (
+                {lastAutoSavedAt
+                  ? lastAutoSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : 'recently'}
+                ). You can keep editing or start fresh.
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => setHasRecoveredAutoSave(false)}
+              className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm cursor-pointer"
+            >
+              Keep Editing
+            </button>
+            <button
+              type="button"
+              onClick={handleStartFresh}
+              className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Discard & Start Fresh</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Studio Header & Draft Controls */}
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl">
               Project Studio
             </h2>
@@ -321,6 +517,24 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                 New Project
               </span>
             )}
+
+            {/* Auto-save status indicator */}
+            {isAutoSaving ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-800/80 border border-slate-700/60 px-2.5 py-0.5 text-[11px] font-mono text-indigo-300 animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-ping" />
+                <span>Auto-saving...</span>
+              </span>
+            ) : lastAutoSavedAt ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-mono text-emerald-300"
+                title={`Saved to browser storage at ${lastAutoSavedAt.toLocaleTimeString()}`}
+              >
+                <Cloud className="h-3 w-3 text-emerald-400" />
+                <span>
+                  Auto-saved {lastAutoSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </span>
+            ) : null}
           </div>
           <p className="mt-1 text-xs text-slate-400">
             Showcase what you're making, save drafts to finish later, or post to the feed.
@@ -356,7 +570,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
           </button>
 
           {/* New blank project */}
-          {(currentDraftId || title || markdown) && (
+          {(currentDraftId || title || markdown || lastAutoSavedAt) && (
             <button
               type="button"
               onClick={handleStartFresh}
@@ -717,7 +931,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDraftsModalOpen(false)}
-                className="text-slate-400 hover:text-white rounded-lg p-1"
+                className="text-slate-400 hover:text-white rounded-lg p-1 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -775,14 +989,14 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                           e.stopPropagation();
                           handleLoadDraft(d);
                         }}
-                        className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm"
+                        className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm cursor-pointer"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteDraft(d.id, d.title, e)}
-                        className="rounded-xl p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                        className="rounded-xl p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                         title="Delete draft"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -800,7 +1014,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                   handleStartFresh();
                   setIsDraftsModalOpen(false);
                 }}
-                className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span>Start fresh blank project</span>
@@ -809,7 +1023,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDraftsModalOpen(false)}
-                className="rounded-xl bg-slate-800 px-4 py-1.5 text-xs font-medium text-slate-300 hover:text-white"
+                className="rounded-xl bg-slate-800 px-4 py-1.5 text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
               >
                 Close
               </button>

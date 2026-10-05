@@ -58,15 +58,7 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
 
       {/* Hero Section */}
       <section className="relative z-10 mx-auto max-w-6xl px-4 pt-12 pb-20 sm:px-6 lg:px-8 text-center space-y-8">
-        {/* Creator Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-950/40 px-4 py-1.5 text-xs font-mono text-indigo-300 backdrop-blur-md shadow-inner"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-          <span>PROJECT SHOWCASE & CREATOR NETWORK</span>
-        </motion.div>
+        
 
         {/* Hero Title */}
         <motion.h1

@@ -143,7 +143,7 @@ export default function App() {
         id: `login_streak_${Date.now()}`,
         type: 'streak_milestone',
         title: `🔥 Day ${streak.currentStreak} Daily Streak Active!`,
-        message: `Welcome back! Daily streak recorded (+${streakBonus} Points awarded). Keep logging in everyday — streak rewards double and grow by +2 each day!`,
+        message: `Welcome back! Daily streak recorded (+${streakBonus} Points awarded). Keep logging in everyday to earn +2 points each day!`,
         createdAt: new Date().toISOString(),
         read: false,
       };
@@ -656,7 +656,7 @@ export default function App() {
         id: `login_streak_${Date.now()}`,
         type: 'streak_milestone',
         title: `🔥 Day ${streak.currentStreak} Streak Active!`,
-        message: `Welcome back! Daily login recorded (+${streakBonus} Points awarded). Keep your streak alive — daily login points double and grow by +2 each day!`,
+        message: `Welcome back! Daily login recorded (+${streakBonus} Points awarded). Keep your streak alive — log in everyday to earn +2 points each day!`,
         createdAt: new Date().toISOString(),
         read: false,
       };

@@ -73,6 +73,30 @@ if (typeof window !== 'undefined') {
 
       localStorage.setItem(STORAGE_KEYS.CLEARED_ACCOUNTS_FLAG, 'true');
     }
+
+    // Fix legacy accounts that received 27 points (25 default + 2 streak) on initial signup
+    const rawUser = localStorage.getItem(STORAGE_KEYS.USER);
+    if (rawUser) {
+      const u: User = JSON.parse(rawUser);
+      if (u && u.reputationScore === 27) {
+        u.reputationScore = 2;
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(u));
+      }
+    }
+    const rawAll = localStorage.getItem(STORAGE_KEYS.ALL_USERS);
+    if (rawAll) {
+      const all: User[] = JSON.parse(rawAll);
+      let changed = false;
+      for (const u of all) {
+        if (u && u.reputationScore === 27) {
+          u.reputationScore = 2;
+          changed = true;
+        }
+      }
+      if (changed) {
+        localStorage.setItem(STORAGE_KEYS.ALL_USERS, JSON.stringify(all));
+      }
+    }
   } catch (e) {
     console.error('Storage cleanup failed', e);
   }

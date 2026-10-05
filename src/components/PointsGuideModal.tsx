@@ -360,22 +360,22 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white">How Daily Streaks Work</h4>
-                    <p className="text-xs text-amber-300/90">Streak points double & increase by +2 each login day!</p>
+                    <p className="text-xs text-amber-300/90">Earn +2 points every day you log in and keep your streak alive!</p>
                   </div>
                 </div>
 
                 <div className="space-y-2 text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
                   <div className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">1.</span>
-                    <span><strong>Starts on Day 1:</strong> The moment you log into your account today, your streak flame begins at 1 Day (+2 Points).</span>
+                    <span><strong>Starts on Day 1:</strong> The moment you log in or sign up, your daily streak starts at Day 1 and awards you +2 Points.</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">2.</span>
-                    <span><strong>Streak Points Double & Grow by +2:</strong> Daily login points double for early streak milestones (Day 1: 2 pts, Day 2: 4 pts, Day 3: 8 pts, Day 4: 16 pts, Day 5: 32 pts), and continue climbing by +2 every single consecutive day you log in!</span>
+                    <span><strong>+2 Points Every Day:</strong> Each day you return and check in, your streak increments and gives you +2 Points toward your creator reputation.</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-amber-400 font-bold">3.</span>
-                    <span><strong>Missed a day?</strong> If you miss a day, you start a new streak.</span>
+                    <span><strong>Missed a day?</strong> If you miss a day, your streak resets, and you start fresh on your next check-in.</span>
                   </div>
                 </div>
               </div>
