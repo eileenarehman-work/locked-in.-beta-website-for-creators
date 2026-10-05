@@ -196,13 +196,19 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     onSuccess(newUser);
   };
 
+  // Easy exit with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
-      onClick={(e) => {
-        // Prevent accidental closing on backdrop click: ONLY the Cancel button closes the modal
-        e.stopPropagation();
-      }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto cursor-pointer animate-in fade-in duration-150"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -211,15 +217,14 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         className="my-8 w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-7 shadow-2xl relative overflow-hidden cursor-default"
       >
-        {/* Top-Right Dedicated Cancel Button */}
         <button
-          type="button"
           onClick={onClose}
-          title="Cancel and close"
-          className="absolute top-5 right-5 flex items-center gap-1.5 rounded-xl border border-slate-700/80 bg-slate-800/90 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm z-10 cursor-pointer"
+          title="Close (Esc)"
+          aria-label="Close (Esc)"
+          className="absolute top-5 right-5 flex items-center gap-1.5 rounded-xl border border-slate-700/80 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm z-10"
         >
-          <X className="h-3.5 w-3.5" />
-          <span>Cancel</span>
+          <X className="h-4 w-4" />
+          <span className="text-[10px] font-mono text-slate-400">Esc</span>
         </button>
 
         {/* Auth Mode Tabs: Log In vs Sign Up */}
@@ -350,23 +355,13 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5 pt-1">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="w-1/3 flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-3 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  <span>Cancel</span>
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <span>Log In</span>
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-[0.98] cursor-pointer"
+              >
+                <span>Log In</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </form>
 
             <div className="pt-2 text-center">
@@ -582,29 +577,19 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             </div>
 
             {/* Submit */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-3.5 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  <span>Cancel</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuthMode('login')}
-                  className="text-xs text-slate-400 hover:text-white"
-                >
-                  Already have an account? Log In
-                </button>
-              </div>
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setAuthMode('login')}
+                className="text-xs text-slate-400 hover:text-white"
+              >
+                Already have an account? Log In
+              </button>
 
               <button
                 type="submit"
                 disabled={!captchaPassed}
-                className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all disabled:opacity-40 cursor-pointer"
+                className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all disabled:opacity-40"
               >
                 <Check className="h-4 w-4" />
                 <span>Create Account</span>

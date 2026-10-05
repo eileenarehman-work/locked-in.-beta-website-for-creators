@@ -33,7 +33,6 @@ import {
   CheckCircle2,
   Trash2,
   UserMinus,
-  LogOut,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { storage } from '../mock/initialData';
@@ -48,13 +47,11 @@ interface DirectMessagesProps {
   allRegisteredUsers?: User[];
   onSendMessage: (recipientId: string, text: string, imageUrls?: string[]) => void;
   onSendGroupMessage: (roomId: string, content: string, imageUrls?: string[]) => void;
-  onCreateGroupRoom?: (name: string, description: string, initialMembers?: User[]) => void;
+  onCreateGroupRoom?: (name: string, description: string) => void;
   onUpdateInviteStatus: (inviteId: string, status: 'ACCEPTED' | 'DECLINED') => void;
   onAcceptFriendRequest: (friendshipId: string) => void;
   onDeclineFriendRequest?: (friendshipId: string) => void;
   onSendFriendRequest: (friendHandleOrId: string) => { success: boolean; message?: string; error?: string } | void;
-  onAddGroupMember?: (roomId: string, user: User) => void;
-  onRemoveGroupMember?: (roomId: string, userId: string) => void;
   selectedUserId: string;
   onSelectUser: (userId: string) => void;
 }
@@ -70,8 +67,6 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   onSendMessage,
   onSendGroupMessage,
   onCreateGroupRoom,
-  onAddGroupMember,
-  onRemoveGroupMember,
   onUpdateInviteStatus,
   onAcceptFriendRequest,
   onDeclineFriendRequest,
@@ -87,21 +82,6 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   const [newFriendInput, setNewFriendInput] = useState('');
   const [friendSuccessMsg, setFriendSuccessMsg] = useState<string | null>(null);
   const [friendErrorMsg, setFriendErrorMsg] = useState<string | null>(null);
-
-  // Group member add / remove states
-  const [drawerTab, setDrawerTab] = useState<'members' | 'add'>('members');
-  const [memberSearchQuery, setMemberSearchQuery] = useState('');
-  const [memberListSearch, setMemberListSearch] = useState('');
-  const [directHandleInput, setDirectHandleInput] = useState('');
-  const [selectedInitialMemberIds, setSelectedInitialMemberIds] = useState<string[]>([]);
-  const [memberToast, setMemberToast] = useState<string | null>(null);
-
-  const showMemberToast = (msg: string) => {
-    setMemberToast(msg);
-    setTimeout(() => {
-      setMemberToast(null);
-    }, 3000);
-  };
 
   // Categorize friendships relative to currentUser
   const myFriendships = useMemo(() => {
@@ -261,46 +241,12 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   const handleCreateChannelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChannelName.trim()) return;
-    const initialUsers = selectedInitialMemberIds
-      .map((id) => registeredCreators.find((u) => u.id === id))
-      .filter(Boolean) as User[];
     if (onCreateGroupRoom) {
-      onCreateGroupRoom(newChannelName.trim(), newChannelDesc.trim(), initialUsers);
+      onCreateGroupRoom(newChannelName.trim(), newChannelDesc.trim());
     }
     setNewChannelName('');
     setNewChannelDesc('');
-    setSelectedInitialMemberIds([]);
     setIsCreatingChannel(false);
-    showMemberToast(`Group #${newChannelName.trim()} created!`);
-  };
-
-  const handleDirectAddMember = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeGroup || !onAddGroupMember) return;
-    const clean = directHandleInput.trim().replace(/^@/, '').toLowerCase();
-    if (!clean) return;
-
-    // Search registered creators or storage
-    const found =
-      registeredCreators.find(
-        (u) =>
-          u.handle.toLowerCase() === clean ||
-          (u.email || '').toLowerCase() === clean ||
-          u.displayName.toLowerCase() === clean
-      ) ||
-      storage.findUserByHandleOrEmail(clean);
-
-    if (found) {
-      if (activeGroup.members?.some((m) => m.userId === found.id)) {
-        showMemberToast(`@${found.handle} is already in this group!`);
-        return;
-      }
-      onAddGroupMember(activeGroup.id, found);
-      showMemberToast(`Added @${found.handle} to group!`);
-      setDirectHandleInput('');
-    } else {
-      showMemberToast(`No creator found matching "${directHandleInput.trim()}"`);
-    }
   };
 
   return (
@@ -970,9 +916,9 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
             activeGroup ? (
               <>
                 {/* Group Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-9 w-9 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center">
                       {activeGroup.avatarUrl ? (
                         <img
                           src={activeGroup.avatarUrl}
@@ -984,36 +930,16 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                         <Hash className="h-4 w-4 text-indigo-400" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-semibold text-white truncate">{activeGroup.name}</h4>
-                        <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20 shrink-0">
-                          {activeGroup.members?.length || 1} people
-                        </span>
-                      </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-white">{activeGroup.name}</h4>
                       <p className="text-[10px] text-slate-400 line-clamp-1">{activeGroup.description || 'Creator Channel'}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2">
                     <button
-                      type="button"
-                      onClick={() => {
-                        setIsDrawerOpen(true);
-                        setDrawerTab('add');
-                      }}
-                      className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 transition-all cursor-pointer"
-                    >
-                      <UserPlus className="h-3.5 w-3.5" />
-                      <span>Add People</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsDrawerOpen(true);
-                        setDrawerTab('members');
-                      }}
-                      className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-700 transition-all cursor-pointer"
+                      onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+                      className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-200 hover:text-white"
                     >
                       <Users className="h-3.5 w-3.5 text-indigo-400" />
                       <span>Members ({activeGroup.members?.length || 1})</span>
@@ -1343,410 +1269,122 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
         <AnimatePresence>
           {isDrawerOpen && activeGroup && (
             <motion.div
-              initial={{ opacity: 0, x: 300 }}
+              initial={{ opacity: 0, x: 260 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 300 }}
-              className="absolute right-0 top-0 bottom-0 w-80 sm:w-96 bg-slate-900 border-l border-slate-800 p-4 shadow-2xl z-30 flex flex-col justify-between"
+              exit={{ opacity: 0, x: 260 }}
+              className="absolute right-0 top-0 bottom-0 w-64 bg-slate-900 border-l border-slate-800 p-4 shadow-2xl z-30 flex flex-col justify-between"
             >
-              <div className="flex-1 flex flex-col min-h-0">
-                {/* Drawer Header */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3 shrink-0">
-                  <div className="flex items-center gap-2">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                  <h4 className="text-xs font-mono uppercase text-white flex items-center gap-1.5">
                     <Users className="h-4 w-4 text-indigo-400" />
-                    <h4 className="text-sm font-bold text-white tracking-tight">
-                      Group People
-                    </h4>
-                  </div>
+                    Channel Members
+                  </h4>
                   <button
-                    onClick={() => {
-                      setIsDrawerOpen(false);
-                      setMemberSearchQuery('');
-                      setDirectHandleInput('');
-                    }}
-                    className="rounded-lg p-1 text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="text-slate-400 hover:text-white"
                   >
-                    <X className="h-4 w-4" />
+                    ×
                   </button>
                 </div>
 
-                {/* Toast feedback */}
-                {memberToast && (
-                  <div className="mb-3 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md animate-in fade-in flex items-center justify-between">
-                    <span>{memberToast}</span>
-                  </div>
-                )}
+                <div className="space-y-2.5">
+                  {activeGroup.members?.map((member) => (
+                    <div key={member.userId} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={member.user.avatarUrl}
+                          alt={member.user.displayName}
+                          referrerPolicy="no-referrer"
+                          className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700"
+                        />
+                        <div>
+                          <span className="text-xs font-semibold text-white block">
+                            {member.user.displayName}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            @{member.user.handle}
+                          </span>
+                        </div>
+                      </div>
 
-                {/* Drawer Navigation Tabs: Current Members vs Add People */}
-                <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 mb-3 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setDrawerTab('members')}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                      drawerTab === 'members'
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    Members ({activeGroup.members?.length || 1})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDrawerTab('add')}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-all ${
-                      drawerTab === 'add'
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <UserPlus className="h-3.5 w-3.5" />
-                    <span>Add People</span>
-                  </button>
+                      {member.role === 'ADMIN' ? (
+                        <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                          <Crown className="h-3 w-3" />
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-slate-500">Member</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
-
-                {/* TAB 1: CURRENT MEMBERS (WITH REMOVE BUTTONS) */}
-                {drawerTab === 'members' && (
-                  <div className="flex-1 flex flex-col min-h-0 space-y-2">
-                    {/* Filter members search */}
-                    {(activeGroup.members?.length || 0) > 4 && (
-                      <div className="relative flex items-center shrink-0 mb-1">
-                        <Search className="absolute left-2.5 h-3.5 w-3.5 text-slate-500" />
-                        <input
-                          type="text"
-                          placeholder="Filter members..."
-                          value={memberListSearch}
-                          onChange={(e) => setMemberListSearch(e.target.value)}
-                          className="w-full rounded-lg border border-slate-800 bg-slate-950 pl-8 pr-2 py-1 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
-                      {(() => {
-                        const members = activeGroup.members || [];
-                        const filtered = memberListSearch.trim()
-                          ? members.filter(
-                              (m) =>
-                                m.user.handle.toLowerCase().includes(memberListSearch.toLowerCase()) ||
-                                m.user.displayName.toLowerCase().includes(memberListSearch.toLowerCase())
-                            )
-                          : members;
-
-                        if (filtered.length === 0) {
-                          return (
-                            <p className="text-xs text-slate-500 py-4 text-center italic">
-                              No members match your search.
-                            </p>
-                          );
-                        }
-
-                        return filtered.map((member) => {
-                          const isSelf = member.userId === currentUser.id;
-
-                          return (
-                            <div
-                              key={member.userId}
-                              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 transition-all"
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                                <img
-                                  src={member.user.avatarUrl}
-                                  alt={member.user.displayName}
-                                  referrerPolicy="no-referrer"
-                                  className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
-                                />
-                                <div className="min-w-0">
-                                  <span className="text-xs font-semibold text-white block truncate">
-                                    {member.user.displayName} {isSelf && <span className="text-[10px] text-slate-400 font-normal">(You)</span>}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-slate-400 block truncate">
-                                    @{member.user.handle}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2 shrink-0">
-                                {member.role === 'ADMIN' ? (
-                                  <span className="flex items-center gap-1 text-[9px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
-                                    <Crown className="h-3 w-3" />
-                                    Admin
-                                  </span>
-                                ) : (
-                                  <span className="text-[9px] font-mono text-slate-500">Member</span>
-                                )}
-
-                                {/* Remove Button */}
-                                {onRemoveGroupMember && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      onRemoveGroupMember(activeGroup.id, member.userId);
-                                      showMemberToast(
-                                        isSelf
-                                          ? 'You left the group'
-                                          : `Removed @${member.user.handle} from group`
-                                      );
-                                    }}
-                                    className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer ${
-                                      isSelf
-                                        ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-200'
-                                        : 'border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 hover:text-white'
-                                    }`}
-                                    title={isSelf ? 'Leave this group' : `Remove @${member.user.handle} from group`}
-                                  >
-                                    {isSelf ? <LogOut className="h-3 w-3" /> : <UserMinus className="h-3 w-3" />}
-                                    <span>{isSelf ? 'Leave' : 'Remove'}</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 2: ADD PEOPLE */}
-                {drawerTab === 'add' && (
-                  <div className="flex-1 flex flex-col min-h-0 space-y-3">
-                    {/* Direct Handle Quick Add */}
-                    <form onSubmit={handleDirectAddMember} className="space-y-1.5 shrink-0">
-                      <label className="block text-[10px] font-mono uppercase text-slate-400">
-                        Add by @handle or email
-                      </label>
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="text"
-                          placeholder="e.g. @marcus_builds"
-                          value={directHandleInput}
-                          onChange={(e) => setDirectHandleInput(e.target.value)}
-                          className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-                        />
-                        <button
-                          type="submit"
-                          disabled={!directHandleInput.trim()}
-                          className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-40 cursor-pointer shrink-0"
-                        >
-                          + Add
-                        </button>
-                      </div>
-                    </form>
-
-                    {/* Search creators to add */}
-                    <div className="relative flex items-center shrink-0">
-                      <Search className="absolute left-2.5 h-3.5 w-3.5 text-slate-500" />
-                      <input
-                        type="text"
-                        placeholder="Search available creators..."
-                        value={memberSearchQuery}
-                        onChange={(e) => setMemberSearchQuery(e.target.value)}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-8 pr-2 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Available Creators List */}
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
-                      {(() => {
-                        const existingIds = new Set(activeGroup.members?.map((m) => m.userId) || []);
-                        const allAvailable = (allRegisteredUsers && allRegisteredUsers.length > 0
-                          ? allRegisteredUsers
-                          : storage.getAllUsers()
-                        ).filter((u) => u && u.id && u.id !== currentUser.id && !existingIds.has(u.id));
-
-                        const filtered = memberSearchQuery.trim()
-                          ? allAvailable.filter(
-                              (u) =>
-                                u.handle.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-                                u.displayName.toLowerCase().includes(memberSearchQuery.toLowerCase())
-                            )
-                          : allAvailable;
-
-                        if (filtered.length === 0) {
-                          return (
-                            <div className="text-center py-6 text-xs text-slate-400 space-y-1">
-                              <p className="font-medium text-slate-300">
-                                {memberSearchQuery ? 'No creators found matching search' : 'All creators are in this group!'}
-                              </p>
-                              <p className="text-[11px] text-slate-500">
-                                You can also type a handle above to invite someone directly.
-                              </p>
-                            </div>
-                          );
-                        }
-
-                        return filtered.map((candidate) => (
-                          <div
-                            key={candidate.id}
-                            className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-indigo-500/40 transition-all"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                              <img
-                                src={candidate.avatarUrl}
-                                alt={candidate.displayName}
-                                referrerPolicy="no-referrer"
-                                className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
-                              />
-                              <div className="min-w-0">
-                                <span className="text-xs font-semibold text-white block truncate">
-                                  {candidate.displayName}
-                                </span>
-                                <span className="text-[10px] font-mono text-slate-400 block truncate">
-                                  @{candidate.handle}
-                                </span>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (onAddGroupMember) {
-                                  onAddGroupMember(activeGroup.id, candidate);
-                                  showMemberToast(`Added @${candidate.handle} to group!`);
-                                }
-                              }}
-                              className="rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shrink-0 cursor-pointer shadow-sm"
-                            >
-                              + Add
-                            </button>
-                          </div>
-                        ));
-                      })()}
-                    </div>
-                  </div>
-                )}
               </div>
 
-              <div className="border-t border-slate-800 pt-3 text-[11px] font-mono text-slate-400 text-center shrink-0">
-                Teen Creator Channel · Real Collaboration
+              <div className="border-t border-slate-800 pt-3 text-[11px] font-mono text-slate-400 text-center">
+                Real Teen Creators Only
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Create Group Channel Modal with Member Picker */}
+        {/* Create Group Channel Modal */}
         <AnimatePresence>
           {isCreatingChannel && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+                className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4"
               >
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <div>
-                    <h3 className="text-base font-bold text-white">Create Group Channel</h3>
-                    <p className="text-xs text-slate-400">Start a squad channel and invite creators.</p>
-                  </div>
-                  <button onClick={() => setIsCreatingChannel(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                  <h3 className="text-base font-bold text-white">Create Group Channel</h3>
+                  <button onClick={() => setIsCreatingChannel(false)} className="text-slate-400 hover:text-white">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 <form onSubmit={handleCreateChannelSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
-                      Channel Name *
+                    <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
+                      Channel Name
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. 🎨 3D Print Lab, 🎮 Unity Game Jam, 🤖 Robotics Build Team"
+                      placeholder="e.g. 🎨 3D Print & Prop Makers, 🎮 Unity Game Jam"
                       value={newChannelName}
                       onChange={(e) => setNewChannelName(e.target.value)}
                       required
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
-                      Topic / Description
+                    <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
+                      Description / Topic
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Share slicing tips, print fails, progress logs, and collaborate"
+                      placeholder="e.g. Share slicing tips, print fails, and finished prints"
                       value={newChannelDesc}
                       onChange={(e) => setNewChannelDesc(e.target.value)}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
 
-                  {/* Add People to Initial Group */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-mono uppercase text-slate-300">
-                        Add People Now (Optional)
-                      </label>
-                      <span className="text-[11px] font-mono text-indigo-400">
-                        {selectedInitialMemberIds.length} selected
-                      </span>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-800 bg-slate-950 p-2.5 max-h-44 overflow-y-auto space-y-1.5">
-                      {registeredCreators.length === 0 ? (
-                        <p className="text-xs text-slate-500 text-center py-2 italic">
-                          No other registered creators yet. You can invite friends anytime!
-                        </p>
-                      ) : (
-                        registeredCreators.map((creator) => {
-                          const isSelected = selectedInitialMemberIds.includes(creator.id);
-                          return (
-                            <div
-                              key={creator.id}
-                              onClick={() => {
-                                setSelectedInitialMemberIds((prev) =>
-                                  isSelected ? prev.filter((id) => id !== creator.id) : [...prev, creator.id]
-                                );
-                              }}
-                              className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-colors border ${
-                                isSelected
-                                  ? 'bg-indigo-600/20 border-indigo-500/40 text-white'
-                                  : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-900 text-slate-300'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <img
-                                  src={creator.avatarUrl}
-                                  alt={creator.displayName}
-                                  referrerPolicy="no-referrer"
-                                  className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
-                                />
-                                <div className="min-w-0">
-                                  <span className="text-xs font-semibold block truncate">
-                                    {creator.displayName}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-slate-400 block truncate">
-                                    @{creator.handle}
-                                  </span>
-                                </div>
-                              </div>
-                              <span
-                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
-                                  isSelected
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'border border-slate-700 bg-slate-800 text-slate-400'
-                                }`}
-                              >
-                                {isSelected ? 'Selected' : '+ Add'}
-                              </span>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                  <div className="flex items-center justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsCreatingChannel(false)}
-                      className="px-4 py-2 text-xs text-slate-400 hover:text-white cursor-pointer"
+                      className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={!newChannelName.trim()}
-                      className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-all disabled:opacity-40 cursor-pointer shadow-md shadow-indigo-600/30"
+                      className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
                     >
                       Create Channel
                     </button>

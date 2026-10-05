@@ -460,30 +460,7 @@ export const storage = {
   getChatRooms: (): ChatRoom[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CHAT_ROOMS);
-      if (data) {
-        const parsed = JSON.parse(data);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-      const defaultRooms: ChatRoom[] = [
-        {
-          id: 'room_robotics_makers',
-          type: 'GROUP',
-          name: 'Robotics & Hardware Lab',
-          description: 'Share CAD models, Arduino/Pi wiring, 3D printing & sensor tests',
-          members: [],
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'room_gamedev_creative',
-          type: 'GROUP',
-          name: 'Game Dev & Creative Coding',
-          description: 'Unity, Godot, shaders, pixel art, sound design and playtesting',
-          members: [],
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      localStorage.setItem(STORAGE_KEYS.CHAT_ROOMS, JSON.stringify(defaultRooms));
-      return defaultRooms;
+      return data ? JSON.parse(data) : [];
     } catch {
       return [];
     }
