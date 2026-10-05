@@ -258,7 +258,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors shadow-sm"
                 >
                   <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Live System</span>
+                  <span>Live Demo</span>
                 </a>
               )}
               {project.repoUrl && (
@@ -277,7 +277,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                 className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm shadow-indigo-600/30 cursor-pointer"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
-                <span>Collaborate / DM</span>
+                <span>Message</span>
               </button>
             </div>
           </div>
@@ -294,7 +294,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                     : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
                 }`}
               >
-                <span>Specs</span>
+                <span>Overview</span>
               </button>
               <button
                 type="button"
@@ -341,12 +341,12 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
           {/* Tab 1: Overview */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Actual Qualities That Interest Users */}
+              {/* Build Highlights */}
               <div className="rounded-xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/40 via-slate-950 to-slate-900 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wide">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5 tracking-wide">
                     <Sparkles className="h-4 w-4 text-amber-400" />
-                    Actual Build Qualities & Maker Highlights
+                    Highlights & Qualities
                   </span>
                 </div>
 
@@ -369,7 +369,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
               </div>
 
               <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-5">
-                <h3 className="text-sm font-semibold text-slate-200 mb-2">Tagline & Core Objective</h3>
+                <h3 className="text-sm font-semibold text-slate-200 mb-2">About this project</h3>
                 <p className="text-sm text-slate-300 leading-relaxed">{project.tagline}</p>
               </div>
 
@@ -384,7 +384,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
           {/* Tab 2: Milestones */}
           {activeTab === 'milestones' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-white">Verifiable Build Milestones</h3>
+              <h3 className="text-sm font-semibold text-white">Project Milestones</h3>
               <div className="space-y-3">
                 {project.milestones.map((milestone, idx) => (
                   <div

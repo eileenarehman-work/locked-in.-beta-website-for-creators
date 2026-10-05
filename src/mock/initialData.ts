@@ -25,8 +25,8 @@ const STORAGE_KEYS = {
   LOGIN_DATES: 'lockedin_login_dates',
   DAILY_REVIEW_DATES: 'lockedin_daily_review_dates',
   DELETED_ACCOUNTS: 'lockedin_deleted_account_ids_v1',
-  USER_PASSWORDS: 'wedidthis_user_passwords_v1',
   CLEARED_ACCOUNTS_FLAG: 'lockedin_strict_zero_fabricated_reviews_v6',
+  DRAFTS: 'lockedin_project_drafts_v1',
 };
 
 // Immediate purge of any legacy fake seed accounts, fabricated reviews, fabricated notifications, and dummy builds
@@ -69,16 +69,6 @@ if (typeof window !== 'undefined') {
           }
         }
         localStorage.setItem(STORAGE_KEYS.ALL_USERS, JSON.stringify(realUsers));
-      }
-
-      // If an account had eileen_locks_in with placeholder xxx@gmail.com, restore real email
-      const rawUser = localStorage.getItem(STORAGE_KEYS.USER);
-      if (rawUser && rawUser.includes('eileen_locks_in') && rawUser.includes('xxx@gmail.com')) {
-        localStorage.setItem(STORAGE_KEYS.USER, rawUser.replaceAll('xxx@gmail.com', 'eileen.a.rehman@gmail.com'));
-      }
-      const rawAllUsers = localStorage.getItem(STORAGE_KEYS.ALL_USERS);
-      if (rawAllUsers && rawAllUsers.includes('eileen_locks_in') && rawAllUsers.includes('xxx@gmail.com')) {
-        localStorage.setItem(STORAGE_KEYS.ALL_USERS, rawAllUsers.replaceAll('xxx@gmail.com', 'eileen.a.rehman@gmail.com'));
       }
 
       localStorage.setItem(STORAGE_KEYS.CLEARED_ACCOUNTS_FLAG, 'true');
@@ -150,20 +140,6 @@ export const storage = {
         }
       }
 
-      // Ensure Eileen's default account is present unless user explicitly deleted it
-      const deletedIds = storage.getDeletedAccountIds();
-      if (!deletedIds.has(EILEEN_DEFAULT_ACCOUNT.id)) {
-        const hasEileen = validUsers.some(
-          (u) =>
-            u.id === EILEEN_DEFAULT_ACCOUNT.id ||
-            (u.handle || '').toLowerCase() === 'eileen_locks_in' ||
-            (u.email || '').toLowerCase() === EILEEN_DEFAULT_ACCOUNT.email.toLowerCase()
-        );
-        if (!hasEileen) {
-          validUsers.push(EILEEN_DEFAULT_ACCOUNT);
-        }
-      }
-
       return validUsers;
     } catch {
       return [];
@@ -196,22 +172,7 @@ export const storage = {
       const clean = email.trim().toLowerCase();
       if (!clean) return null;
       const users = storage.getAllUsers();
-      const found = users.find((u) => (u.email || '').trim().toLowerCase() === clean);
-      if (found) return found;
-
-      // Special guarantee for Eileen's account if matching email
-      if (
-        clean === 'eileen.a.rehman@gmail.com' ||
-        clean === 'xxx@gmail.com' ||
-        clean === 'eileen@gmail.com'
-      ) {
-        const deleted = storage.getDeletedAccountIds();
-        if (!deleted.has(EILEEN_DEFAULT_ACCOUNT.id)) {
-          storage.registerUser(EILEEN_DEFAULT_ACCOUNT);
-          return EILEEN_DEFAULT_ACCOUNT;
-        }
-      }
-      return null;
+      return users.find((u) => (u.email || '').trim().toLowerCase() === clean) || null;
     } catch {
       return null;
     }
@@ -221,20 +182,9 @@ export const storage = {
       const clean = handle.replace(/^@/, '').trim().toLowerCase();
       if (!clean) return null;
       const users = storage.getAllUsers();
-      const found = users.find(
-        (u) => (u.handle || '').replace(/^@/, '').trim().toLowerCase() === clean
+      return (
+        users.find((u) => (u.handle || '').replace(/^@/, '').trim().toLowerCase() === clean) || null
       );
-      if (found) return found;
-
-      // Special guarantee for @eileen_locks_in if not explicitly deleted
-      if (clean === 'eileen_locks_in') {
-        const deleted = storage.getDeletedAccountIds();
-        if (!deleted.has(EILEEN_DEFAULT_ACCOUNT.id)) {
-          storage.registerUser(EILEEN_DEFAULT_ACCOUNT);
-          return EILEEN_DEFAULT_ACCOUNT;
-        }
-      }
-      return null;
     } catch {
       return null;
     }
@@ -254,23 +204,13 @@ export const storage = {
 
     // Check substring / fuzzy in all users
     const allUsers = storage.getAllUsers();
-    const matched = allUsers.find(
-      (u) =>
-        (u.handle || '').replace(/^@/, '').trim().toLowerCase() === cleanHandle ||
-        (u.email || '').trim().toLowerCase() === clean
+    return (
+      allUsers.find(
+        (u) =>
+          (u.handle || '').replace(/^@/, '').trim().toLowerCase() === cleanHandle ||
+          (u.email || '').trim().toLowerCase() === clean
+      ) || null
     );
-    if (matched) return matched;
-
-    // Guaranteed @eileen_locks_in fallback
-    if (cleanHandle === 'eileen_locks_in' || clean.includes('eileen')) {
-      const deleted = storage.getDeletedAccountIds();
-      if (!deleted.has(EILEEN_DEFAULT_ACCOUNT.id)) {
-        storage.registerUser(EILEEN_DEFAULT_ACCOUNT);
-        return EILEEN_DEFAULT_ACCOUNT;
-      }
-    }
-
-    return null;
   },
   getUserById: (id: string): User | null => {
     try {
@@ -301,45 +241,6 @@ export const storage = {
   isEmailRegistered: (email: string): boolean => {
     return Boolean(storage.getUserByEmail(email));
   },
-  getUserPassword: (userId: string): string => {
-    if (userId === EILEEN_DEFAULT_ACCOUNT.id) return '117190er';
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.USER_PASSWORDS);
-      const map = raw ? JSON.parse(raw) : {};
-      return map[userId] || '';
-    } catch {
-      return '';
-    }
-  },
-  setUserPassword: (userId: string, pass: string) => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.USER_PASSWORDS);
-      const map = raw ? JSON.parse(raw) : {};
-      map[userId] = pass;
-      localStorage.setItem(STORAGE_KEYS.USER_PASSWORDS, JSON.stringify(map));
-    } catch {
-      // ignore
-    }
-  },
-  validateUserPassword: (user: User, pass: string): boolean => {
-    if (!user || !pass) return false;
-    // Special internal guarantee for Eileen's account: password must be 117190er
-    if (
-      user.id === EILEEN_DEFAULT_ACCOUNT.id ||
-      (user.handle || '').replace(/^@/, '').toLowerCase() === 'eileen_locks_in' ||
-      (user.email || '').toLowerCase() === 'eileen.a.rehman@gmail.com'
-    ) {
-      return pass === '117190er';
-    }
-    // Check if user has password directly
-    if (user.password && user.password === pass) return true;
-    // Check stored password map
-    const stored = storage.getUserPassword(user.id);
-    if (stored) return stored === pass;
-    // If account was created prior to password requirement, record this password as their credential
-    storage.setUserPassword(user.id, pass);
-    return true;
-  },
   deleteUserAccount: (userId: string) => {
     try {
       // 1. Record ID in deleted accounts list
@@ -365,7 +266,15 @@ export const storage = {
       const reviews = storage.getReviews().filter((r) => r.reviewerId !== userId);
       storage.saveReviews(reviews);
 
-      // 6. Remove login dates
+      // 6. Remove drafts authored by this user
+      try {
+        const drafts = storage.getDrafts().filter((d) => d.authorId !== userId);
+        localStorage.setItem(STORAGE_KEYS.DRAFTS, JSON.stringify(drafts));
+      } catch {
+        // ignore
+      }
+
+      // 7. Remove login dates
       try {
         const rawLoginDates = localStorage.getItem(STORAGE_KEYS.LOGIN_DATES);
         if (rawLoginDates) {
@@ -410,6 +319,40 @@ export const storage = {
   },
   saveProjects: (projects: Project[]) => {
     localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
+  },
+  getDrafts: (userId?: string): Project[] => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.DRAFTS);
+      const drafts: Project[] = data ? JSON.parse(data) : [];
+      return userId ? drafts.filter((d) => d.authorId === userId) : drafts;
+    } catch {
+      return [];
+    }
+  },
+  saveDraft: (draft: Project) => {
+    try {
+      const drafts = storage.getDrafts();
+      const filtered = drafts.filter((d) => d.id !== draft.id);
+      const updated = [
+        {
+          ...draft,
+          status: 'DRAFT' as const,
+          updatedAt: new Date().toISOString(),
+        },
+        ...filtered,
+      ];
+      localStorage.setItem(STORAGE_KEYS.DRAFTS, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save draft', e);
+    }
+  },
+  deleteDraft: (draftId: string) => {
+    try {
+      const drafts = storage.getDrafts().filter((d) => d.id !== draftId);
+      localStorage.setItem(STORAGE_KEYS.DRAFTS, JSON.stringify(drafts));
+    } catch (e) {
+      console.error('Failed to delete draft', e);
+    }
   },
   getReviews: (): Review[] => {
     try {

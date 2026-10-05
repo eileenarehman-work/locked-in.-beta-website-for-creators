@@ -1192,14 +1192,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 </div>
               )}
 
-              {/* Anti-Fabrication Guarantee Notice */}
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/40 p-4 space-y-2 text-xs">
+              {/* Real Friends Notice */}
+              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/40 p-4 space-y-1.5 text-xs">
                 <div className="flex items-center gap-2 text-slate-300 font-semibold text-xs">
                   <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                  <span>Real Accounts Communication Policy</span>
+                  <span>Connecting with builders</span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Only accounts that have completed the sign-up process are saved globally in locked in. Non-existing accounts are strictly never generated or fabricated. When you add a creator, they receive your friend request upon sign-in and can accept to enable two-way instant messaging.
+                  Send a friend request to any maker you want to collaborate with. Once they accept, you can DM and exchange build tips.
                 </p>
               </div>
             </div>

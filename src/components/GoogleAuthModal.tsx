@@ -15,8 +15,6 @@ import {
   Calendar,
   CheckCircle,
   AlertCircle,
-  Eye,
-  EyeOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -57,15 +55,11 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(initialMode);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Login state: Email & Password
+  // Login state: Just email needed (empty by default, placeholder xxx@gmail.com)
   const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  // Sign up state: Full onboarding with password, age, handle, avatar, bio & tags
+  // Sign up state: Full onboarding with age, handle, avatar, bio & tags
   const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
   const [age, setAge] = useState<number>(16);
@@ -115,61 +109,45 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     }, 600);
   };
 
-  // 1. SIMPLE LOGIN: Strictly 1 account per email or @handle with password check
+  // 1. SIMPLE LOGIN: Strictly 1 account per email or @handle
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
     const cleanInput = loginEmail.trim().toLowerCase();
     if (!cleanInput) return;
 
-    if (!loginPassword) {
-      setAuthError('Please enter your password.');
+    // Check by handle or email using findUserByHandleOrEmail
+    const registeredUser = storage.findUserByHandleOrEmail(cleanInput);
+    if (registeredUser) {
+      storage.registerUser(registeredUser);
+      onSuccess(registeredUser);
       return;
     }
 
-    // Check by handle or email using findUserByHandleOrEmail (internally resolves @eileen_locks_in)
-    let user = storage.findUserByHandleOrEmail(cleanInput);
-
-    if (!user) {
-      const currentActiveUser = storage.getUser();
-      if (
-        currentActiveUser &&
-        (currentActiveUser.email.toLowerCase() === cleanInput ||
-          currentActiveUser.handle.replace(/^@/, '').toLowerCase() === cleanInput.replace(/^@/, ''))
-      ) {
-        user = currentActiveUser;
-      }
-    }
-
-    if (!user) {
-      setAuthError(
-        `No account found for "${loginEmail.trim()}". Please sign up to create your account.`
-      );
+    // Check currently active user in storage if matching
+    const currentActiveUser = storage.getUser();
+    if (
+      currentActiveUser &&
+      (currentActiveUser.email.toLowerCase() === cleanInput ||
+        currentActiveUser.handle.replace(/^@/, '').toLowerCase() === cleanInput.replace(/^@/, ''))
+    ) {
+      storage.registerUser(currentActiveUser);
+      onSuccess(currentActiveUser);
       return;
     }
 
-    // Validate password against user record
-const isPasswordValid = storage.validateUserPassword(user, loginPassword);
-if (!isPasswordValid) {
-  setAuthError('Incorrect password. Please try again.');
-  return;
-}
-
-    storage.registerUser(user);
-    onSuccess(user);
+    // No account found: inform the user to sign up
+    setAuthError(
+      `No account found for "${loginEmail.trim()}". You can log in using your @handle or email address, or sign up below.`
+    );
   };
 
-  // 2. SIGN UP: Strictly 1 account per email enforcement with password
+  // 2. SIGN UP: Strictly 1 account per email enforcement
   const handleSignupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
     const cleanSignupEmail = signupEmail.trim().toLowerCase();
     if (!cleanSignupEmail || !displayName.trim() || !handle.trim()) return;
-
-    if (!signupPassword || signupPassword.length < 6) {
-      setAuthError('Please enter a password with at least 6 characters.');
-      return;
-    }
 
     // Strict 1 account per email check:
     if (storage.isEmailRegistered(cleanSignupEmail)) {
@@ -200,7 +178,6 @@ if (!isPasswordValid) {
     const newUser: User = {
       id: `usr_${Date.now()}`,
       email: cleanSignupEmail,
-      password: signupPassword,
       googleId: `g_auth_${Math.random().toString(36).substring(2, 9)}`,
       age: Math.max(13, age),
       handle: cleanHandle,
@@ -213,8 +190,7 @@ if (!isPasswordValid) {
       createdAt: new Date().toISOString(),
     };
 
-    // Save account password and register globally
-    storage.setUserPassword(newUser.id, signupPassword);
+    // Save account globally so other creators can find and communicate with them
     storage.registerUser(newUser);
 
     onSuccess(newUser);
@@ -283,7 +259,7 @@ if (!isPasswordValid) {
         {/* 1 Account Per Email Policy Notice */}
         <div className="mb-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800/80 rounded-xl py-1.5 px-3">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-          <span>Account Rule: Exactly <strong>one account per email address</strong></span>
+          <span>One account per email</span>
         </div>
 
         {/* Error Alert Banner */}
@@ -302,7 +278,7 @@ if (!isPasswordValid) {
                   }}
                   className="mt-2 inline-flex items-center gap-1 rounded-lg bg-indigo-600/80 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors"
                 >
-                  <span>Switch to Log In with this email</span>
+                  <span>Switch to log in with this email</span>
                   <ArrowRight className="h-3 w-3" />
                 </button>
               )}
@@ -316,7 +292,7 @@ if (!isPasswordValid) {
                   }}
                   className="mt-2 inline-flex items-center gap-1 rounded-lg bg-indigo-600/80 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors"
                 >
-                  <span>Switch to Sign Up with this email</span>
+                  <span>Create an account with this email</span>
                   <ArrowRight className="h-3 w-3" />
                 </button>
               )}
@@ -330,7 +306,7 @@ if (!isPasswordValid) {
           </div>
         )}
 
-        {/* 1. LOGIN MODE: Just email needed */}
+        {/* 1. LOGIN MODE: Just email or handle needed */}
         {authMode === 'login' && (
           <div className="space-y-6">
             <div className="text-center space-y-2">
@@ -354,20 +330,20 @@ if (!isPasswordValid) {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Log In to locked in.</h3>
+              <h3 className="text-xl font-bold text-white tracking-tight">Welcome Back</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Returning creator? Just enter your email and password to log straight into your account.
+                Type your handle or email to jump back into your account.
               </p>
             </div>
 
-            {/* Login Form: Email & Password */}
+            {/* Simple Handle or Email Login Form */}
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
-                  Your Google / Creator Email
+                  Handle or Email
                 </label>
                 <div className="relative flex items-center">
-                  <Mail className="absolute left-3.5 h-4 w-4 text-slate-500" />
+                  <AtSign className="absolute left-3.5 h-4 w-4 text-slate-500" />
                   <input
                     type="text"
                     required
@@ -379,35 +355,11 @@ if (!isPasswordValid) {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
-                  Password
-                </label>
-                <div className="relative flex items-center">
-                  <Lock className="absolute left-3.5 h-4 w-4 text-slate-500" />
-                  <input
-                    type={showLoginPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Enter your password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPassword((prev) => !prev)}
-                    className="absolute right-3.5 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
-                  >
-                    {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
               <button
                 type="submit"
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-[0.98] cursor-pointer"
               >
-                <span>Continue / Log In</span>
+                <span>Log In</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>
@@ -418,21 +370,21 @@ if (!isPasswordValid) {
                 onClick={() => setAuthMode('signup')}
                 className="text-xs text-slate-400 hover:text-indigo-300 transition-colors"
               >
-                Don't have an account yet? <strong className="text-indigo-400">Sign Up</strong>
+                Don't have an account yet? <strong className="text-indigo-400">Sign up</strong>
               </button>
             </div>
           </div>
         )}
 
-        {/* 2. SIGN UP MODE: Full Onboarding with Age Verification & Avatar */}
+        {/* 2. SIGN UP MODE: Friendly Onboarding */}
         {authMode === 'signup' && (
           <form onSubmit={handleSignupSubmit} className="space-y-4.5">
             <div className="border-b border-slate-800 pb-3">
               <h3 className="text-lg font-bold text-white tracking-tight">
-                Create Your Teen Creator Account
+                Create Your Account
               </h3>
               <p className="text-xs text-slate-400">
-                Age verification & profile setup for teen safety compliance.
+                A quick profile so other builders know who you are and what you make.
               </p>
             </div>
 
@@ -451,31 +403,6 @@ if (!isPasswordValid) {
                   onChange={(e) => setSignupEmail(e.target.value)}
                   className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
                 />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
-                Choose a Password <span className="text-rose-400">*</span>
-              </label>
-              <div className="relative flex items-center">
-                <Lock className="absolute left-3 h-3.5 w-3.5 text-slate-500" />
-                <input
-                  type={showSignupPassword ? 'text' : 'password'}
-                  required
-                  placeholder="At least 6 characters"
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-10 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowSignupPassword((prev) => !prev)}
-                  className="absolute right-3 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
-                >
-                  {showSignupPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
             </div>
 

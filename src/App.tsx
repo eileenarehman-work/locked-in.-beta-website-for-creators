@@ -1042,13 +1042,13 @@ export default function App() {
                 <div className="space-y-2 max-w-2xl">
                   <div className="flex items-center gap-2 text-xs font-mono text-amber-400">
                     <Flame className="h-4 w-4 fill-amber-400 text-amber-400 animate-pulse" />
-                    <span className="font-bold tracking-wider">DAILY STREAK & MAKER POINTS HUB</span>
+                    <span className="font-bold tracking-wider">DAILY STREAK & POINTS</span>
                   </div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak Active 🔥
+                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak 🔥
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    Build daily habits. Check in everyday to grow your daily streak points, complete daily review missions, unlock badges, and climb the builder leaderboard.
+                    Check in every day to keep your streak alive, review projects from other builders, unlock badges, and climb the leaderboard.
                   </p>
                 </div>
 
@@ -1086,7 +1086,7 @@ export default function App() {
                       </span>
                       <div>
                         <h3 className="text-xs font-bold text-white tracking-tight">
-                          Daily Review Mission
+                          Daily Review Bonus
                         </h3>
                         <span className="text-[10px] font-mono text-emerald-400">
                           +15 Bonus Points Today
@@ -1106,7 +1106,7 @@ export default function App() {
                   </div>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    Complete your first community review for any project today to earn a <strong className="text-amber-300">+15 Bonus Points</strong> reward in addition to standard review points (+40 Points total)!
+                    Review any maker's project today to grab a <strong className="text-amber-300">+15 bonus points</strong> reward on top of your normal review points (+40 points total)!
                   </p>
 
                   <div className="pt-1 flex items-center justify-between">

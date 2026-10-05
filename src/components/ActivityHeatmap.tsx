@@ -123,7 +123,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           <div className="flex items-center gap-2">
             <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
               <Flame className="h-5 w-5 text-amber-400 fill-amber-400/40 drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]" />
-              <span>Ignite Your Streak</span>
+              <span>Daily Streak</span>
             </h3>
             <span className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-mono font-medium text-emerald-400 flex items-center gap-1">
               <ShieldCheck className="h-3 w-3" />
@@ -131,7 +131,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Build consecutive daily habits, double login rewards, and unlock milestone badges.
+            Log in every day to keep your streak going, earn bonus points, and unlock badges.
           </p>
         </div>
 
