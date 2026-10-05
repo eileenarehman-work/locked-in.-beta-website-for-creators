@@ -47,7 +47,9 @@ interface DirectMessagesProps {
   allRegisteredUsers?: User[];
   onSendMessage: (recipientId: string, text: string, imageUrls?: string[]) => void;
   onSendGroupMessage: (roomId: string, content: string, imageUrls?: string[]) => void;
-  onCreateGroupRoom?: (name: string, description: string) => void;
+  onCreateGroupRoom?: (name: string, description: string, initialMembers?: User[]) => void;
+  onAddGroupMember?: (roomId: string, user: User) => void;
+  onRemoveGroupMember?: (roomId: string, userId: string) => void;
   onUpdateInviteStatus: (inviteId: string, status: 'ACCEPTED' | 'DECLINED') => void;
   onAcceptFriendRequest: (friendshipId: string) => void;
   onDeclineFriendRequest?: (friendshipId: string) => void;
@@ -67,6 +69,8 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   onSendMessage,
   onSendGroupMessage,
   onCreateGroupRoom,
+  onAddGroupMember,
+  onRemoveGroupMember,
   onUpdateInviteStatus,
   onAcceptFriendRequest,
   onDeclineFriendRequest,
@@ -139,6 +143,17 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelDesc, setNewChannelDesc] = useState('');
+  const [selectedInitialMembers, setSelectedInitialMembers] = useState<User[]>([]);
+
+  // Group Member Management state
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [addMemberQuery, setAddMemberQuery] = useState('');
+  const [groupActionToast, setGroupActionToast] = useState<string | null>(null);
+
+  const showGroupToast = (msg: string) => {
+    setGroupActionToast(msg);
+    setTimeout(() => setGroupActionToast(null), 3500);
+  };
 
   // Active Peer for DM
   const activePeer = conversations[selectedUserId] || Object.values(conversations)[0];
@@ -147,6 +162,41 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
   // Active Group Room
   const activeGroup = chatRooms.find((r) => r.id === activeRoomId) || chatRooms[0];
   const currentGroupMessages = activeGroup ? groupMessages[activeGroup.id] || [] : [];
+
+  const addMemberCandidates = useMemo(() => {
+    if (!activeGroup) return [];
+    const query = addMemberQuery.trim().replace(/^@/, '').toLowerCase();
+    return registeredCreators.filter((u) => {
+      const handle = (u.handle || '').replace(/^@/, '').toLowerCase();
+      const name = (u.displayName || '').toLowerCase();
+      return !query || handle.includes(query) || name.includes(query);
+    });
+  }, [activeGroup, addMemberQuery, registeredCreators]);
+
+  const handleAddMember = (targetUser: User) => {
+    if (!activeGroup) return;
+    if (onAddGroupMember) {
+      onAddGroupMember(activeGroup.id, targetUser);
+      showGroupToast(`Added @${targetUser.handle} to #${activeGroup.name}!`);
+    }
+  };
+
+  const handleRemoveMember = (targetUserId: string, targetHandle: string) => {
+    if (!activeGroup) return;
+    if (onRemoveGroupMember) {
+      onRemoveGroupMember(activeGroup.id, targetUserId);
+      showGroupToast(`Removed @${targetHandle} from #${activeGroup.name}.`);
+    }
+  };
+
+  const handleLeaveGroup = () => {
+    if (!activeGroup) return;
+    if (onRemoveGroupMember) {
+      onRemoveGroupMember(activeGroup.id, currentUser.id);
+      showGroupToast(`You left #${activeGroup.name}.`);
+      setIsDrawerOpen(false);
+    }
+  };
 
   // Filter messages between currentUser and activePeer
   const threadMessages = activePeerId
@@ -242,16 +292,24 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
     e.preventDefault();
     if (!newChannelName.trim()) return;
     if (onCreateGroupRoom) {
-      onCreateGroupRoom(newChannelName.trim(), newChannelDesc.trim());
+      onCreateGroupRoom(newChannelName.trim(), newChannelDesc.trim(), selectedInitialMembers);
     }
     setNewChannelName('');
     setNewChannelDesc('');
+    setSelectedInitialMembers([]);
     setIsCreatingChannel(false);
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Social Center Header */}
+      {groupActionToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-2xl shadow-indigo-600/40 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <Check className="h-4 w-4 text-emerald-300" />
+          <span>{groupActionToast}</span>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl">
@@ -938,8 +996,16 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => setIsAddMemberModalOpen(true)}
+                      className="flex items-center gap-1.5 rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-2.5 py-1 text-xs text-indigo-300 hover:bg-indigo-500/20 hover:text-white transition-colors cursor-pointer"
+                      title="Add people to this group channel"
+                    >
+                      <UserPlus className="h-3.5 w-3.5 text-indigo-400" />
+                      <span>Add People</span>
+                    </button>
+                    <button
                       onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                      className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-200 hover:text-white"
+                      className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-200 hover:text-white transition-colors cursor-pointer"
                     >
                       <Users className="h-3.5 w-3.5 text-indigo-400" />
                       <span>Members ({activeGroup.members?.length || 1})</span>
@@ -1288,36 +1354,93 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                   </button>
                 </div>
 
-                <div className="space-y-2.5">
-                  {activeGroup.members?.map((member) => (
-                    <div key={member.userId} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={member.user.avatarUrl}
-                          alt={member.user.displayName}
-                          referrerPolicy="no-referrer"
-                          className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700"
-                        />
-                        <div>
-                          <span className="text-xs font-semibold text-white block">
-                            {member.user.displayName}
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-400">
-                            @{member.user.handle}
-                          </span>
+                {/* Quick Add People button at top of drawer */}
+                <button
+                  type="button"
+                  onClick={() => setIsAddMemberModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-indigo-500/40 bg-indigo-500/10 py-1.5 px-3 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 hover:text-white transition-all mb-3 cursor-pointer"
+                >
+                  <UserPlus className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>+ Add People to Group</span>
+                </button>
+
+                <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+                  {activeGroup.members?.map((member) => {
+                    const isCurrentUser = member.userId === currentUser.id;
+                    const isRoomAdmin = activeGroup.members?.some(
+                      (m) => m.userId === currentUser.id && m.role === 'ADMIN'
+                    );
+                    const memberUser =
+                      member.user ||
+                      allRegisteredUsers?.find((u) => u.id === member.userId) ||
+                      (isCurrentUser
+                        ? currentUser
+                        : {
+                            id: member.userId,
+                            displayName: 'Creator',
+                            handle: 'maker',
+                            avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=Maker',
+                          });
+
+                    return (
+                      <div
+                        key={member.userId}
+                        className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <img
+                            src={memberUser.avatarUrl}
+                            alt={memberUser.displayName}
+                            referrerPolicy="no-referrer"
+                            className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold text-white block truncate">
+                              {memberUser.displayName} {isCurrentUser && <span className="text-[10px] text-slate-400 font-normal">(you)</span>}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 block truncate">
+                              @{memberUser.handle}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                          {member.role === 'ADMIN' ? (
+                            <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                              <Crown className="h-3 w-3" />
+                              Admin
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-slate-500">Member</span>
+                          )}
+
+                          {/* Remove member button for Room Admin or Creator */}
+                          {!isCurrentUser && (isRoomAdmin || currentUser.id === activeGroup.members[0]?.userId) && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMember(member.userId, memberUser.handle)}
+                              title={`Remove @${memberUser.handle} from group`}
+                              className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            >
+                              <UserMinus className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+
+                          {/* Leave group option for current user */}
+                          {isCurrentUser && (activeGroup.members?.length || 0) > 1 && (
+                            <button
+                              type="button"
+                              onClick={handleLeaveGroup}
+                              title="Leave this group channel"
+                              className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-[10px] font-mono cursor-pointer"
+                            >
+                              Leave
+                            </button>
+                          )}
                         </div>
                       </div>
-
-                      {member.role === 'ADMIN' ? (
-                        <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
-                          <Crown className="h-3 w-3" />
-                          Admin
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono text-slate-500">Member</span>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1325,6 +1448,123 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 Real Teen Creators Only
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Add People to Group Modal */}
+        <AnimatePresence>
+          {isAddMemberModalOpen && activeGroup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md cursor-default">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl"
+              >
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                      <UserPlus className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white">Add People to #{activeGroup.name}</h3>
+                      <p className="text-[11px] text-slate-400">Invite fellow creators to join this channel</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddMemberModalOpen(false);
+                      setAddMemberQuery('');
+                    }}
+                    className="text-slate-400 hover:text-white rounded-lg p-1 cursor-pointer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Search creator */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search creators by name or @handle..."
+                    value={addMemberQuery}
+                    onChange={(e) => setAddMemberQuery(e.target.value)}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Creator candidates list */}
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                  {addMemberCandidates.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-slate-500">
+                      No matching creators found.
+                    </div>
+                  ) : (
+                    addMemberCandidates.map((candidate) => {
+                      const isAlreadyInGroup = activeGroup.members?.some(
+                        (m) => m.userId === candidate.id
+                      );
+                      return (
+                        <div
+                          key={candidate.id}
+                          className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <img
+                              src={candidate.avatarUrl}
+                              alt={candidate.displayName}
+                              referrerPolicy="no-referrer"
+                              className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <span className="text-xs font-semibold text-white block truncate">
+                                {candidate.displayName}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-400 block truncate">
+                                @{candidate.handle}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 ml-2">
+                            {isAlreadyInGroup ? (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 text-[11px] font-mono font-medium text-emerald-400">
+                                <Check className="h-3 w-3" />
+                                <span>In Group</span>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleAddMember(candidate)}
+                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors cursor-pointer"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                <span>Add</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="flex justify-end border-t border-slate-800 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddMemberModalOpen(false);
+                      setAddMemberQuery('');
+                    }}
+                    className="rounded-xl bg-slate-800 px-4 py-1.5 text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
@@ -1373,18 +1613,76 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                     />
                   </div>
 
+                  {/* Add Initial People */}
+                  <div>
+                    <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
+                      Add People (Optional)
+                    </label>
+                    <div className="max-h-36 overflow-y-auto space-y-1.5 rounded-xl border border-slate-800 bg-slate-950 p-2">
+                      {registeredCreators.length === 0 ? (
+                        <p className="text-[11px] text-slate-500 p-2">No other creators registered yet.</p>
+                      ) : (
+                        registeredCreators.map((creator) => {
+                          const isSelected = selectedInitialMembers.some((m) => m.id === creator.id);
+                          return (
+                            <button
+                              type="button"
+                              key={creator.id}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedInitialMembers((prev) =>
+                                    prev.filter((m) => m.id !== creator.id)
+                                  );
+                                } else {
+                                  setSelectedInitialMembers((prev) => [...prev, creator]);
+                                }
+                              }}
+                              className={`w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'bg-indigo-600/20 border border-indigo-500/40 text-white'
+                                  : 'hover:bg-slate-900 text-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={creator.avatarUrl}
+                                  alt={creator.displayName}
+                                  referrerPolicy="no-referrer"
+                                  className="h-6 w-6 rounded-full object-cover"
+                                />
+                                <span className="truncate">
+                                  {creator.displayName} (@{creator.handle})
+                                </span>
+                              </div>
+                              {isSelected ? (
+                                <Check className="h-3.5 w-3.5 text-indigo-400" />
+                              ) : (
+                                <Plus className="h-3.5 w-3.5 text-slate-500" />
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    {selectedInitialMembers.length > 0 && (
+                      <p className="mt-1 text-[10px] text-indigo-300 font-mono">
+                        {selectedInitialMembers.length} creator{selectedInitialMembers.length > 1 ? 's' : ''} will be added
+                      </p>
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsCreatingChannel(false)}
-                      className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                      className="px-3 py-1.5 text-xs text-slate-400 hover:text-white cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={!newChannelName.trim()}
-                      className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
+                      className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-40 cursor-pointer"
                     >
                       Create Channel
                     </button>

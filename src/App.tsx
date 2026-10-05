@@ -426,25 +426,71 @@ export default function App() {
     }));
   };
 
-  // Create Group Room
-  const handleCreateGroupRoom = (name: string, description: string) => {
+  // Create Group Room with optional initial members
+  const handleCreateGroupRoom = (name: string, description: string, initialMembers: User[] = []) => {
     if (!currentUser) return;
+    const roomId = `room_${Date.now()}`;
+    const members = [
+      {
+        roomId,
+        userId: currentUser.id,
+        role: 'ADMIN' as const,
+        user: currentUser,
+      },
+      ...initialMembers
+        .filter((u) => u.id !== currentUser.id)
+        .map((u) => ({
+          roomId,
+          userId: u.id,
+          role: 'MEMBER' as const,
+          user: u,
+        })),
+    ];
+
     const newRoom: ChatRoom = {
-      id: `room_${Date.now()}`,
+      id: roomId,
       type: 'GROUP',
       name,
       description,
-      members: [
-        {
-          roomId: `room_${Date.now()}`,
-          userId: currentUser.id,
-          role: 'ADMIN',
-          user: currentUser,
-        },
-      ],
+      members,
       createdAt: new Date().toISOString(),
     };
     setChatRooms((prev) => [newRoom, ...prev]);
+  };
+
+  // Add Member to Group
+  const handleAddGroupMember = (roomId: string, user: User) => {
+    setChatRooms((prev) =>
+      prev.map((room) => {
+        if (room.id !== roomId) return room;
+        if (room.members.some((m) => m.userId === user.id)) return room;
+        return {
+          ...room,
+          members: [
+            ...room.members,
+            {
+              roomId,
+              userId: user.id,
+              role: 'MEMBER' as const,
+              user,
+            },
+          ],
+        };
+      })
+    );
+  };
+
+  // Remove Member from Group
+  const handleRemoveGroupMember = (roomId: string, userId: string) => {
+    setChatRooms((prev) =>
+      prev.map((room) => {
+        if (room.id !== roomId) return room;
+        return {
+          ...room,
+          members: room.members.filter((m) => m.userId !== userId),
+        };
+      })
+    );
   };
 
   // Update Collaboration Invite
@@ -1329,6 +1375,8 @@ export default function App() {
               onSendMessage={handleSendMessage}
               onSendGroupMessage={handleSendGroupMessage}
               onCreateGroupRoom={handleCreateGroupRoom}
+              onAddGroupMember={handleAddGroupMember}
+              onRemoveGroupMember={handleRemoveGroupMember}
               onUpdateInviteStatus={handleUpdateInviteStatus}
               onAcceptFriendRequest={handleAcceptFriendRequest}
               onDeclineFriendRequest={handleDeclineOrRemoveFriend}
