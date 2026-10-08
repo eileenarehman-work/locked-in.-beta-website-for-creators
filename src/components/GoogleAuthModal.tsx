@@ -1,22 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { User } from '../types';
-import { storage } from '../mock/initialData';
+import { Logo } from './Logo';
 import {
-  ShieldCheck,
-  Upload,
   X,
-  Sparkles,
-  Camera,
+  Mail,
+  ShieldCheck,
+  Calendar,
+  Upload,
+  AlertCircle,
+  CheckCircle,
+  ArrowRight,
   AtSign,
   Check,
-  ArrowRight,
-  Mail,
-  Lock,
-  Calendar,
-  CheckCircle,
-  AlertCircle,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { storage } from '../mock/initialData';
 
 interface GoogleAuthModalProps {
   initialMode?: 'login' | 'signup';
@@ -25,29 +23,16 @@ interface GoogleAuthModalProps {
   existingUser?: User | null;
 }
 
+// Official Hand-Drawn Mascot Avatars from Logo
 const AVATAR_PRESETS = [
-  'https://api.dicebear.com/7.x/bottts/svg?seed=Rocket',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=Circuit',
-  'https://api.dicebear.com/7.x/pixel-art/svg?seed=Gamer',
-  'https://api.dicebear.com/7.x/pixel-art/svg?seed=Artist',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Spark',
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=Neon',
-];
-
-const TEEN_SPACES = [
-  '#art',
-  '#3dprinting',
-  '#robotics',
-  '#gamedev',
-  '#coding',
-  '#music',
-  '#makers',
-  '#electronics',
-  '#webdev',
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="46" ry="45" fill="%23ffea78" stroke="%231e293b" stroke-width="6"/><circle cx="31" cy="38" r="4.5" fill="%232aa6cb"/><circle cx="69" cy="38" r="4.5" fill="%232aa6cb"/><ellipse cx="50" cy="61" rx="14" ry="10" fill="%23ebe3dc" stroke="%231e293b" stroke-width="5"/></svg>',
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="47" ry="46" fill="%23ffadad" stroke="%231e293b" stroke-width="6"/><path d="M 24 28 Q 32 30 37 29" stroke="%231e293b" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M 60 23 Q 70 20 79 24" stroke="%231e293b" stroke-width="5.5" stroke-linecap="round" fill="none"/><circle cx="33" cy="38" r="4.5" fill="%231e293b"/><circle cx="70" cy="38" r="4.5" fill="%231e293b"/><path d="M 35 58 L 65 58 L 52 80 Z" fill="%23ffffff" stroke="%231e293b" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="48" ry="45" fill="%23ffcb95" stroke="%231e293b" stroke-width="6"/><path d="M 25 40 Q 35 36 44 40" stroke="%231e293b" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M 57 40 Q 66 36 76 40" stroke="%231e293b" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M 15 53 Q 23 46 25 55 Q 50 70 75 55 Q 77 46 85 53" stroke="%231e293b" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="47" ry="46" fill="%23ede0d7" stroke="%231e293b" stroke-width="6"/><circle cx="31" cy="38" r="5" fill="%2322c55e"/><circle cx="69" cy="38" r="4.5" fill="%231e293b"/><path d="M 34 58 Q 50 76 66 58" stroke="%231e293b" stroke-width="5.5" stroke-linecap="round" fill="none"/></svg>',
 ];
 
 export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
-  initialMode = 'login',
+  initialMode = 'signup',
   onSuccess,
   onClose,
   existingUser,
@@ -55,50 +40,57 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(initialMode);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Login state: Just email needed (empty by default, placeholder xxx@gmail.com)
+  // Login form state
   const [loginEmail, setLoginEmail] = useState('');
 
-  // Sign up state: Full onboarding with age, handle, avatar, bio & tags
-  const [signupEmail, setSignupEmail] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [handle, setHandle] = useState('');
+  // Sign up form state
+  const [signupEmail, setSignupEmail] = useState(existingUser?.email || '');
+  const [displayName, setDisplayName] = useState(existingUser?.displayName || '');
+  const [handle, setHandle] = useState(existingUser?.handle || '');
   const [age, setAge] = useState<number>(16);
-  const [bio, setBio] = useState('Teen builder & creator. Building 3D prints, game modding & robotics.');
-  const [avatarUrl, setAvatarUrl] = useState(AVATAR_PRESETS[0]);
-  const [selectedTags, setSelectedTags] = useState<string[]>(['#3dprinting', '#robotics', '#coding']);
+  const [bio, setBio] = useState(existingUser?.bio || '');
+  const [avatarUrl, setAvatarUrl] = useState(existingUser?.avatarUrl || AVATAR_PRESETS[0]);
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    existingUser?.interestTags && existingUser.interestTags.length > 0
+      ? existingUser.interestTags
+      : ['#robotics', '#3dprinting', '#gamedev']
+  );
   const [tagInput, setTagInput] = useState('');
+
+  // Human verification simulation state
   const [captchaPassed, setCaptchaPassed] = useState(false);
   const [isVerifyingCaptcha, setIsVerifyingCaptcha] = useState(false);
 
-  // Handle avatar upload via FileReader
-  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleAddCustomTag = (e: React.KeyboardEvent | React.MouseEvent) => {
+    if ('key' in e && e.key !== 'Enter' && e.key !== ',') return;
+    if ('preventDefault' in e) e.preventDefault();
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (typeof event.target?.result === 'string') {
-        setAvatarUrl(event.target.result);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
+    let clean = tagInput.trim();
+    if (!clean) return;
+    if (!clean.startsWith('#')) clean = `#${clean}`;
+    clean = clean.toLowerCase();
 
-  const handleAddCustomTag = (e?: React.KeyboardEvent | React.MouseEvent) => {
-    if (e && 'key' in e && e.key !== 'Enter' && e.key !== ',') return;
-    if (e && 'preventDefault' in e) e.preventDefault();
-    const clean = tagInput.trim().replace(/^#+/, '').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
-    if (clean) {
-      const formatted = `#${clean}`;
-      if (!selectedTags.includes(formatted)) {
-        setSelectedTags([...selectedTags, formatted]);
-      }
-      setTagInput('');
+    if (!selectedTags.includes(clean)) {
+      setSelectedTags([...selectedTags, clean]);
     }
+    setTagInput('');
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     setSelectedTags(selectedTags.filter((t) => t !== tagToRemove));
+  };
+
+  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setAvatarUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleTriggerCaptcha = () => {
@@ -109,124 +101,126 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     }, 600);
   };
 
-  // 1. SIMPLE LOGIN: Strictly 1 account per email or @handle
+  // 1. Log In Submission
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    const cleanInput = loginEmail.trim().toLowerCase();
-    if (!cleanInput) return;
 
-    // Check by handle or email using findUserByHandleOrEmail
-    const registeredUser = storage.findUserByHandleOrEmail(cleanInput);
-    if (registeredUser) {
-      storage.registerUser(registeredUser);
-      onSuccess(registeredUser);
+    const term = loginEmail.trim().toLowerCase();
+    if (!term) {
+      setAuthError('Please enter your email or handle.');
       return;
     }
 
-    // Check currently active user in storage if matching
-    const currentActiveUser = storage.getUser();
-    if (
-      currentActiveUser &&
-      (currentActiveUser.email.toLowerCase() === cleanInput ||
-        currentActiveUser.handle.replace(/^@/, '').toLowerCase() === cleanInput.replace(/^@/, ''))
-    ) {
-      storage.registerUser(currentActiveUser);
-      onSuccess(currentActiveUser);
-      return;
-    }
-
-    // No account found: inform the user to sign up
-    setAuthError(
-      `No account found for "${loginEmail.trim()}". You can log in using your @handle or email address, or sign up below.`
+    const cleanHandle = term.startsWith('@') ? term.substring(1) : term;
+    const users = storage.getAllUsers();
+    const found = users.find(
+      (u) =>
+        (u.email || '').toLowerCase() === term ||
+        (u.handle || '').toLowerCase() === cleanHandle ||
+        (u.handle || '').toLowerCase() === term
     );
+
+    if (found) {
+      storage.setUser(found);
+      onSuccess(found);
+    } else {
+      setAuthError(`No account found with '${term}'. Sign up below to create a new account!`);
+    }
   };
 
-  // 2. SIGN UP: Strictly 1 account per email enforcement
+  // 2. Sign Up Submission
   const handleSignupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    const cleanSignupEmail = signupEmail.trim().toLowerCase();
-    if (!cleanSignupEmail || !displayName.trim() || !handle.trim()) return;
 
-    // Strict 1 account per email check:
-    if (storage.isEmailRegistered(cleanSignupEmail)) {
+    const cleanEmail = signupEmail.trim().toLowerCase();
+    if (!cleanEmail) {
+      setAuthError('Email address is required.');
+      return;
+    }
+
+    const users = storage.getAllUsers();
+    if (users.some((u) => (u.email || '').toLowerCase() === cleanEmail)) {
       setAuthError(
-        `An account is already registered with "${signupEmail.trim()}". Accounts are strictly restricted to 1 per email. Please log in instead.`
+        'An account already exists for this email! Only 1 account per email is allowed. Please switch to Log In.'
       );
       return;
     }
 
-    // Also verify handle uniqueness across accounts
-    const cleanHandle = handle.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
-    const allExisting = storage.getAllUsers();
-    if (allExisting.some((u) => u.handle.toLowerCase() === cleanHandle)) {
-      setAuthError(`The handle @${cleanHandle} is already taken by another creator. Please pick a different handle.`);
+    let cleanHandle = handle.trim().toLowerCase();
+    if (cleanHandle.startsWith('@')) cleanHandle = cleanHandle.substring(1);
+    if (!cleanHandle) {
+      cleanHandle = `maker_${Math.floor(Math.random() * 8999 + 1000)}`;
+    }
+
+    if (users.some((u) => (u.handle || '').replace(/^@/, '').toLowerCase() === cleanHandle)) {
+      setAuthError(`@${cleanHandle} is already claimed. Pick another handle!`);
       return;
     }
 
     if (!captchaPassed) {
-      setAuthError('Please complete the human verification check before signing up.');
-      return;
-    }
-
-    if (!age || age < 13) {
-      setAuthError('You must be at least 13 years old to join locked in.');
+      setAuthError('Please complete the verification checkbox to continue.');
       return;
     }
 
     const newUser: User = {
       id: `usr_${Date.now()}`,
-      email: cleanSignupEmail,
-      googleId: `g_auth_${Math.random().toString(36).substring(2, 9)}`,
-      age: Math.max(13, age),
+      displayName: displayName.trim() || 'Young Creator',
       handle: cleanHandle,
-      displayName: displayName.trim(),
-      avatarUrl,
-      bio: bio.trim(),
-      reputationScore: 0,
-      trustTier: 'VERIFIED_HUMAN',
-      interestTags: selectedTags.length ? selectedTags : ['#makers'],
+      avatarUrl: avatarUrl || AVATAR_PRESETS[0],
+      email: cleanEmail,
+      googleId: `google_${Date.now()}`,
+      age: age || 16,
+      bio: bio.trim() || 'Young maker exploring robotics, 3D printing & creative code.',
+      interestTags: selectedTags.length > 0 ? selectedTags : ['#creator', '#maker'],
+      reputationScore: 10,
+      trustTier: 'CREATOR',
       createdAt: new Date().toISOString(),
     };
 
-    // Save account globally so other creators can find and communicate with them
     storage.registerUser(newUser);
-
+    storage.setUser(newUser);
     onSuccess(newUser);
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto cursor-default animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-sm overflow-y-auto cursor-default animate-in fade-in duration-150"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         onClick={(e) => e.stopPropagation()}
-        className="my-8 w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-7 shadow-2xl relative overflow-hidden cursor-default"
+        className="my-8 w-full max-w-lg rounded-3xl border-2 border-sky-200 bg-white p-6 sm:p-7 shadow-2xl relative overflow-hidden cursor-default text-slate-800"
       >
+        {/* Cancel Button in top right */}
         <button
           type="button"
           onClick={onClose}
           title="Cancel"
           aria-label="Cancel"
-          className="absolute top-5 right-5 flex items-center gap-1.5 rounded-xl border border-slate-700/80 bg-slate-800/90 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-all shadow-sm z-10 cursor-pointer"
+          className="absolute top-5 right-5 flex items-center gap-1.5 rounded-full border-2 border-slate-200 bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition-all shadow-2xs z-10 cursor-pointer active:scale-95"
         >
-          <X className="h-4 w-4 text-slate-400" />
+          <X className="h-4 w-4 text-slate-500" />
           <span>Cancel</span>
         </button>
 
+        {/* Brand Logo in Modal */}
+        <div className="flex justify-center mb-4">
+          <Logo size="md" />
+        </div>
+
         {/* Auth Mode Tabs: Log In vs Sign Up */}
-        <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-2xl border border-slate-800/80 mb-6 max-w-xs mx-auto">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-full border-2 border-slate-200 mb-5 max-w-xs mx-auto">
           <button
             type="button"
             onClick={() => setAuthMode('login')}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+            className={`flex-1 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
               authMode === 'login'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-sky-400 text-slate-950 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Log In
@@ -237,10 +231,10 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
               setAuthMode('signup');
               setAuthError(null);
             }}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+            className={`flex-1 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
               authMode === 'signup'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-300 text-slate-950 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Sign Up
@@ -248,17 +242,17 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
         </div>
 
         {/* 1 Account Per Email Policy Notice */}
-        <div className="mb-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800/80 rounded-xl py-1.5 px-3">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-          <span>One account per email</span>
+        <div className="mb-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-3 font-medium">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+          <span>One account per email policy</span>
         </div>
 
         {/* Error Alert Banner */}
         {authError && (
-          <div className="mb-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs text-rose-300 flex items-start gap-2.5 animate-in fade-in duration-200">
-            <AlertCircle className="h-4 w-4 text-rose-400 mt-0.5 flex-shrink-0" />
+          <div className="mb-5 rounded-2xl border-2 border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-800 flex items-start gap-2.5 animate-in fade-in duration-200">
+            <AlertCircle className="h-4 w-4 text-rose-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="font-medium text-rose-200 leading-snug">{authError}</p>
+              <p className="font-semibold text-rose-900 leading-snug">{authError}</p>
               {authMode === 'signup' && storage.isEmailRegistered(signupEmail) && (
                 <button
                   type="button"
@@ -267,7 +261,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                     setAuthMode('login');
                     setAuthError(null);
                   }}
-                  className="mt-2 inline-flex items-center gap-1 rounded-lg bg-indigo-600/80 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors"
+                  className="mt-2 inline-flex items-center gap-1 rounded-full bg-sky-500 px-3 py-1 text-[11px] font-bold text-white hover:bg-sky-600 transition-colors"
                 >
                   <span>Switch to log in with this email</span>
                   <ArrowRight className="h-3 w-3" />
@@ -281,7 +275,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                     setAuthMode('signup');
                     setAuthError(null);
                   }}
-                  className="mt-2 inline-flex items-center gap-1 rounded-lg bg-indigo-600/80 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors"
+                  className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-bold text-white hover:bg-emerald-600 transition-colors"
                 >
                   <span>Create an account with this email</span>
                   <ArrowRight className="h-3 w-3" />
@@ -290,7 +284,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             </div>
             <button
               onClick={() => setAuthError(null)}
-              className="text-rose-400 hover:text-white transition-colors"
+              className="text-rose-500 hover:text-rose-800 transition-colors"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -300,8 +294,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
         {/* 1. LOGIN MODE: Just email or handle needed */}
         {authMode === 'login' && (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-md">
+            <div className="text-center space-y-1.5">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white border-2 border-slate-200 shadow-xs">
                 <svg className="h-6 w-6" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -321,27 +315,27 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Welcome Back</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Type your handle or email to jump back into your account.
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Welcome Back</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Type your handle or email to jump back into the lounge.
               </p>
             </div>
 
             {/* Simple Handle or Email Login Form */}
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono uppercase text-slate-300 mb-1.5">
+                <label className="block text-xs font-mono uppercase text-slate-700 font-bold mb-1.5">
                   Handle or Email
                 </label>
                 <div className="relative flex items-center">
-                  <AtSign className="absolute left-3.5 h-4 w-4 text-slate-500" />
+                  <AtSign className="absolute left-3.5 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
                     required
                     placeholder="xxx@gmail.com"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                    className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
@@ -350,13 +344,13 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
+                  className="flex-1 rounded-full border-2 border-slate-300 bg-slate-100 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-all cursor-pointer shadow-2xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-[0.98] cursor-pointer"
+                  className="flex-[2] flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-4 py-3 text-xs font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-102 transition-all active:scale-[0.98] cursor-pointer"
                 >
                   <span>Log In</span>
                   <ArrowRight className="h-4 w-4" />
@@ -368,9 +362,9 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
               <button
                 type="button"
                 onClick={() => setAuthMode('signup')}
-                className="text-xs text-slate-400 hover:text-indigo-300 transition-colors"
+                className="text-xs text-slate-500 hover:text-sky-700 transition-colors"
               >
-                Don't have an account yet? <strong className="text-indigo-400">Sign up</strong>
+                Don't have an account yet? <strong className="text-sky-600 font-bold">Sign up</strong>
               </button>
             </div>
           </div>
@@ -378,42 +372,44 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
         {/* 2. SIGN UP MODE: Friendly Onboarding */}
         {authMode === 'signup' && (
-          <form onSubmit={handleSignupSubmit} className="space-y-4.5">
-            <div className="border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-white tracking-tight">
+          <form onSubmit={handleSignupSubmit} className="space-y-4">
+            <div className="border-b-2 border-slate-100 pb-3">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">
                 Create Your Account
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 A quick profile so other builders know who you are and what you make.
               </p>
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
-                Google / Account Email <span className="text-rose-400">*</span>
+              <label className="block text-xs font-mono uppercase text-slate-700 font-bold mb-1">
+                Account Email <span className="text-rose-500">*</span>
               </label>
               <div className="relative flex items-center">
-                <Mail className="absolute left-3 h-3.5 w-3.5 text-slate-500" />
+                <Mail className="absolute left-3 h-3.5 w-3.5 text-slate-400" />
                 <input
                   type="email"
                   required
                   placeholder="e.g. xxx@gmail.com"
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 pl-9 pr-3.5 py-2 text-xs text-slate-800 focus:border-sky-400 focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Age Verification (Mandatory for teens) */}
-            <div className="rounded-2xl border border-indigo-900/60 bg-indigo-950/20 p-3.5 space-y-1.5">
+            <div className="rounded-2xl border-2 border-sky-200 bg-sky-50/60 p-3 space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-mono uppercase text-indigo-300 flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-indigo-400" />
-                  Age Verification (13+ Required) <span className="text-rose-400">*</span>
+                <label className="text-xs font-mono uppercase text-sky-900 font-bold flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-sky-700" />
+                  Age Verification (13+ Required) <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[10px] font-mono text-indigo-400">Teen Community</span>
+                <span className="text-[10px] font-mono font-bold text-sky-700 bg-white px-2 py-0.5 rounded-full border border-sky-200">
+                  Young Creators
+                </span>
               </div>
               <input
                 type="number"
@@ -423,18 +419,18 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 onChange={(e) => setAge(parseInt(e.target.value) || 16)}
                 required
                 placeholder="Age (13-19)"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white font-mono focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-xl border-2 border-sky-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-mono focus:border-sky-400 focus:outline-none"
               />
-              <p className="text-[10px] text-slate-400">
-                locked in. is built specifically for preteens and teens (13+).
+              <p className="text-[10px] text-slate-500">
+                locked in. is built specifically for preteens, teens, and young creators.
               </p>
             </div>
 
             {/* Display Name & Handle */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
-                  Display Name <span className="text-rose-400">*</span>
+                <label className="block text-xs font-mono uppercase text-slate-700 font-bold mb-1">
+                  Display Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -442,23 +438,23 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
                   placeholder="e.g. Alex Chen"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:border-sky-400 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
-                  Unique @Handle <span className="text-rose-400">*</span>
+                <label className="block text-xs font-mono uppercase text-slate-700 font-bold mb-1">
+                  Unique @Handle <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-3 text-xs text-slate-500 font-mono">@</span>
+                  <span className="absolute left-3 text-xs text-slate-400 font-mono font-bold">@</span>
                   <input
                     type="text"
                     value={handle}
                     onChange={(e) => setHandle(e.target.value)}
                     required
                     placeholder="alex_builds"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-7 pr-3 py-2 text-xs text-white font-mono focus:border-indigo-500 focus:outline-none"
+                    className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 pl-7 pr-3 py-1.5 text-xs text-slate-800 font-mono focus:border-sky-400 focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
@@ -466,26 +462,29 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
             {/* Custom Avatar Upload */}
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5">
-                Profile Avatar (Upload image file or choose preset)
+              <label className="block text-xs font-mono uppercase text-slate-700 font-bold mb-1.5">
+                Profile Avatar (Upload image file or choose mascot)
               </label>
               <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0">
+                <div className="relative h-12 w-12 rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-200 shrink-0">
                   <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                 </div>
-                <label className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-200 hover:text-white cursor-pointer transition-colors">
-                  <Upload className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>Upload File</span>
+                <label className="flex items-center gap-1.5 rounded-full border-2 border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors shadow-2xs">
+                  <Upload className="h-3.5 w-3.5 text-sky-600" />
+                  <span>Upload Pic</span>
                   <input type="file" accept="image/*" onChange={handleAvatarFileUpload} className="hidden" />
                 </label>
-                <div className="flex items-center gap-1">
-                  {AVATAR_PRESETS.slice(0, 4).map((p, idx) => (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {AVATAR_PRESETS.map((p, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => setAvatarUrl(p)}
-                      className={`h-6 w-6 rounded-md overflow-hidden border ${
-                        avatarUrl === p ? 'border-indigo-500 ring-2 ring-indigo-500/50' : 'border-slate-800 opacity-60'
+                      title={`Select Mascot ${idx + 1}`}
+                      className={`h-8 w-8 rounded-full overflow-hidden border-2 transition-all cursor-pointer ${
+                        avatarUrl === p
+                          ? 'border-sky-400 ring-2 ring-sky-300 scale-110'
+                          : 'border-slate-200 opacity-70 hover:opacity-100'
                       }`}
                     >
                       <img src={p} alt="preset" className="h-full w-full object-cover" />
@@ -497,7 +496,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
             {/* Bio */}
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
+              <label className="block text-xs font-mono uppercase text-slate-700 font-bold mb-1">
                 Short Creator Bio
               </label>
               <input
@@ -505,26 +504,26 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="e.g. 3D printing props, Unity games, building robot combat chassis"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:border-sky-400 focus:bg-white focus:outline-none"
               />
             </div>
 
-            {/* Custom Hashtags (YouTube / Instagram style) */}
+            {/* Custom Hashtags */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-mono uppercase text-slate-400">
+              <label className="block text-xs font-mono uppercase text-slate-700 font-bold">
                 Custom Creator Hashtags
               </label>
-              <div className="flex flex-wrap gap-1.5 min-h-[30px] p-2 rounded-xl border border-slate-800 bg-slate-950">
+              <div className="flex flex-wrap gap-1.5 min-h-[30px] p-2 rounded-xl border-2 border-slate-200 bg-slate-50">
                 {selectedTags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-lg bg-indigo-600/20 border border-indigo-500/40 px-2 py-0.5 text-xs font-mono text-indigo-300 flex items-center gap-1.5"
+                    className="rounded-full bg-sky-100 border border-sky-300 px-2.5 py-0.5 text-xs font-mono text-sky-800 font-bold flex items-center gap-1.5"
                   >
                     <span>{tag}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
-                      className="text-indigo-400 hover:text-white"
+                      className="text-sky-600 hover:text-sky-900"
                     >
                       ×
                     </button>
@@ -538,12 +537,12 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleAddCustomTag}
                   placeholder="e.g. #robotics, #3dprinting, #gamejam, #art"
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 rounded-xl border-2 border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleAddCustomTag}
-                  className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+                  className="rounded-full border-2 border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
                 >
                   + Add
                 </button>
@@ -551,45 +550,45 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             </div>
 
             {/* Human Verification Checkbox */}
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-3 flex items-center justify-between">
+            <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={handleTriggerCaptcha}
                   disabled={captchaPassed || isVerifyingCaptcha}
-                  className={`h-5 w-5 rounded border flex items-center justify-center transition-all ${
+                  className={`h-5 w-5 rounded-lg border-2 flex items-center justify-center transition-all ${
                     captchaPassed
                       ? 'bg-emerald-500 border-emerald-500 text-white'
-                      : 'border-slate-600 bg-slate-800 hover:border-indigo-500'
+                      : 'border-slate-300 bg-white hover:border-sky-400'
                   }`}
                 >
                   {captchaPassed && <CheckCircle className="h-3.5 w-3.5" />}
                 </button>
-                <span className="text-xs text-slate-300">
+                <span className="text-xs text-slate-700 font-medium">
                   {captchaPassed
-                    ? 'Human verification confirmed'
+                    ? 'Creator verification confirmed'
                     : isVerifyingCaptcha
                     ? 'Verifying token...'
                     : 'I am a creator and agree to Community Guidelines'}
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-slate-500">Security Check</span>
+              <span className="text-[10px] font-mono text-slate-500 font-bold">Safety Check</span>
             </div>
 
             {/* Submit & Cancel Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t-2 border-slate-100">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
+                  className="rounded-full border-2 border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-all cursor-pointer shadow-2xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => setAuthMode('login')}
-                  className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="text-xs text-slate-500 hover:text-slate-900 transition-colors cursor-pointer font-medium"
                 >
                   Already have an account? Log In
                 </button>
@@ -598,7 +597,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
               <button
                 type="submit"
                 disabled={!captchaPassed}
-                className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all disabled:opacity-40 cursor-pointer"
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-5 py-2 text-xs font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-102 transition-all disabled:opacity-40 cursor-pointer"
               >
                 <Check className="h-4 w-4" />
                 <span>Create Account</span>

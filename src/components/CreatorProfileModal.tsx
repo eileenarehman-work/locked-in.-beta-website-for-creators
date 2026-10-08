@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Project, Review, Badge, Friendship } from '../types';
+import { User, Project, Review, Friendship } from '../types';
 import {
   X,
   UserPlus,
@@ -7,12 +7,10 @@ import {
   UserCheck,
   MessageSquare,
   Sparkles,
-  Calendar,
   Layers,
   Heart,
   Eye,
   Settings,
-  ExternalLink,
   Trophy,
   Star,
   Hammer,
@@ -23,17 +21,14 @@ import {
   CheckCircle2,
   Zap,
   Check,
-  Share2,
   Clock,
   Trash2,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { VerifiedBadge, VERIFIED_REPUTATION_THRESHOLD } from './VerifiedBadge';
 import {
   getAllMilestoneBadgesWithStatus,
-  getUnlockedBadgesForUser,
   getNextMilestoneBadge,
-  getTierBadgeStyle,
 } from '../utils/badgeSystem';
 
 interface CreatorProfileModalProps {
@@ -131,26 +126,27 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto cursor-pointer animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm overflow-y-auto cursor-pointer animate-in fade-in duration-150"
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        initial={{ opacity: 0, scale: 0.95, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        exit={{ opacity: 0, scale: 0.95, y: 12 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
         onClick={(e) => e.stopPropagation()}
-        className="my-8 w-full max-w-2xl rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden relative cursor-default"
+        className="my-8 w-full max-w-2xl rounded-3xl border-2 border-sky-200 bg-white shadow-2xl overflow-hidden relative cursor-default text-slate-800"
       >
-        {/* Cover Banner */}
-        <div className="h-32 w-full bg-gradient-to-r from-indigo-950 via-indigo-800 to-emerald-700 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.15),transparent)]" />
+        {/* Cover Banner with Warm Pastel Gradient */}
+        <div className="h-32 w-full bg-gradient-to-r from-sky-200 via-emerald-100 to-amber-100 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.7),transparent)]" />
           <button
             onClick={onClose}
             title="Close (Esc)"
             aria-label="Close profile modal (Esc)"
-            className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-slate-950/80 px-3 py-1.5 text-white/90 hover:text-white hover:bg-slate-950 transition-all border border-white/10 shadow-lg z-10"
+            className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-slate-700 hover:text-slate-900 hover:bg-white transition-all border border-sky-200 shadow-md z-10 cursor-pointer"
           >
             <X className="h-4 w-4" />
-            <span className="text-[10px] font-mono text-slate-300">Esc</span>
+            <span className="text-[10px] font-mono text-slate-500">Esc</span>
           </button>
         </div>
 
@@ -163,9 +159,9 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                 src={profileUser.avatarUrl}
                 alt={profileUser.displayName}
                 referrerPolicy="no-referrer"
-                className="h-24 w-24 rounded-2xl object-cover ring-4 ring-slate-900 bg-slate-950 shadow-xl"
+                className="h-24 w-24 rounded-full object-cover ring-4 ring-white bg-sky-50 shadow-xl"
               />
-              <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-slate-900" />
+              <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-emerald-400 ring-2 ring-white" />
             </div>
 
             {/* Action Buttons */}
@@ -177,9 +173,9 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                       onClose();
                       onEditOwnProfile();
                     }}
-                    className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700 transition-colors cursor-pointer"
+                    className="flex items-center gap-2 rounded-full border-2 border-sky-200 bg-sky-50 px-4 py-2 text-xs font-bold text-sky-900 hover:bg-sky-100 transition-colors cursor-pointer shadow-2xs"
                   >
-                    <Settings className="h-4 w-4 text-indigo-400" />
+                    <Settings className="h-4 w-4 text-sky-600" />
                     <span>Edit Profile</span>
                   </button>
                   <button
@@ -187,10 +183,10 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                       onClose();
                       onEditOwnProfile();
                     }}
-                    className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-900/30 transition-colors cursor-pointer"
-                    title="Account Settings & Delete Account"
+                    className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer shadow-2xs"
+                    title="Account Settings"
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-rose-500" />
                     <span>Delete</span>
                   </button>
                 </div>
@@ -201,9 +197,9 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                       onClose();
                       onOpenMessage(profileUser);
                     }}
-                    className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
+                    className="flex items-center gap-1.5 rounded-full border-2 border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer"
                   >
-                    <MessageSquare className="h-4 w-4 text-amber-400" />
+                    <MessageSquare className="h-4 w-4 text-amber-600" />
                     <span>Message</span>
                   </button>
 
@@ -220,16 +216,16 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                               setTimeout(() => setFriendActionMsg(null), 3000);
                             }
                           }}
-                          className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-950/20 text-rose-300 hover:bg-rose-900/30 px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer group"
+                          className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer shadow-2xs group"
                           title={`Unfriend @${profileUser.handle}`}
                         >
-                          <UserMinus className="h-4 w-4 text-rose-400 group-hover:scale-110 transition-transform" />
+                          <UserMinus className="h-4 w-4 text-rose-500 group-hover:scale-110 transition-transform" />
                           <span>Unfriend</span>
                         </button>
                       ) : userFriendship?.status === 'PENDING' ? (
                         userFriendship.userId === currentUser.id ? (
-                          <span className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-xs font-medium text-slate-400">
-                            <Clock className="h-3.5 w-3.5 text-amber-400" />
+                          <span className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-500 shadow-2xs">
+                            <Clock className="h-3.5 w-3.5 text-amber-500" />
                             <span>Request Sent</span>
                           </span>
                         ) : (
@@ -242,7 +238,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                                 setTimeout(() => setFriendActionMsg(null), 3000);
                               }
                             }}
-                            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors shadow-sm"
+                            className="flex items-center gap-1.5 rounded-full bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-emerald-300 transition-colors shadow-2xs cursor-pointer"
                           >
                             <Check className="h-4 w-4" />
                             <span>Accept Friend</span>
@@ -258,9 +254,9 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                               setTimeout(() => setFriendActionMsg(null), 3000);
                             }
                           }}
-                          className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
+                          className="flex items-center gap-1.5 rounded-full border-2 border-sky-200 bg-sky-50 px-3.5 py-2 text-xs font-bold text-sky-800 hover:bg-sky-100 transition-colors shadow-2xs cursor-pointer"
                         >
-                          <UserPlus className="h-4 w-4 text-indigo-400" />
+                          <UserPlus className="h-4 w-4 text-sky-600" />
                           <span>Add Friend</span>
                         </button>
                       )}
@@ -271,12 +267,12 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                     onClick={() => onToggleFollow(profileUser.id)}
                     onMouseEnter={() => setIsHoveringFollow(true)}
                     onMouseLeave={() => setIsHoveringFollow(false)}
-                    className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-2xs ${
                       isFollowing
                         ? isHoveringFollow
-                          ? 'border border-rose-600/40 bg-rose-600/20 text-rose-300'
-                          : 'border border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
-                        : 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500'
+                          ? 'border border-rose-300 bg-rose-50 text-rose-700'
+                          : 'border border-emerald-300 bg-emerald-50 text-emerald-800'
+                        : 'bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 text-slate-950 hover:scale-105 active:scale-95'
                     }`}
                   >
                     {isFollowing ? (
@@ -287,7 +283,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                         </>
                       ) : (
                         <>
-                          <UserCheck className="h-4 w-4 text-emerald-400" />
+                          <UserCheck className="h-4 w-4 text-emerald-600" />
                           <span>Following</span>
                         </>
                       )
@@ -303,11 +299,19 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
             </div>
           </div>
 
+          {/* Feedback alert for friend action */}
+          {friendActionMsg && (
+            <div className="mb-3 rounded-2xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800 font-bold flex items-center gap-2 animate-in fade-in">
+              <Check className="h-4 w-4 text-emerald-600" />
+              <span>{friendActionMsg}</span>
+            </div>
+          )}
+
           {/* User Names & Gamified Badges */}
           <div className="space-y-3">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl flex items-center gap-2">
+                <h2 className="text-xl font-black text-slate-900 tracking-tight sm:text-2xl flex items-center gap-2">
                   <span>{profileUser.displayName}</span>
                   <VerifiedBadge
                     size="md"
@@ -315,15 +319,15 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                     reputationScore={profileUser.reputationScore}
                   />
                 </h2>
-                <span className="rounded-md bg-indigo-500/20 border border-indigo-500/30 px-2 py-0.5 text-[10px] font-mono font-medium text-indigo-300">
+                <span className="rounded-full bg-sky-100 border border-sky-200 px-2.5 py-0.5 text-[11px] font-bold text-sky-800">
                   {profileUser.age} yrs
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs font-mono text-indigo-400">@{profileUser.handle}</span>
+                <span className="text-xs font-mono font-bold text-sky-700">@{profileUser.handle}</span>
                 {profileUser.reputationScore >= VERIFIED_REPUTATION_THRESHOLD && (
-                  <span className="text-[10px] text-sky-400 font-mono flex items-center gap-1 font-medium">
-                    • Peer Reviewer
+                  <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                    • Verified Peer Reviewer
                   </span>
                 )}
               </div>
@@ -332,25 +336,22 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
             {/* Unlocked Badges Showcase Chips */}
             {unlockedBadges.length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                {unlockedBadges.map((badge) => {
-                  const style = getTierBadgeStyle(badge.tier);
-                  return (
-                    <button
-                      key={badge.id}
-                      onClick={() => setActiveTab('badges')}
-                      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-all hover:scale-105 ${style.pillBg}`}
-                      title={`${badge.name}: ${badge.description}`}
-                    >
-                      <span className="flex-shrink-0">{renderBadgeIcon(badge.iconName, 'h-3.5 w-3.5')}</span>
-                      <span>{badge.name}</span>
-                    </button>
-                  );
-                })}
+                {unlockedBadges.map((badge) => (
+                  <button
+                    key={badge.id}
+                    onClick={() => setActiveTab('badges')}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-900 transition-all hover:scale-105 shadow-2xs cursor-pointer"
+                    title={`${badge.name}: ${badge.description}`}
+                  >
+                    <span className="text-amber-600">{renderBadgeIcon(badge.iconName, 'h-3.5 w-3.5')}</span>
+                    <span>{badge.name}</span>
+                  </button>
+                ))}
               </div>
             )}
 
             {profileUser.bio && (
-              <p className="text-xs text-slate-300 leading-relaxed max-w-xl">
+              <p className="text-xs text-slate-600 font-medium leading-relaxed max-w-xl">
                 {profileUser.bio}
               </p>
             )}
@@ -361,7 +362,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                 {profileUser.interestTags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-lg bg-slate-950 border border-slate-800 px-2 py-0.5 text-[11px] font-mono text-slate-400"
+                    className="rounded-full bg-slate-50 border border-slate-200 px-3 py-0.5 text-xs font-bold text-slate-600"
                   >
                     {tag.startsWith('#') ? tag : `#${tag}`}
                   </span>
@@ -371,48 +372,48 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
 
             {/* Next Badge Milestone Progression Card */}
             {nextMilestone ? (
-              <div className="rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 p-3.5 space-y-2.5">
+              <div className="rounded-3xl border-2 border-sky-100 bg-gradient-to-r from-sky-50 via-emerald-50 to-amber-50 p-4 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-sky-700 border border-sky-200 shadow-2xs">
                       {renderBadgeIcon(nextMilestone.badge.iconName, 'h-3.5 w-3.5')}
                     </span>
                     <div>
-                      <span className="font-semibold text-white">Next Milestone: {nextMilestone.badge.name}</span>
-                      <span className="text-[10px] font-mono text-slate-400 ml-1.5">({nextMilestone.badge.minReputationScore} Points required)</span>
+                      <span className="font-black text-slate-900">Next Milestone: {nextMilestone.badge.name}</span>
+                      <span className="text-[11px] font-medium text-slate-500 ml-1.5">({nextMilestone.badge.minReputationScore} Points)</span>
                     </div>
                   </div>
-                  <span className="font-mono text-indigo-300 font-semibold tabular-nums text-[11px]">
+                  <span className="font-bold text-sky-800 tabular-nums text-xs">
                     {profileUser.reputationScore} / {nextMilestone.badge.minReputationScore} Points
                   </span>
                 </div>
                 {/* Progress bar */}
-                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-2 w-full rounded-full bg-white border border-slate-200 overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-300 rounded-full transition-all duration-500"
                     style={{
                       width: `${Math.min(100, Math.max(6, nextMilestone.progressPercent))}%`,
                     }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
-                  <span>Earn +25 Points per peer review (+15 daily review bonus) & +30 Points per build</span>
-                  <span className="text-emerald-400 font-medium font-mono">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                  <span>Earn points by reviewing creations and posting prototypes</span>
+                  <span className="text-emerald-700 font-bold">
                     {nextMilestone.remaining} Points to unlock
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-slate-950 p-3.5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex-shrink-0">
-                  <Star className="h-5 w-5 fill-amber-400/40 text-amber-400" />
+              <div className="rounded-3xl border-2 border-amber-200 bg-amber-50/70 p-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 border border-amber-300 text-amber-600 flex-shrink-0 shadow-2xs">
+                  <Star className="h-5 w-5 fill-amber-400 text-amber-500" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-amber-200 uppercase tracking-wide">
-                    Master Tier Reached
+                  <span className="text-xs font-black text-amber-900 uppercase tracking-wide">
+                    Master Tier Innovator Reached
                   </span>
-                  <p className="text-[11px] text-slate-300 leading-snug mt-0.5">
-                    All badges unlocked... congrats! ({profileUser.reputationScore} points). A legendary leader of the platform.
+                  <p className="text-xs text-slate-600 font-medium leading-snug mt-0.5">
+                    All badges unlocked with {profileUser.reputationScore} points! A champion of youth innovation.
                   </p>
                 </div>
               </div>
@@ -420,42 +421,42 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
           </div>
 
           {/* Creator Stats Counters */}
-          <div className="grid grid-cols-4 gap-2 border-y border-slate-800/80 py-3.5 mt-5">
+          <div className="grid grid-cols-4 gap-2 border-y border-sky-100 py-3.5 mt-5">
             <div className="text-center">
-              <span className="block text-base font-bold text-white tabular-nums">
+              <span className="block text-base font-black text-slate-900 tabular-nums">
                 {userProjects.length}
               </span>
-              <span className="text-[11px] font-mono text-slate-400">Builds</span>
+              <span className="text-[11px] font-bold text-slate-500">Builds</span>
             </div>
             <div className="text-center">
-              <span className="block text-base font-bold text-white tabular-nums">
+              <span className="block text-base font-black text-slate-900 tabular-nums">
                 {followerCount}
               </span>
-              <span className="text-[11px] font-mono text-slate-400">Followers</span>
+              <span className="text-[11px] font-bold text-slate-500">Followers</span>
             </div>
             <div className="text-center">
-              <span className="block text-base font-bold text-white tabular-nums">
+              <span className="block text-base font-black text-slate-900 tabular-nums">
                 {followingCount}
               </span>
-              <span className="text-[11px] font-mono text-slate-400">Following</span>
+              <span className="text-[11px] font-bold text-slate-500">Following</span>
             </div>
             <div className="text-center">
-              <span className="flex items-center justify-center gap-1 text-base font-bold text-amber-400 tabular-nums">
-                <Star className="h-3.5 w-3.5 fill-amber-400/40 text-amber-400" />
+              <span className="flex items-center justify-center gap-1 text-base font-black text-amber-600 tabular-nums">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
                 {profileUser.reputationScore}
               </span>
-              <span className="text-[11px] font-mono text-slate-400">Points</span>
+              <span className="text-[11px] font-bold text-slate-500">Points</span>
             </div>
           </div>
 
           {/* Navigation Tabs: Builds vs Badges vs Reviews */}
-          <div className="flex items-center gap-2 border-b border-slate-800 pt-5 pb-3">
+          <div className="flex items-center gap-2 border-b border-sky-100 pt-5 pb-3">
             <button
               onClick={() => setActiveTab('builds')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black transition-all cursor-pointer ${
                 activeTab === 'builds'
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-sky-100 text-sky-900 border-2 border-sky-300 shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <Layers className="h-3.5 w-3.5" />
@@ -463,41 +464,40 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('badges')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black transition-all cursor-pointer ${
                 activeTab === 'badges'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-amber-100 text-amber-900 border-2 border-amber-300 shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Trophy className="h-3.5 w-3.5 text-amber-400" />
+              <Trophy className="h-3.5 w-3.5 text-amber-600" />
               <span>Badges</span>
             </button>
             <button
               onClick={() => setActiveTab('reviews')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black transition-all cursor-pointer ${
                 activeTab === 'reviews'
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-emerald-100 text-emerald-900 border-2 border-emerald-300 shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
               <span>Reviews</span>
             </button>
           </div>
 
           {/* Tab Content */}
           <div className="pt-4 max-h-[380px] overflow-y-auto space-y-3 pr-1">
-            {/* Tab 1: Builds with Actual Qualities That Interest the User */}
+            {/* Tab 1: Builds */}
             {activeTab === 'builds' && (
               userProjects.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-800 p-8 text-center text-xs text-slate-500 space-y-1">
-                  <Layers className="h-6 w-6 mx-auto text-slate-600 mb-2" />
-                  <p>No builds published by this creator yet.</p>
+                <div className="rounded-3xl border-2 border-dashed border-sky-100 p-8 text-center text-xs text-slate-500 space-y-1">
+                  <Layers className="h-6 w-6 mx-auto text-sky-400 mb-2" />
+                  <p className="font-bold">No builds published by this creator yet.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {userProjects.map((p) => {
-                    // Extract actual qualities that interest the user
                     const primaryQuality = p.qualities?.[0] || 'Working Prototype';
                     const secondaryQualities = p.qualities?.slice(1, 3) || ['Open Source CAD', 'Field Tested'];
 
@@ -508,10 +508,10 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                           onClose();
                           onOpenProject(p);
                         }}
-                        className="group flex flex-col rounded-2xl border border-slate-800 bg-slate-950 p-3 text-left transition-all hover:border-indigo-500/40 hover:bg-slate-950/90 overflow-hidden"
+                        className="group flex flex-col rounded-3xl border-2 border-slate-100 bg-white p-3.5 text-left transition-all hover:border-sky-300 hover:shadow-md cursor-pointer overflow-hidden"
                       >
-                        {/* Build Cover Media with Actual Qualities Overlay */}
-                        <div className="h-28 w-full rounded-xl overflow-hidden bg-slate-900 mb-2.5 relative border border-slate-800/80">
+                        {/* Build Cover Media */}
+                        <div className="h-28 w-full rounded-2xl overflow-hidden bg-slate-100 mb-2.5 relative border border-slate-200">
                           {p.mediaUrls[0] ? (
                             <img
                               src={p.mediaUrls[0]}
@@ -519,34 +519,34 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                               className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-950/60 p-4 text-center">
-                              <span className="text-xs font-semibold text-indigo-300">
+                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-50 to-emerald-50 p-4 text-center">
+                              <span className="text-xs font-black text-sky-800">
                                 {primaryQuality}
                               </span>
                             </div>
                           )}
 
-                          {/* Actual Qualities Overlay Badge (top-left) */}
+                          {/* Primary Quality Overlay Badge */}
                           <div className="absolute top-2 left-2 z-10">
-                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-950/85 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/40 shadow-sm">
-                              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-black text-emerald-800 border border-emerald-200 shadow-2xs">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                               <span>{primaryQuality}</span>
                             </span>
                           </div>
 
-                          {/* Quick Rubric / Proof indicator (top-right) */}
+                          {/* Quick Rubric / Proof indicator */}
                           <div className="absolute top-2 right-2 z-10">
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-950/85 backdrop-blur-md px-1.5 py-0.5 text-[9px] font-mono font-medium text-indigo-300 border border-indigo-500/30">
-                              <Sparkles className="h-3 w-3 text-sky-400" />
+                            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-md px-2 py-0.5 text-[10px] font-black text-sky-800 border border-sky-200 shadow-2xs">
+                              <Sparkles className="h-3 w-3 text-amber-500" />
                               <span>Build</span>
                             </span>
                           </div>
                         </div>
 
-                        <h4 className="text-xs font-bold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">
+                        <h4 className="text-xs font-black text-slate-900 group-hover:text-sky-700 transition-colors line-clamp-1">
                           {p.title}
                         </h4>
-                        <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">
+                        <p className="text-[11px] text-slate-600 line-clamp-2 mt-0.5 font-medium">
                           {p.tagline || p.contentMarkdown.slice(0, 80)}
                         </p>
 
@@ -555,16 +555,16 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                           {secondaryQualities.map((q, idx) => (
                             <span
                               key={idx}
-                              className="rounded bg-slate-900 px-1.5 py-0.5 text-[9px] font-mono text-slate-300 border border-slate-800"
+                              className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-800 border border-sky-100"
                             >
                               {q}
                             </span>
                           ))}
                         </div>
 
-                        <div className="mt-2.5 flex items-center justify-between text-[10px] font-mono text-slate-500 border-t border-slate-900 pt-2">
-                          <span className="flex items-center gap-1 text-rose-400/80">
-                            <Heart className="h-3 w-3" />
+                        <div className="mt-2.5 flex items-center justify-between text-[11px] font-bold text-slate-400 border-t border-slate-100 pt-2">
+                          <span className="flex items-center gap-1 text-rose-500">
+                            <Heart className="h-3 w-3 fill-rose-500/20" />
                             {p.likesCount}
                           </span>
                           <span className="flex items-center gap-1">
@@ -582,98 +582,94 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
             {/* Tab 2: Gamified Badges Showcase */}
             {activeTab === 'badges' && (
               <div className="space-y-3">
-                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-300 flex items-center justify-between">
+                <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/60 p-3.5 text-xs text-amber-900 font-bold flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-amber-400" />
+                    <Trophy className="h-4 w-4 text-amber-600" />
                     <span>Badges unlock as you publish builds and write constructive peer reviews.</span>
                   </div>
-                  <span className="font-mono text-emerald-400 font-semibold text-[11px]">
-                    {profileUser.reputationScore} Total Points
+                  <span className="font-black text-amber-800 text-xs">
+                    {profileUser.reputationScore} Points
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {milestoneBadges.map((badge) => {
-                    const style = getTierBadgeStyle(badge.tier);
-
-                    return (
-                      <div
-                        key={badge.id}
-                        className={`rounded-2xl border p-3.5 transition-all relative overflow-hidden flex flex-col justify-between ${
-                          badge.isUnlocked
-                            ? `${style.border} ${style.bg} shadow-lg ${style.glow}`
-                            : 'border-slate-800/80 bg-slate-950/50 opacity-70'
-                        }`}
-                      >
-                        <div>
-                          {/* Top Row: Icon + Rarity + Status */}
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                                  badge.isUnlocked
-                                    ? style.iconBg
-                                    : 'bg-slate-800 text-slate-500 border border-slate-700'
+                  {milestoneBadges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className={`rounded-3xl border-2 p-3.5 transition-all relative overflow-hidden flex flex-col justify-between ${
+                        badge.isUnlocked
+                          ? 'border-amber-300 bg-gradient-to-br from-amber-50 via-white to-sky-50 shadow-sm'
+                          : 'border-slate-200 bg-slate-50/70 opacity-70'
+                      }`}
+                    >
+                      <div>
+                        {/* Top Row */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`flex h-9 w-9 items-center justify-center rounded-full ${
+                                badge.isUnlocked
+                                  ? 'bg-amber-100 text-amber-700 border border-amber-300 shadow-2xs'
+                                  : 'bg-slate-200 text-slate-500 border border-slate-300'
+                              }`}
+                            >
+                              {renderBadgeIcon(badge.iconName, 'h-4 w-4')}
+                            </div>
+                            <div>
+                              <h4
+                                className={`text-xs font-black leading-tight ${
+                                  badge.isUnlocked ? 'text-slate-900' : 'text-slate-500'
                                 }`}
                               >
-                                {renderBadgeIcon(badge.iconName, 'h-4 w-4')}
-                              </div>
-                              <div>
-                                <h4
-                                  className={`text-xs font-bold leading-tight ${
-                                    badge.isUnlocked ? 'text-white' : 'text-slate-400'
-                                  }`}
-                                >
-                                  {badge.name}
-                                </h4>
-                                <span className="text-[10px] font-mono text-slate-400 capitalize">
-                                  {badge.tier} Tier · {badge.rarity}
-                                </span>
-                              </div>
+                                {badge.name}
+                              </h4>
+                              <span className="text-[10px] font-bold text-slate-400 capitalize">
+                                {badge.tier} Tier
+                              </span>
                             </div>
-
-                            {badge.isUnlocked ? (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[9px] font-mono font-semibold text-emerald-300">
-                                <Check className="h-3 w-3" />
-                                UNLOCKED
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-800 px-2 py-0.5 text-[9px] font-mono text-slate-400 border border-slate-700">
-                                <Lock className="h-2.5 w-2.5 text-slate-500" />
-                                {badge.minReputationScore} PTS
-                              </span>
-                            )}
                           </div>
 
-                          {/* Description */}
-                          <p className="text-[11px] text-slate-300 leading-relaxed">
-                            {badge.description}
-                          </p>
+                          {badge.isUnlocked ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-black text-emerald-800 shadow-2xs">
+                              <Check className="h-3 w-3" />
+                              UNLOCKED
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-600">
+                              <Lock className="h-2.5 w-2.5 text-slate-500" />
+                              {badge.minReputationScore} PTS
+                            </span>
+                          )}
                         </div>
 
-                        {/* Bottom Row / Progress for locked badges */}
-                        {!badge.isUnlocked && (
-                          <div className="mt-3 pt-2 border-t border-slate-800/60 space-y-1.5">
-                            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                              <span>Progress</span>
-                              <span>
-                                {profileUser.reputationScore} / {badge.minReputationScore} ({badge.progressPercent}%)
-                              </span>
-                            </div>
-                            <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
-                              <div
-                                className="h-full bg-indigo-500 rounded-full"
-                                style={{ width: `${badge.progressPercent}%` }}
-                              />
-                            </div>
-                            <span className="text-[9px] font-mono text-indigo-300 block text-right">
-                              {badge.remainingRep} Points remaining
+                        {/* Description */}
+                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                          {badge.description}
+                        </p>
+                      </div>
+
+                      {/* Bottom Row / Progress for locked badges */}
+                      {!badge.isUnlocked && (
+                        <div className="mt-3 pt-2 border-t border-slate-200 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                            <span>Progress</span>
+                            <span>
+                              {profileUser.reputationScore} / {badge.minReputationScore} ({badge.progressPercent}%)
                             </span>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          <div className="h-2 w-full rounded-full bg-white border border-slate-200 overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-sky-400 to-emerald-400 rounded-full"
+                              style={{ width: `${badge.progressPercent}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-bold text-sky-700 block text-right">
+                            {badge.remainingRep} Points remaining
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -681,24 +677,24 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
             {/* Tab 3: Reviews Written */}
             {activeTab === 'reviews' && (
               userReviews.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-800 p-8 text-center text-xs text-slate-500 space-y-1">
-                  <Sparkles className="h-6 w-6 mx-auto text-slate-600 mb-2" />
-                  <p>No peer reviews given yet.</p>
+                <div className="rounded-3xl border-2 border-dashed border-sky-100 p-8 text-center text-xs text-slate-500 space-y-1">
+                  <Sparkles className="h-6 w-6 mx-auto text-sky-400 mb-2" />
+                  <p className="font-bold">No peer reviews given yet.</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
                   {userReviews.map((rev) => (
                     <div
                       key={rev.id}
-                      className="rounded-2xl border border-slate-800 bg-slate-950 p-3.5 text-xs text-slate-300 space-y-2"
+                      className="rounded-3xl border-2 border-sky-100 bg-sky-50/40 p-4 text-xs text-slate-700 space-y-2"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-white">Review for Build</span>
-                        <span className="text-[10px] font-mono text-slate-500">
+                        <span className="font-black text-slate-900">Peer Review for Build</span>
+                        <span className="text-[10px] font-bold text-slate-400">
                           {new Date(rev.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-slate-300 text-xs italic">
+                      <p className="text-slate-600 text-xs italic font-medium leading-relaxed">
                         "{rev.feedbackText}"
                       </p>
                     </div>

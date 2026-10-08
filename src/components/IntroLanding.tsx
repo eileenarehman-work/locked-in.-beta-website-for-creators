@@ -4,10 +4,8 @@ import { Project } from '../types';
 import {
   Sparkles,
   ArrowRight,
-  Flame,
-  MessageSquare,
   CheckCircle2,
-  Code2,
+  Globe2,
 } from 'lucide-react';
 import { Logo } from './Logo';
 
@@ -22,11 +20,12 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
   featuredProjects,
 }) => {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* Symmetrical Background Gradients & Ambient Glow */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-gradient-to-b from-indigo-600/20 via-indigo-950/10 to-transparent blur-3xl" />
-      <div className="pointer-events-none absolute top-1/2 -left-48 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/2 -right-48 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
+    <div className="relative min-h-screen overflow-hidden bg-[#faf7f2] text-slate-800 selection:bg-sky-200 selection:text-sky-900">
+      {/* Symmetrical Bubbly Pastel Ambient Glows (Sky Blue, Mint Green, Peach & Butter Yellow) */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-[650px] w-[950px] -translate-x-1/2 rounded-full bg-gradient-to-b from-sky-200/50 via-emerald-200/35 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -left-48 h-[450px] w-[450px] rounded-full bg-amber-200/40 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-48 h-[450px] w-[450px] rounded-full bg-rose-200/40 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 left-1/2 -translate-x-1/2 h-80 w-[700px] rounded-full bg-emerald-200/35 blur-3xl" />
 
       {/* Top Navigation */}
       <header className="relative z-20 mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -37,46 +36,46 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => onOpenGoogleLogin('login')}
-            className="rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+            className="rounded-full border-2 border-slate-300 bg-white/90 px-5 py-2 text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:border-sky-300 transition-all cursor-pointer shadow-xs active:scale-95"
           >
             Log In
           </button>
           <button
             onClick={() => onOpenGoogleLogin('signup')}
-            className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all cursor-pointer"
+            className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-5 py-2 text-xs font-black text-slate-900 shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
           >
-            Sign Up
+            Join the Community
           </button>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 mx-auto max-w-5xl px-4 pt-16 pb-20 sm:px-6 lg:px-8 text-center space-y-8">
-        {/* Symmetrical Hero Title */}
+      <section className="relative z-10 mx-auto max-w-5xl px-4 pt-14 pb-20 sm:px-6 lg:px-8 text-center space-y-8">
+        {/* Bubbly Hero Title */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mx-auto max-w-4xl text-4xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl leading-tight"
+          className="mx-auto max-w-4xl text-4xl font-black tracking-tight text-slate-900 sm:text-6xl lg:text-7xl leading-tight"
         >
-          WE DON’T JUST SCROLL. <br />
-          <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent">
-            WE CREATE THE FUTURE.
+          JOIN THE FIGHT FOR INNOVATION. <br />
+          <span className="bg-gradient-to-r from-sky-600 via-emerald-500 to-amber-500 bg-clip-text text-transparent">
+            WE ARE NOT THEIR PAWNS.
           </span>
         </motion.h1>
 
-        {/* Symmetrical Centered Subtitle */}
+        {/* Informally Friendly Subtitle */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mx-auto max-w-2xl text-base text-slate-300 sm:text-lg leading-relaxed text-center"
+          className="mx-auto max-w-2xl text-base text-slate-600 sm:text-lg leading-relaxed text-center font-medium"
         >
-          The best website for creators of all ages to showcase their projects in hardware, robotics, 3D prints, games, art, music, and more.
-          Publish your projects, follow fellow creators, and collaborate in real-time.
+          The friendliest website for creators of all ages to share their projects in 3D prints, games, robotics, code, and art.
+          Connect with builders all over the world, chat directly, and make cool things together!
         </motion.p>
 
-        {/* Symmetrical Balanced CTA Buttons */}
+        {/* Bubbly Pastel CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -85,10 +84,10 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
         >
           {/* Glowing Google OAuth Button */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => onOpenGoogleLogin('signup')}
-            className="group relative flex w-full sm:w-auto items-center justify-center gap-3 rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-xl shadow-indigo-500/20 transition-all hover:bg-slate-100 cursor-pointer"
+            className="group relative flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-white border-2 border-slate-200 px-8 py-4 text-sm font-black text-slate-800 shadow-lg shadow-sky-200/50 hover:border-sky-300 hover:bg-slate-50 transition-all cursor-pointer"
           >
             {/* Google G logo */}
             <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -110,65 +109,111 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
               />
             </svg>
             <span>Sign Up with Google</span>
-            <div className="absolute inset-0 -z-10 rounded-2xl bg-indigo-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 -z-10 rounded-full bg-sky-200/40 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
           </motion.button>
 
-          {/* Log In to Explore CTA */}
+          {/* View Feed CTA */}
           <button
             onClick={() => onOpenGoogleLogin('login')}
-            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/90 px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-md hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border-2 border-slate-300 bg-white/80 px-8 py-4 text-sm font-bold text-slate-700 backdrop-blur-md hover:bg-white hover:border-emerald-300 hover:text-slate-900 transition-all cursor-pointer shadow-xs active:scale-95"
           >
-            <span>Explore Community</span>
-            <ArrowRight className="h-4 w-4 text-indigo-400" />
+            <span>View the Feed</span>
+            <ArrowRight className="h-4 w-4 text-sky-600" />
           </button>
         </motion.div>
 
-        {/* Symmetrical 4-Card Value Grid */}
+        {/* Symmetrical 4-Card Value Grid featuring the 4 Official Mascots */}
         <div className="pt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto text-left">
-          <div className="h-full flex flex-col justify-between rounded-2xl border border-indigo-500/20 bg-gradient-to-b from-indigo-950/30 to-slate-900/40 p-4 space-y-3 shadow-sm hover:border-indigo-500/40 transition-colors">
+          {/* Card 1: Curious Star (Yellow Mascot) */}
+          <div className="h-full flex flex-col justify-between rounded-3xl border-2 border-amber-200 bg-gradient-to-b from-amber-50/90 via-white to-amber-50/50 p-5 space-y-3.5 shadow-sm hover:border-amber-300 hover:-translate-y-1 transition-all group">
             <div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-2">
-                <Code2 className="h-5 w-5" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 border border-amber-300 group-hover:scale-110 transition-transform">
+                  <svg viewBox="0 0 100 100" className="h-8 w-8 drop-shadow-xs">
+                    <ellipse cx="50" cy="50" rx="46" ry="45" fill="#ffea78" stroke="#1e293b" strokeWidth="6"/>
+                    <circle cx="31" cy="38" r="4.5" fill="#2aa6cb"/>
+                    <circle cx="69" cy="38" r="4.5" fill="#2aa6cb"/>
+                    <ellipse cx="50" cy="61" rx="14" ry="10" fill="#ebe3dc" stroke="#1e293b" strokeWidth="5"/>
+                  </svg>
+                </div>
+                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300">
+                  Curious Star
+                </span>
               </div>
-              <h4 className="text-sm font-bold text-white tracking-tight">Showcase Your Passion</h4>
-              <p className="text-xs text-slate-400 leading-relaxed mt-1.5">
-                Put your hardware, 3D prints, games, and code in front of makers who truly understand the craft.
+              <h4 className="text-sm font-extrabold text-slate-900 tracking-tight">Show Off Your Builds</h4>
+              <p className="text-xs text-slate-600 leading-relaxed mt-1.5 font-normal">
+                Got a 3D print, game, robot, art piece, or code project? Put it on stage where fellow makers actually appreciate it!
               </p>
             </div>
           </div>
 
-          <div className="h-full flex flex-col justify-between rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-950/30 to-slate-900/40 p-4 space-y-3 shadow-sm hover:border-amber-500/40 transition-colors">
+          {/* Card 2: Cozy Champ (Peach Mascot) */}
+          <div className="h-full flex flex-col justify-between rounded-3xl border-2 border-orange-200 bg-gradient-to-b from-orange-50/90 via-white to-orange-50/50 p-5 space-y-3.5 shadow-sm hover:border-orange-300 hover:-translate-y-1 transition-all group">
             <div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 mb-2">
-                <Flame className="h-5 w-5 fill-amber-400/30" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 border border-orange-300 group-hover:scale-110 transition-transform">
+                  <svg viewBox="0 0 100 100" className="h-8 w-8 drop-shadow-xs">
+                    <ellipse cx="50" cy="50" rx="48" ry="45" fill="#ffcb95" stroke="#1e293b" strokeWidth="6"/>
+                    <path d="M 25 40 Q 35 36 44 40" stroke="#1e293b" strokeWidth="5" strokeLinecap="round" fill="none"/>
+                    <path d="M 57 40 Q 66 36 76 40" stroke="#1e293b" strokeWidth="5" strokeLinecap="round" fill="none"/>
+                    <path d="M 15 53 Q 23 46 25 55 Q 50 70 75 55 Q 77 46 85 53" stroke="#1e293b" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  </svg>
+                </div>
+                <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-[10px] font-bold text-orange-800 border border-orange-300">
+                  Cozy Champ
+                </span>
               </div>
-              <h4 className="text-sm font-bold text-white tracking-tight">Lock In & Level Up</h4>
-              <p className="text-xs text-slate-400 leading-relaxed mt-1.5">
-                Earn +2 streak points every day, unlock lovable creator badges from 'Friendly Star' to 'locked in', and climb the ranks.
+              <h4 className="text-sm font-extrabold text-slate-900 tracking-tight">Lock In & Level Up</h4>
+              <p className="text-xs text-slate-600 leading-relaxed mt-1.5 font-normal">
+                Earn +2 streak points every single day you show up. Unlock cute badges from 'Friendly Star' to 'locked in'!
               </p>
             </div>
           </div>
 
-          <div className="h-full flex flex-col justify-between rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-950/30 to-slate-900/40 p-4 space-y-3 shadow-sm hover:border-sky-500/40 transition-colors">
+          {/* Card 3: Chat Buddy (Coral Mascot) */}
+          <div className="h-full flex flex-col justify-between rounded-3xl border-2 border-rose-200 bg-gradient-to-b from-rose-50/90 via-white to-rose-50/50 p-5 space-y-3.5 shadow-sm hover:border-rose-300 hover:-translate-y-1 transition-all group">
             <div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 mb-2">
-                <MessageSquare className="h-5 w-5" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 border border-rose-300 group-hover:scale-110 transition-transform">
+                  <svg viewBox="0 0 100 100" className="h-8 w-8 drop-shadow-xs">
+                    <ellipse cx="50" cy="50" rx="47" ry="46" fill="#ffadad" stroke="#1e293b" strokeWidth="6"/>
+                    <path d="M 24 28 Q 32 30 37 29" stroke="#1e293b" strokeWidth="5" strokeLinecap="round" fill="none"/>
+                    <path d="M 60 23 Q 70 20 79 24" stroke="#1e293b" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
+                    <circle cx="33" cy="38" r="4.5" fill="#1e293b"/>
+                    <circle cx="70" cy="38" r="4.5" fill="#1e293b"/>
+                    <path d="M 35 58 L 65 58 L 52 80 Z" fill="#ffffff" stroke="#1e293b" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-300">
+                  Chat Buddy
+                </span>
               </div>
-              <h4 className="text-sm font-bold text-white tracking-tight">Build Squads & Chat</h4>
-              <p className="text-xs text-slate-400 leading-relaxed mt-1.5">
-                Direct message creators, share progress photos, hang out in channels, and collaborate on big ideas.
+              <h4 className="text-sm font-extrabold text-slate-900 tracking-tight">Hang Out & Group Chat</h4>
+              <p className="text-xs text-slate-600 leading-relaxed mt-1.5 font-normal">
+                Direct message creators, join group channels, share progress photos, and collaborate on new projects!
               </p>
             </div>
           </div>
 
-          <div className="h-full flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-950/30 to-slate-900/40 p-4 space-y-3 shadow-sm hover:border-emerald-500/40 transition-colors">
+          {/* Card 4: Kind Helper (Mint Mascot) */}
+          <div className="h-full flex flex-col justify-between rounded-3xl border-2 border-emerald-200 bg-gradient-to-b from-emerald-50/90 via-white to-emerald-50/50 p-5 space-y-3.5 shadow-sm hover:border-emerald-300 hover:-translate-y-1 transition-all group">
             <div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 mb-2">
-                <Sparkles className="h-5 w-5" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 border border-emerald-300 group-hover:scale-110 transition-transform">
+                  <svg viewBox="0 0 100 100" className="h-8 w-8 drop-shadow-xs">
+                    <ellipse cx="50" cy="50" rx="47" ry="46" fill="#ede0d7" stroke="#1e293b" strokeWidth="6"/>
+                    <circle cx="31" cy="38" r="5" fill="#22c55e"/>
+                    <circle cx="69" cy="38" r="4.5" fill="#1e293b"/>
+                    <path d="M 34 58 Q 50 76 66 58" stroke="#1e293b" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
+                  </svg>
+                </div>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-300">
+                  Kind Helper
+                </span>
               </div>
-              <h4 className="text-sm font-bold text-white tracking-tight">Real Peer Feedback</h4>
-              <p className="text-xs text-slate-400 leading-relaxed mt-1.5">
-                Receive thoughtful, high-signal peer reviews on your builds so you can sharpen your skills and ship better.
+              <h4 className="text-sm font-extrabold text-slate-900 tracking-tight">Friendly Peer Feedback</h4>
+              <p className="text-xs text-slate-600 leading-relaxed mt-1.5 font-normal">
+                Thoughtful, positive reviews from fellow builders who cheer you on and help you sharpen your craft with zero toxic vibes.
               </p>
             </div>
           </div>
@@ -176,18 +221,19 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
       </section>
 
       {/* Symmetrical Featured Projects Showcase */}
-      <section className="relative z-10 border-t border-slate-800/80 bg-slate-950/70 py-16">
+      <section className="relative z-10 border-t-2 border-slate-200/80 bg-white/70 py-16 backdrop-blur-xs">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Centered Showcase Section Header */}
           <div className="mx-auto max-w-2xl text-center mb-10">
-            <span className="text-xs font-mono uppercase tracking-wider text-indigo-400">
-              COMMUNITY SHOWCASE
+            <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-sky-200 bg-sky-50 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-sky-800">
+              <Globe2 className="h-3 w-3 text-emerald-600" />
+              Community Showcase
             </span>
-            <h2 className="mt-1 text-2xl font-bold text-white tracking-tight sm:text-3xl">
-              Real Things Built by Real People
+            <h2 className="mt-2 text-2xl font-black text-slate-900 tracking-tight sm:text-3xl">
+              Real Things Built by Real Friends Worldwide
             </h2>
-            <p className="mt-2 text-xs text-slate-400 max-w-md mx-auto">
-              Hardware, robotics, 3D prints, games, art, and code crafted by passionate makers.
+            <p className="mt-2 text-xs sm:text-sm text-slate-600 max-w-md mx-auto font-medium">
+              Hardware, robotics, 3D prints, games, art, and code crafted by passionate makers around the globe.
             </p>
           </div>
 
@@ -197,47 +243,54 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
                 <div
                   key={project.id}
                   onClick={() => onOpenGoogleLogin('login')}
-                  className="group cursor-pointer rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:shadow-xl hover:shadow-indigo-500/5"
+                  className="group cursor-pointer rounded-3xl border-2 border-slate-100 bg-white p-4 transition-all hover:border-sky-300 hover:shadow-xl hover:shadow-sky-100 hover:-translate-y-1 flex flex-col justify-between shadow-xs"
                 >
-                  <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-950 mb-3 border border-slate-800 relative">
-                    {project.mediaUrls[0] ? (
-                      <img
-                        src={project.mediaUrls[0]}
-                        alt={project.title}
-                        referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-950/50 text-xs text-slate-300 font-medium p-4 text-center">
-                        <Sparkles className="h-5 w-5 text-indigo-400 mb-1" />
-                        <span>{project.qualities?.[0] || 'Working Prototype'}</span>
+                  <div>
+                    <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 mb-3.5 border border-slate-200 relative">
+                      {project.mediaUrls[0] ? (
+                        <img
+                          src={project.mediaUrls[0]}
+                          alt={project.title}
+                          referrerPolicy="no-referrer"
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-sky-50 text-xs text-slate-600 font-medium p-4 text-center">
+                          <Sparkles className="h-6 w-6 text-sky-500 mb-1" />
+                          <span>{project.qualities?.[0] || 'Working Prototype'}</span>
+                        </div>
+                      )}
+                      {/* Qualities Overlay Tag */}
+                      <div className="absolute top-2.5 left-2.5 z-10">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-300 shadow-xs">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                          <span>{project.qualities?.[0] || 'Working Prototype'}</span>
+                        </span>
                       </div>
-                    )}
-                    {/* Qualities Overlay Tag */}
-                    <div className="absolute top-2 left-2 z-10">
-                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-950/85 backdrop-blur-md px-2 py-0.5 text-[9px] font-semibold text-emerald-300 border border-emerald-500/40 shadow-sm">
-                        <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />
-                        <span>{project.qualities?.[0] || 'Working Prototype'}</span>
-                      </span>
                     </div>
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-sky-700 mb-1.5 flex-wrap">
+                      {project.tags.slice(0, 2).map((t) => (
+                        <span key={t} className="rounded-full bg-sky-50 border border-sky-200 px-2 py-0.5 font-bold">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-sky-600 transition-colors">
+                      {project.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+                      {project.tagline}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-mono text-indigo-400 mb-1">
-                    {project.tags.slice(0, 2).join(' · ')}
-                  </div>
-                  <h3 className="text-sm font-semibold text-white line-clamp-1 group-hover:text-indigo-300 transition-colors">
-                    {project.title}
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-400 line-clamp-2">
-                    {project.tagline}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-xs text-slate-400">
-                    <span className="flex items-center gap-1 font-medium text-slate-300">
+
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
+                    <span className="flex items-center gap-1 font-semibold text-slate-700">
                       <span>@{project.author.handle}</span>
                       {project.author.reputationScore >= 50 && (
-                        <span className="text-sky-400 font-bold">✓</span>
+                        <span className="text-sky-600 font-bold">✓</span>
                       )}
                     </span>
-                    <span className="text-slate-400 font-mono text-[11px]">
+                    <span className="text-slate-500 font-mono text-[11px]">
                       {project.viewsCount || 0} views
                     </span>
                   </div>
@@ -245,41 +298,45 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
               ))}
             </div>
           ) : (
-            <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/30 p-10 text-center space-y-4 max-w-lg mx-auto">
-              <div className="mx-auto h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/80 p-10 text-center space-y-4 max-w-lg mx-auto">
+              <div className="mx-auto h-12 w-12 rounded-2xl bg-sky-100 border border-sky-300 flex items-center justify-center text-sky-600">
                 <Sparkles className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">The Stage is Ready for You</h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
+              <h3 className="text-lg font-bold text-slate-900">The Stage is Ready for You</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto">
                 Sign up with Google or your email to publish your very first project in art, 3D printing, game dev, robotics, code, and more!
               </p>
               <button
                 onClick={() => onOpenGoogleLogin('signup')}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2.5 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 transition-all shadow-md shadow-sky-300/40 cursor-pointer"
               >
-                <span>Sign Up & Share Your Build</span>
+                <span>Join & Share Your Build</span>
               </button>
             </div>
           )}
 
-          {/* Centered Symmetrical Showcase Footer Button */}
+          {/* Centered Bubbly Showcase Footer Button */}
           <div className="mt-10 text-center">
             <button
               onClick={() => onOpenGoogleLogin('login')}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/80 px-6 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 bg-white px-7 py-3 text-xs font-bold text-slate-700 hover:text-slate-900 hover:border-sky-300 transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              <span>Explore all community builds</span>
-              <ArrowRight className="h-3.5 w-3.5 text-indigo-400" />
+              <span>View all community builds</span>
+              <ArrowRight className="h-3.5 w-3.5 text-sky-600" />
             </button>
           </div>
         </div>
       </section>
 
-      {/* Symmetrical Footer */}
-      <footer className="border-t border-slate-900 py-10 text-center text-xs text-slate-500 font-mono space-y-1.5">
-        <p className="font-semibold text-slate-400">locked in. — The Best Community for Creators</p>
-        <p className="text-[11px] text-slate-600">
-          Learn Something New · Follow Fellow Creators · Express Yourself
+      {/* Symmetrical Bubbly Footer */}
+      <footer className="border-t-2 border-slate-200/80 py-10 text-center text-xs text-slate-500 font-mono space-y-2 bg-[#faf7f2]">
+        <div className="flex items-center justify-center gap-2 text-slate-700 font-bold">
+          <span className="text-slate-900">locked in.</span>
+          <span>·</span>
+          <span>Made with ❤️ for young creators worldwide</span>
+        </div>
+        <p className="text-[11px] text-slate-500">
+          Learn Something New · Follow Fellow Builders · Express Yourself
         </p>
       </footer>
     </div>

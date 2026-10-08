@@ -50,6 +50,7 @@ export interface Project {
   viewsCount: number;
   likesCount: number;
   tags: string[];
+  category?: string;
   qualities?: string[]; // Actual qualities that interest the user (e.g., 'Working Prototype', 'Open Source CAD', 'Tested Schematics')
   status: ProjectStatus;
   milestones: ProjectMilestone[];

@@ -304,3 +304,17 @@ Return valid JSON:
     confidenceScore: 0.92,
   };
 }
+
+export async function evaluateReviewDraft(
+  projectTitle: string,
+  feedbackText: string,
+  totalScore: number
+): Promise<ReviewQualityResult> {
+  const quarter = Math.round(totalScore / 4);
+  return evaluateReviewQuality(feedbackText, projectTitle, {
+    clarity: quarter,
+    execution: quarter,
+    technicality: quarter,
+    documentation: quarter,
+  });
+}

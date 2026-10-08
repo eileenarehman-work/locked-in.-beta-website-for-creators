@@ -221,3 +221,11 @@ export function calculateRealStreak(
     nextDayBonus,
   };
 }
+
+export function calculateStreakInfo(
+  currentUser: User | null,
+  projects: Project[] = [],
+  reviews: Review[] = []
+): StreakInfo {
+  return calculateRealStreak(projects, reviews, currentUser);
+}

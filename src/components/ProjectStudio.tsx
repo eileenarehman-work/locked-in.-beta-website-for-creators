@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Project, ProjectStatus, User } from '../types';
 import { generateProjectDraft, assignSmartTags } from '../services/geminiService';
 import { storage } from '../mock/initialData';
+import { Mascot } from './Mascot';
 import {
   Sparkles,
   ShieldCheck,
@@ -451,27 +452,27 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 text-slate-800">
       {/* Toast Notification */}
       {draftToast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-2xl shadow-indigo-600/40 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <Check className="h-4 w-4 text-emerald-300" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-xs font-bold text-white shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <Check className="h-4 w-4 text-emerald-400" />
           <span>{draftToast}</span>
         </div>
       )}
 
       {/* Recovered Auto-Save Banner */}
       {hasRecoveredAutoSave && (
-        <div className="mb-6 rounded-2xl border border-indigo-500/40 bg-gradient-to-r from-indigo-950/60 via-slate-900 to-indigo-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg animate-in fade-in duration-200">
+        <div className="mb-6 rounded-3xl border-2 border-sky-200 bg-gradient-to-r from-sky-50 via-white to-emerald-50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs animate-in fade-in duration-200">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-100 text-sky-700 border border-sky-300 shadow-2xs">
               <Cloud className="h-4 w-4" />
             </span>
             <div>
-              <span className="font-semibold text-white text-sm block">
+              <span className="font-bold text-slate-900 text-sm block">
                 Recovered in-progress work!
               </span>
-              <span className="text-slate-300 text-xs">
+              <span className="text-slate-600 text-xs font-medium">
                 Auto-saved from your previous session (
                 {lastAutoSavedAt
                   ? lastAutoSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -484,60 +485,57 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             <button
               type="button"
               onClick={() => setHasRecoveredAutoSave(false)}
-              className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm cursor-pointer"
+              className="rounded-full bg-gradient-to-r from-sky-400 to-emerald-300 px-4 py-2 text-xs font-bold text-slate-950 hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
             >
               Keep Editing
             </button>
             <button
               type="button"
               onClick={handleStartFresh}
-              className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="rounded-full border-2 border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Discard & Start Fresh</span>
+              <span>Discard & Start Over</span>
             </button>
           </div>
         </div>
       )}
 
       {/* Studio Header & Draft Controls */}
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-200/80 pb-5">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl">
+            <Mascot type="curious" size="sm" />
+            <h2 className="text-xl font-black text-slate-900 tracking-tight sm:text-2xl">
               Project Studio
             </h2>
             {currentDraftId ? (
-              <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-xs font-medium text-amber-300">
+              <span className="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                 <FileText className="h-3 w-3" />
                 Editing Draft
               </span>
-            ) : (
-              <span className="rounded-md bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 text-xs font-mono text-indigo-400">
-                New Project
-              </span>
-            )}
+            ) : null}
 
             {/* Auto-save status indicator */}
             {isAutoSaving ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-800/80 border border-slate-700/60 px-2.5 py-0.5 text-[11px] font-mono text-indigo-300 animate-pulse">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-ping" />
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-sky-800 font-bold animate-pulse">
+                <span className="h-2 w-2 rounded-full bg-sky-500 animate-ping" />
                 <span>Auto-saving...</span>
               </span>
             ) : lastAutoSavedAt ? (
               <span
-                className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-mono text-emerald-300"
+                className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-500 font-medium"
                 title={`Saved to browser storage at ${lastAutoSavedAt.toLocaleTimeString()}`}
               >
-                <Cloud className="h-3 w-3 text-emerald-400" />
+                <Cloud className="h-3 w-3 text-emerald-600" />
                 <span>
-                  Auto-saved {lastAutoSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  Saved {lastAutoSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </span>
             ) : null}
           </div>
-          <p className="mt-1 text-xs text-slate-400">
-            Showcase what you're making, save drafts to finish later, or post to the feed.
+          <p className="mt-1 text-xs text-slate-600 font-medium">
+            Share what you're building, save drafts to finish later, and get feedback from fellow makers.
           </p>
         </div>
 
@@ -547,12 +545,12 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
           <button
             type="button"
             onClick={() => setIsDraftsModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 rounded-full border-2 border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:border-amber-300 hover:bg-amber-50 transition-all cursor-pointer shadow-2xs"
           >
-            <FolderOpen className="h-3.5 w-3.5 text-amber-400" />
+            <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
             <span>Saved Drafts</span>
             {savedDrafts.length > 0 && (
-              <span className="ml-1 rounded-full bg-amber-500/20 px-1.5 py-0.2 text-[10px] font-bold text-amber-300">
+              <span className="ml-1 rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[10px] font-black text-amber-900">
                 {savedDrafts.length}
               </span>
             )}
@@ -562,7 +560,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 rounded-full border-2 border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors cursor-pointer shadow-2xs"
             title="Save your progress to edit later"
           >
             <Save className="h-3.5 w-3.5" />
@@ -574,7 +572,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             <button
               type="button"
               onClick={handleStartFresh}
-              className="flex items-center gap-1 rounded-xl border border-slate-800 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1 rounded-full border-2 border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-slate-300 transition-colors cursor-pointer shadow-2xs"
               title="Start a fresh blank project"
             >
               <PlusCircle className="h-3.5 w-3.5" />
@@ -587,9 +585,9 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             type="button"
             onClick={handleGenerateDraft}
             disabled={isGeneratingDraft || !title.trim()}
-            className="flex items-center gap-1.5 rounded-xl border border-indigo-700/80 bg-indigo-950/40 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-900/60 transition-colors disabled:opacity-40 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-full border-2 border-sky-300 bg-sky-50 px-3.5 py-1.5 text-xs font-bold text-sky-800 hover:bg-sky-100 transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
           >
-            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+            <Sparkles className="h-3.5 w-3.5 text-sky-600" />
             <span>{isGeneratingDraft ? 'Writing...' : 'Help Me Write'}</span>
           </button>
 
@@ -597,24 +595,24 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             type="button"
             onClick={handleSmartTag}
             disabled={isGeneratingTags}
-            className="flex items-center gap-1.5 rounded-xl border border-emerald-700/80 bg-emerald-950/40 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/60 transition-colors disabled:opacity-40 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-full border-2 border-emerald-300 bg-emerald-50 px-3.5 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
           >
-            <Tag className="h-3.5 w-3.5 text-emerald-400" />
+            <Tag className="h-3.5 w-3.5 text-emerald-600" />
             <span>{isGeneratingTags ? 'Tagging...' : 'Suggest Tags'}</span>
           </button>
         </div>
       </div>
 
       {helperMessage && (
-        <div className="mb-6 rounded-xl border border-indigo-800/60 bg-indigo-950/30 p-3 text-xs text-indigo-200 flex items-center justify-between gap-2">
+        <div className="mb-6 rounded-2xl border-2 border-sky-200 bg-sky-50 p-3.5 text-xs text-sky-900 flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-indigo-400 shrink-0" />
-            <span>{helperMessage}</span>
+            <Sparkles className="h-4 w-4 text-sky-600 shrink-0" />
+            <span className="font-medium">{helperMessage}</span>
           </div>
           <button
             type="button"
             onClick={() => setHelperMessage(null)}
-            className="text-slate-400 hover:text-white"
+            className="text-slate-500 hover:text-slate-900 cursor-pointer"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -628,8 +626,8 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
           <div className="lg:col-span-2 space-y-5">
             {/* Title */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                What are you making? <span className="text-rose-400">*</span>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                What are you making? <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -637,13 +635,13 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none shadow-2xs font-medium"
               />
             </div>
 
             {/* Quick Tagline */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">
                 One-liner summary
               </label>
               <input
@@ -651,19 +649,19 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                 placeholder="A short punchy sentence about what it does or how you made it..."
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none shadow-2xs font-normal"
               />
             </div>
 
             {/* Category Selector */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-xs text-white focus:border-indigo-500 focus:outline-none cursor-pointer"
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-900 focus:border-sky-400 focus:outline-none cursor-pointer shadow-2xs font-medium"
               >
                 {TEEN_CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.label}>
@@ -675,23 +673,23 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
 
             {/* Description & Build Notes */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5 flex justify-between">
+              <label className="block text-xs font-bold text-slate-800 mb-1.5 flex justify-between">
                 <span>Build notes, tools & how you made it</span>
-                <span className="text-slate-500 text-[11px]">Supports markdown</span>
+                <span className="text-slate-500 text-[11px] font-normal">Supports markdown</span>
               </label>
               <textarea
                 rows={9}
                 placeholder="Tell other makers how you put this together: What tools did you use (Blender, Bambu Studio, VS Code, Tinkercad, Unity, Soldering iron)? What was tough? Any tips for someone building something similar?"
                 value={markdown}
                 onChange={(e) => setMarkdown(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-4 text-xs text-slate-200 placeholder-slate-600 focus:border-indigo-500 focus:outline-none leading-relaxed font-sans"
+                className="w-full rounded-3xl border-2 border-slate-200 bg-white p-4 text-xs text-slate-800 placeholder-slate-400 focus:border-sky-400 focus:outline-none leading-relaxed font-sans shadow-2xs font-normal"
               />
             </div>
 
             {/* Links */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
                   Playable demo or video link (optional)
                 </label>
                 <input
@@ -699,12 +697,12 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                   placeholder="https://..."
                   value={demoUrl}
                   onChange={(e) => setDemoUrl(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none shadow-2xs font-normal"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
                   Code repo or 3D files (optional)
                 </label>
                 <input
@@ -712,7 +710,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                   placeholder="https://github.com/... or Printables link"
                   value={repoUrl}
                   onChange={(e) => setRepoUrl(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none shadow-2xs font-normal"
                 />
               </div>
             </div>
@@ -721,20 +719,22 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
           {/* Right Column: Upload Photos & Tags */}
           <div className="space-y-6">
             {/* Real Image Uploader */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
-              <label className="block text-xs font-medium text-slate-300 flex items-center justify-between">
+            <div className="rounded-3xl border-2 border-slate-200 bg-white p-5 space-y-3.5 shadow-2xs">
+              <label className="block text-xs font-bold text-slate-800 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
-                  <ImageIcon className="h-3.5 w-3.5 text-indigo-400" />
+                  <ImageIcon className="h-4 w-4 text-sky-600" />
                   Photos & Screenshots
                 </span>
-                <span className="text-[10px] text-emerald-400 font-mono">Real Uploads</span>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Up to 4 images
+                </span>
               </label>
 
               {/* Upload Dropzone */}
-              <label className="block border-2 border-dashed border-slate-700/80 hover:border-indigo-500 rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-950/40">
-                <Upload className="h-6 w-6 text-indigo-400 mx-auto mb-1.5" />
-                <p className="text-xs font-semibold text-white">Click or drag photos of your project</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPEG, GIF, or WebP</p>
+              <label className="block border-2 border-dashed border-sky-300 hover:border-sky-400 rounded-2xl p-4 text-center cursor-pointer transition-colors bg-sky-50/50">
+                <Upload className="h-6 w-6 text-sky-600 mx-auto mb-1.5" />
+                <p className="text-xs font-bold text-slate-900">Click or drag photos of your project</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">PNG, JPEG, GIF, or WebP</p>
                 <input
                   type="file"
                   accept="image/*"
@@ -747,14 +747,14 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
               {/* Image Previews */}
               {uploadedImages.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-950 border border-slate-800 relative group">
+                  <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 border-2 border-slate-200 relative group">
                     <img
                       src={uploadedImages[0]}
                       alt="Cover Preview"
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover"
                     />
-                    <span className="absolute top-2 left-2 rounded-md bg-slate-950/80 px-2 py-0.5 text-[10px] font-mono text-emerald-400 backdrop-blur-md">
+                    <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-mono text-emerald-800 border border-emerald-300 backdrop-blur-md font-bold">
                       Cover Photo
                     </span>
                   </div>
@@ -762,12 +762,12 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                   {uploadedImages.length > 1 && (
                     <div className="grid grid-cols-3 gap-2">
                       {uploadedImages.slice(1).map((img, idx) => (
-                        <div key={idx} className="relative aspect-[16/9] rounded-lg overflow-hidden border border-slate-800 group">
+                        <div key={idx} className="relative aspect-[16/9] rounded-xl overflow-hidden border-2 border-slate-200 group">
                           <img src={img} alt={`asset-${idx}`} className="h-full w-full object-cover" />
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(idx + 1)}
-                            className="absolute top-1 right-1 h-5 w-5 rounded-full bg-slate-950/80 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            className="absolute top-1 right-1 h-5 w-5 rounded-full bg-slate-900/80 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                           >
                             ×
                           </button>
@@ -777,37 +777,37 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-slate-800 p-4 text-center text-xs text-slate-500">
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center text-xs text-slate-500 font-medium">
                   No photos added yet. Upload a screenshot, 3D print photo, or bench test snapshot!
                 </div>
               )}
             </div>
 
             {/* Custom Hashtags */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2.5">
+            <div className="rounded-3xl border-2 border-slate-200 bg-white p-5 space-y-3 shadow-2xs">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-medium text-slate-300">
+                <label className="block text-xs font-bold text-slate-800">
                   Tags
                 </label>
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[10px] text-slate-500 font-medium">
                   Press Enter to add
                 </span>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 rounded-xl border border-slate-800 bg-slate-950">
+              <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 rounded-2xl border-2 border-slate-100 bg-slate-50">
                 {tags.length === 0 && (
-                  <span className="text-xs text-slate-500 italic">No tags added yet.</span>
+                  <span className="text-xs text-slate-400 italic">No tags added yet.</span>
                 )}
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="rounded-lg bg-indigo-600/20 border border-indigo-500/40 px-2 py-0.5 text-xs font-mono text-indigo-300 flex items-center gap-1.5"
+                    className="rounded-full bg-sky-100 border border-sky-300 px-3 py-0.5 text-xs font-mono text-sky-800 font-bold flex items-center gap-1.5"
                   >
                     <span>{t}</span>
                     <button
                       type="button"
                       onClick={() => setTags(tags.filter((x) => x !== t))}
-                      className="text-indigo-400 hover:text-white cursor-pointer"
+                      className="text-sky-600 hover:text-sky-950 cursor-pointer font-bold"
                     >
                       ×
                     </button>
@@ -831,8 +831,8 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                       }
                     }
                   }}
-                  placeholder="e.g. #arduino, #fpvdrone, #unity, #3dprint"
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  placeholder="e.g. #arduino, #fpvdrone, #unity"
+                  className="flex-1 rounded-full border-2 border-slate-200 bg-white px-3.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-sky-400 focus:outline-none shadow-2xs font-normal"
                 />
                 <button
                   type="button"
@@ -844,7 +844,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                       setTagInput('');
                     }
                   }}
-                  className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 cursor-pointer"
+                  className="rounded-full border-2 border-slate-200 bg-white px-4 py-1.5 text-xs font-bold text-slate-700 hover:border-sky-300 hover:bg-sky-50 cursor-pointer shadow-2xs"
                 >
                   + Add
                 </button>
@@ -852,27 +852,27 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             </div>
 
             {/* Quick Human Verification */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
-              <label className="block text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+            <div className="rounded-3xl border-2 border-slate-200 bg-white p-5 space-y-2.5 shadow-2xs">
+              <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-600" />
                 Anti-bot check
               </label>
 
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-3 flex items-center justify-between">
+              <div className="rounded-2xl border-2 border-slate-100 bg-slate-50 p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={handleTriggerCaptcha}
                     disabled={captchaPassed || isVerifyingCaptcha}
-                    className={`h-5 w-5 rounded border flex items-center justify-center transition-all cursor-pointer ${
+                    className={`h-5 w-5 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
                       captchaPassed
-                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                        : 'border-slate-600 bg-slate-800 hover:border-indigo-500'
+                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-2xs'
+                        : 'border-slate-300 bg-white hover:border-sky-400'
                     }`}
                   >
                     {captchaPassed && <CheckCircle className="h-3.5 w-3.5" />}
                   </button>
-                  <span className="text-xs text-slate-300">
+                  <span className="text-xs text-slate-700 font-medium">
                     {captchaPassed
                       ? "You're all set!"
                       : isVerifyingCaptcha
@@ -880,7 +880,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                       : 'I am a real builder'}
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">Protected</span>
+                <span className="text-[10px] text-slate-500 font-mono font-bold">Protected</span>
               </div>
             </div>
 
@@ -889,7 +889,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
               <button
                 type="submit"
                 disabled={!captchaPassed || !title.trim()}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 active:scale-[0.98] transition-all disabled:opacity-40 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-40 cursor-pointer"
               >
                 <Send className="h-4 w-4" />
                 <span>Publish to Feed</span>
@@ -898,9 +898,9 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
               <button
                 type="button"
                 onClick={handleSaveDraft}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 rounded-full border-2 border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:border-amber-300 hover:bg-amber-50 transition-all cursor-pointer shadow-2xs"
               >
-                <Save className="h-3.5 w-3.5 text-amber-400" />
+                <Save className="h-3.5 w-3.5 text-amber-600" />
                 <span>Save as Draft (Finish Later)</span>
               </button>
             </div>
@@ -912,26 +912,26 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
       {isDraftsModalOpen && (
         <div
           onClick={() => setIsDraftsModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm cursor-pointer animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-sm cursor-pointer animate-in fade-in duration-150"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4 cursor-default max-h-[85vh] flex flex-col"
+            className="w-full max-w-lg rounded-3xl border-2 border-amber-200 bg-white p-6 shadow-2xl space-y-4 cursor-default max-h-[85vh] flex flex-col text-slate-800"
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shadow-2xs">
                   <FolderOpen className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white tracking-tight">Your Saved Drafts</h3>
-                  <p className="text-xs text-slate-400">Pick up right where you left off</p>
+                  <h3 className="text-base font-black text-slate-900 tracking-tight">Your Saved Drafts</h3>
+                  <p className="text-xs text-slate-500 font-medium">Pick up right where you left off</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsDraftsModalOpen(false)}
-                className="text-slate-400 hover:text-white rounded-lg p-1 cursor-pointer"
+                className="text-slate-400 hover:text-slate-800 rounded-full p-1 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -940,9 +940,9 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
               {savedDrafts.length === 0 ? (
                 <div className="py-12 text-center space-y-2">
-                  <FileText className="h-8 w-8 text-slate-600 mx-auto" />
-                  <p className="text-sm font-semibold text-slate-300">No drafts yet</p>
-                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  <FileText className="h-8 w-8 text-slate-400 mx-auto" />
+                  <p className="text-sm font-bold text-slate-800">No drafts yet</p>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto font-medium">
                     Click "Save Draft" anytime while working in the Studio to save your project here.
                   </p>
                 </div>
@@ -951,24 +951,24 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                   <div
                     key={d.id}
                     onClick={() => handleLoadDraft(d)}
-                    className={`rounded-2xl border p-3.5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                    className={`rounded-2xl border-2 p-3.5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
                       currentDraftId === d.id
-                        ? 'border-indigo-500/60 bg-indigo-950/40 ring-1 ring-indigo-500/30'
-                        : 'border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-950'
+                        ? 'border-sky-300 bg-sky-50/70 shadow-2xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-white truncate">
+                        <h4 className="text-sm font-bold text-slate-900 truncate">
                           {d.title || 'Untitled Draft'}
                         </h4>
                         {currentDraftId === d.id && (
-                          <span className="rounded bg-indigo-500/20 text-indigo-300 text-[10px] px-1.5 py-0.2 font-mono">
+                          <span className="rounded-full bg-sky-100 border border-sky-300 text-sky-800 text-[10px] px-2 py-0.2 font-mono font-bold">
                             active
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 truncate">
+                      <p className="text-xs text-slate-600 truncate font-normal">
                         {d.tagline || d.contentMarkdown?.slice(0, 70) || 'No description yet.'}
                       </p>
                       <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono pt-0.5">
@@ -989,14 +989,14 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                           e.stopPropagation();
                           handleLoadDraft(d);
                         }}
-                        className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm cursor-pointer"
+                        className="rounded-full bg-gradient-to-r from-sky-400 to-emerald-300 px-3.5 py-1 text-xs font-bold text-slate-950 shadow-2xs cursor-pointer hover:scale-105 active:scale-95 transition-all"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteDraft(d.id, d.title, e)}
-                        className="rounded-xl p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="rounded-full p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         title="Delete draft"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -1007,14 +1007,14 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
               )}
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-800 pt-3">
+            <div className="flex items-center justify-between border-t-2 border-slate-100 pt-3">
               <button
                 type="button"
                 onClick={() => {
                   handleStartFresh();
                   setIsDraftsModalOpen(false);
                 }}
-                className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
+                className="flex items-center gap-1 text-xs text-sky-700 hover:text-sky-900 font-bold cursor-pointer"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span>Start fresh blank project</span>
@@ -1023,7 +1023,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDraftsModalOpen(false)}
-                className="rounded-xl bg-slate-800 px-4 py-1.5 text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
+                className="rounded-full border-2 border-slate-200 bg-white px-4 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs"
               >
                 Close
               </button>
@@ -1034,3 +1034,4 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
     </div>
   );
 };
+

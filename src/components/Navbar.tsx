@@ -3,7 +3,6 @@ import { User, AppNotification } from '../types';
 import {
   ShieldCheck,
   Plus,
-  Sparkles,
   MessageSquare,
   Compass,
   Terminal,
@@ -14,6 +13,7 @@ import {
   Star,
 } from 'lucide-react';
 import { Logo } from './Logo';
+import { Mascot } from './Mascot';
 import { NotificationCenter } from './NotificationCenter';
 import { VerifiedBadge } from './VerifiedBadge';
 
@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [isNotificationOpen]);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/90 bg-slate-950/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b-2 border-slate-200/80 bg-white/90 backdrop-blur-md shadow-xs">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8 flex-nowrap gap-2 sm:gap-4">
         {/* Zone 1: Brand Logo - Clicking puts user into Intro tab */}
         <div className="flex items-center shrink-0">
@@ -94,26 +94,26 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setActiveTab('feed');
               }
             }}
-            className="flex h-9 items-center gap-2 text-left transition-opacity hover:opacity-90 cursor-pointer shrink-0"
+            className="flex h-9 items-center gap-2 text-left transition-transform hover:scale-105 active:scale-95 cursor-pointer shrink-0"
             title="Click to view Intro & Welcome"
           >
             <Logo size="md" />
           </button>
         </div>
 
-        {/* Zone 2: Navigation Links - Short, uncluttered tabs */}
-        <nav className="hidden lg:flex items-center gap-1 sm:gap-1.5 text-sm font-medium text-slate-300 shrink-0 flex-nowrap">
+        {/* Zone 2: Navigation Links - Bubbly rounded pastel pills */}
+        <nav className="hidden lg:flex items-center gap-1.5 sm:gap-2 text-sm font-medium shrink-0 flex-nowrap">
           {/* 1. Feed Tab */}
           <button
             type="button"
             onClick={() => setActiveTab('feed')}
-            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+            className={`flex h-9 items-center gap-1.5 px-4 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'feed'
-                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                ? 'bg-sky-100 text-sky-800 border-2 border-sky-300 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Compass className={`h-4 w-4 ${activeTab === 'feed' ? 'text-indigo-400' : 'text-slate-400'}`} />
+            <Compass className={`h-4 w-4 ${activeTab === 'feed' ? 'text-sky-700' : 'text-slate-500'}`} />
             <span>Feed</span>
           </button>
 
@@ -121,14 +121,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('streak')}
-            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+            className={`flex h-9 items-center gap-1.5 px-4 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'streak'
-                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                ? 'bg-amber-100 text-amber-800 border-2 border-amber-300 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Flame className={`h-4 w-4 ${activeTab === 'streak' ? 'text-amber-400 fill-amber-400/40' : 'text-slate-400'}`} />
-            <span>Streak</span>
+            <Flame className={`h-4 w-4 ${activeTab === 'streak' ? 'text-amber-600 fill-amber-500' : 'text-slate-500'}`} />
+            <span>Streaks</span>
           </button>
 
           {/* 3. Post Tab */}
@@ -141,27 +141,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setActiveTab('studio');
               }
             }}
-            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+            className={`flex h-9 items-center gap-1.5 px-4 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'studio'
-                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Terminal className={`h-4 w-4 ${activeTab === 'studio' ? 'text-emerald-400' : 'text-slate-400'}`} />
-            <span>Post</span>
+            <Terminal className={`h-4 w-4 ${activeTab === 'studio' ? 'text-emerald-700' : 'text-slate-500'}`} />
+            <span>Studio</span>
           </button>
 
           {/* 4. Reviews Tab */}
           <button
             type="button"
             onClick={() => setActiveTab('reviews')}
-            className={`flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+            className={`flex h-9 items-center gap-1.5 px-4 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'reviews'
-                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                ? 'bg-rose-100 text-rose-800 border-2 border-rose-300 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <ShieldCheck className={`h-4 w-4 ${activeTab === 'reviews' ? 'text-cyan-400' : 'text-slate-400'}`} />
+            <ShieldCheck className={`h-4 w-4 ${activeTab === 'reviews' ? 'text-rose-700' : 'text-slate-500'}`} />
             <span>Reviews</span>
           </button>
 
@@ -175,40 +175,40 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setActiveTab('messages');
               }
             }}
-            className={`relative flex h-9 items-center gap-1.5 px-3 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+            className={`relative flex h-9 items-center gap-1.5 px-4 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'messages'
-                ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                ? 'bg-sky-100 text-sky-800 border-2 border-sky-300 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <MessageSquare className={`h-4 w-4 ${activeTab === 'messages' ? 'text-indigo-300' : 'text-slate-400'}`} />
-            <span>Chat</span>
+            <MessageSquare className={`h-4 w-4 ${activeTab === 'messages' ? 'text-sky-700' : 'text-slate-500'}`} />
+            <span>Messages</span>
             {unreadCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white px-1 shadow-xs">
                 {unreadCount}
               </span>
             )}
           </button>
         </nav>
 
-        {/* Zone 3: Actions & User Status - Pixel-Perfect Horizontal Alignment */}
+        {/* Zone 3: Actions & User Status */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-nowrap">
           {/* Notification Center Trigger */}
           <div className="relative shrink-0" ref={notificationRef}>
             <button
               type="button"
               onClick={() => setIsNotificationOpen((prev) => !prev)}
-              className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all cursor-pointer shrink-0 ${
+              className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-all cursor-pointer shrink-0 border-2 ${
                 isNotificationOpen
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800/90 bg-slate-900/60'
+                  ? 'bg-sky-100 text-sky-800 border-sky-300 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200 bg-white'
               }`}
               title="Notification Center"
               aria-label="Open notifications"
             >
               <Bell className="h-4 w-4" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-md shadow-rose-500/40 animate-pulse">
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-xs animate-pulse">
                   {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
                 </span>
               )}
@@ -218,6 +218,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isNotificationOpen && (
               <NotificationCenter
                 notifications={notifications}
+                unreadCount={unreadNotificationsCount}
                 onMarkAsRead={onMarkNotificationAsRead}
                 onMarkAllAsRead={onMarkAllNotificationsAsRead}
                 onClearAll={onClearNotifications}
@@ -242,7 +243,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onNewProject();
               }
             }}
-            className="flex h-9 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 sm:px-3.5 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 transition-all hover:bg-indigo-500 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
+            className="flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-3.5 sm:px-4 text-xs font-black text-slate-900 shadow-sm transition-all hover:scale-105 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Post Build</span>
@@ -255,35 +256,35 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenPointsGuide}
-                className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-2.5 sm:px-3 text-xs transition-all hover:border-amber-500/40 hover:bg-slate-850 shadow-sm group cursor-pointer shrink-0"
+                className="flex h-9 items-center gap-1.5 rounded-full border-2 border-amber-200 bg-amber-50 px-2.5 sm:px-3 text-xs transition-all hover:border-amber-300 hover:bg-amber-100/70 shadow-xs group cursor-pointer shrink-0"
                 title="Points & Daily Streak Guide - Click to learn how it works"
               >
-                <div className="flex items-center gap-1 text-amber-400 font-mono font-bold">
+                <div className="flex items-center gap-1 text-amber-700 font-mono font-bold">
                   <Flame className="h-3.5 w-3.5 fill-amber-500 text-amber-500 animate-pulse group-hover:scale-110 transition-transform" />
                   <span>{currentStreak > 0 ? currentStreak : 1}d</span>
                 </div>
-                <span className="text-slate-600 text-[10px]">|</span>
-                <div className="flex items-center gap-1 text-amber-300 font-mono font-semibold">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                <span className="text-amber-300 text-[10px]">|</span>
+                <div className="flex items-center gap-1 text-amber-800 font-mono font-semibold">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
                   <span>{currentUser.reputationScore || 0} pts</span>
                 </div>
               </button>
 
-              {/* Account Profile Chip - Single-Line Laser Straight Horizontal Alignment */}
+              {/* Account Profile Chip */}
               <button
                 type="button"
                 onClick={onOpenProfile}
-                className="group flex h-9 items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-2 sm:px-2.5 transition-colors hover:border-slate-700 hover:bg-slate-900 cursor-pointer shrink-0"
+                className="group flex h-9 items-center gap-2 rounded-full border-2 border-slate-200 bg-white px-2 sm:px-2.5 transition-all hover:border-sky-300 cursor-pointer shrink-0 shadow-xs"
                 title="Edit Your Creator Profile & Pic"
               >
                 <img
                   src={currentUser.avatarUrl}
                   alt={currentUser.displayName}
                   referrerPolicy="no-referrer"
-                  className="h-6 w-6 rounded-full object-cover ring-1 ring-emerald-500/50 shrink-0"
+                  className="h-6 w-6 rounded-full object-cover ring-2 ring-emerald-300 shrink-0"
                 />
                 <div className="hidden sm:flex items-center gap-1 leading-none">
-                  <span className="text-xs font-semibold text-slate-200 group-hover:text-white truncate max-w-[90px]">
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-sky-700 truncate max-w-[90px]">
                     @{currentUser.handle}
                   </span>
                   <VerifiedBadge
@@ -297,7 +298,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenProfile}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-900 transition-colors cursor-pointer shrink-0"
+                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-colors cursor-pointer shrink-0 shadow-xs"
                 title="Profile Settings & Avatar Upload"
               >
                 <Settings className="h-4 w-4" />
@@ -307,7 +308,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onLogout}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-900/60 text-slate-400 hover:text-rose-400 hover:bg-slate-900 hover:border-rose-500/30 transition-colors cursor-pointer shrink-0"
+                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-slate-500 hover:text-rose-600 hover:border-rose-300 transition-colors cursor-pointer shrink-0 shadow-xs"
                 title="Log out of account"
               >
                 <LogOut className="h-4 w-4" />
@@ -318,17 +319,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenPointsGuide}
-                className="hidden md:flex h-9 items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-3 text-xs text-slate-300 hover:text-amber-300 hover:border-amber-500/30 transition-colors cursor-pointer shrink-0"
+                className="hidden md:flex h-9 items-center gap-1.5 rounded-full border-2 border-amber-200 bg-amber-50 px-3 text-xs text-amber-800 hover:border-amber-300 transition-colors cursor-pointer shrink-0 font-semibold"
                 title="Learn how Maker Points & Daily Streaks work"
               >
-                <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400/40" />
+                <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
                 <span>Points Guide</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onOpenGoogleLogin('login')}
-                className="flex h-9 items-center px-3 sm:px-3.5 rounded-xl border border-slate-700 bg-slate-900/90 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                className="flex h-9 items-center px-3.5 sm:px-4 rounded-full border-2 border-slate-300 bg-white text-xs font-bold text-slate-700 hover:text-slate-900 hover:border-sky-300 transition-colors cursor-pointer shrink-0 shadow-xs"
               >
                 <span>Log In</span>
               </button>
@@ -336,7 +337,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenGoogleLogin('signup')}
-                className="flex h-9 items-center px-3 sm:px-3.5 rounded-xl bg-indigo-600 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all cursor-pointer shrink-0"
+                className="flex h-9 items-center px-3.5 sm:px-4 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 text-xs font-black text-slate-900 shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
               >
                 <span>Sign Up</span>
               </button>
@@ -345,13 +346,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Navigation Strip (Ensures tabs are easily accessible on small screens) */}
-      <div className="lg:hidden flex items-center justify-around border-t border-slate-800/80 bg-slate-950 px-2 py-1.5 text-[11px] font-medium text-slate-400 overflow-x-auto">
+      {/* Mobile Navigation Strip */}
+      <div className="lg:hidden flex items-center justify-around border-t-2 border-slate-200 bg-white/95 px-2 py-2 text-[11px] font-bold text-slate-600 overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab('feed')}
-          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
-            activeTab === 'feed' ? 'text-indigo-400 font-bold' : 'hover:text-white'
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors whitespace-nowrap ${
+            activeTab === 'feed' ? 'text-sky-700 font-extrabold bg-sky-50' : 'hover:text-slate-900'
           }`}
         >
           <Compass className="h-4 w-4" />
@@ -361,8 +362,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('streak')}
-          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
-            activeTab === 'streak' ? 'text-amber-400 font-bold' : 'hover:text-white'
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors whitespace-nowrap ${
+            activeTab === 'streak' ? 'text-amber-700 font-extrabold bg-amber-50' : 'hover:text-slate-900'
           }`}
         >
           <Flame className="h-4 w-4" />
@@ -378,8 +379,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               setActiveTab('studio');
             }
           }}
-          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
-            activeTab === 'studio' ? 'text-emerald-400 font-bold' : 'hover:text-white'
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors whitespace-nowrap ${
+            activeTab === 'studio' ? 'text-emerald-700 font-extrabold bg-emerald-50' : 'hover:text-slate-900'
           }`}
         >
           <Terminal className="h-4 w-4" />
@@ -389,8 +390,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('reviews')}
-          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
-            activeTab === 'reviews' ? 'text-cyan-400 font-bold' : 'hover:text-white'
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors whitespace-nowrap ${
+            activeTab === 'reviews' ? 'text-rose-700 font-extrabold bg-rose-50' : 'hover:text-slate-900'
           }`}
         >
           <ShieldCheck className="h-4 w-4" />
@@ -406,8 +407,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               setActiveTab('messages');
             }
           }}
-          className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors whitespace-nowrap ${
-            activeTab === 'messages' ? 'text-indigo-300 font-bold' : 'hover:text-white'
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors whitespace-nowrap ${
+            activeTab === 'messages' ? 'text-sky-700 font-extrabold bg-sky-50' : 'hover:text-slate-900'
           }`}
         >
           <MessageSquare className="h-4 w-4" />

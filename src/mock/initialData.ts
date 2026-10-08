@@ -26,12 +26,28 @@ const STORAGE_KEYS = {
   DAILY_REVIEW_DATES: 'lockedin_daily_review_dates',
   DELETED_ACCOUNTS: 'lockedin_deleted_account_ids_v1',
   CLEARED_ACCOUNTS_FLAG: 'lockedin_strict_zero_fabricated_reviews_v6',
+  CLEARED_PREMADE_CHATS_FLAG: 'lockedin_no_premade_group_chats_v1',
   DRAFTS: 'lockedin_project_drafts_v1',
 };
 
 // Immediate purge of any legacy fake seed accounts, fabricated reviews, fabricated notifications, and dummy builds
 if (typeof window !== 'undefined') {
   try {
+    // Purge any pre-made default group chats so users start clean with only user-created channels
+    if (!localStorage.getItem(STORAGE_KEYS.CLEARED_PREMADE_CHATS_FLAG)) {
+      const rawRooms = localStorage.getItem(STORAGE_KEYS.CHAT_ROOMS);
+      if (rawRooms) {
+        const rooms: ChatRoom[] = JSON.parse(rawRooms);
+        // Remove hardcoded pre-made channels
+        const userCreatedRooms = rooms.filter(
+          (r) => r.id !== 'room_robotics_makers' && r.id !== 'room_gamedev_creative'
+        );
+        localStorage.setItem(STORAGE_KEYS.CHAT_ROOMS, JSON.stringify(userCreatedRooms));
+      } else {
+        localStorage.setItem(STORAGE_KEYS.CHAT_ROOMS, JSON.stringify([]));
+      }
+      localStorage.setItem(STORAGE_KEYS.CLEARED_PREMADE_CHATS_FLAG, 'true');
+    }
     if (!localStorage.getItem(STORAGE_KEYS.CLEARED_ACCOUNTS_FLAG)) {
       // Purge all fabricated reviews & notifications: zero fabricated reviews by default
       localStorage.removeItem(STORAGE_KEYS.REVIEWS);
@@ -462,28 +478,14 @@ export const storage = {
       const data = localStorage.getItem(STORAGE_KEYS.CHAT_ROOMS);
       if (data) {
         const parsed = JSON.parse(data);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // Filter out legacy pre-made rooms if any remain
+          return parsed.filter(
+            (r) => r && r.id !== 'room_robotics_makers' && r.id !== 'room_gamedev_creative'
+          );
+        }
       }
-      const defaultRooms: ChatRoom[] = [
-        {
-          id: 'room_robotics_makers',
-          type: 'GROUP',
-          name: 'Robotics & Hardware Lab',
-          description: 'Share CAD models, Arduino/Pi wiring, 3D printing & sensor tests',
-          members: [],
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'room_gamedev_creative',
-          type: 'GROUP',
-          name: 'Game Dev & Creative Coding',
-          description: 'Unity, Godot, shaders, pixel art, sound design and playtesting',
-          members: [],
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      localStorage.setItem(STORAGE_KEYS.CHAT_ROOMS, JSON.stringify(defaultRooms));
-      return defaultRooms;
+      return [];
     } catch {
       return [];
     }

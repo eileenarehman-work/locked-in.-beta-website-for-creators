@@ -25,6 +25,8 @@ import { UserProfileSettings } from './components/UserProfileSettings';
 import { CreatorProfileModal } from './components/CreatorProfileModal';
 import { IntroLanding } from './components/IntroLanding';
 import { PointsGuideModal } from './components/PointsGuideModal';
+import { Mascot } from './components/Mascot';
+import { motion } from 'motion/react';
 import { calculateRealStreak, calculateStreakLoginBonus } from './utils/streakUtils';
 import {
   ShieldCheck,
@@ -142,7 +144,7 @@ export default function App() {
       const streakNotif: AppNotification = {
         id: `login_streak_${Date.now()}`,
         type: 'streak_milestone',
-        title: `🔥 Day ${streak.currentStreak} Daily Streak Active!`,
+        title: `Day ${streak.currentStreak} Streak Active`,
         message: `Welcome back! Daily streak recorded (+${streakBonus} Points awarded). Keep logging in everyday to earn +2 points each day!`,
         createdAt: new Date().toISOString(),
         read: false,
@@ -311,22 +313,44 @@ export default function App() {
   };
 
   // Add Review
-  const handleAddReview = (newReviewData: Omit<Review, 'id' | 'createdAt'>) => {
+  const handleAddReview = (
+    projectId: string,
+    rubric: {
+      clarity: number;
+      execution: number;
+      technicality: number;
+      documentation: number;
+    },
+    feedbackText: string,
+    isBlindReview: boolean,
+    evalResult: { qualityScore: number; feedback: string }
+  ) => {
     if (!currentUser) {
       setAuthModalMode('signup');
       setIsGoogleModalOpen(true);
       return;
     }
 
+    const totalScore = rubric.clarity + rubric.execution + rubric.technicality + rubric.documentation;
+
     const newReview: Review = {
-      ...newReviewData,
       id: `rev_${Date.now()}`,
+      projectId,
+      reviewerId: currentUser.id,
+      reviewer: currentUser,
+      rubric,
+      totalScore,
+      feedbackText,
+      aiQualityScore: evalResult.qualityScore,
+      isBlindReview,
+      upvotesCount: 0,
+      status: 'APPROVED',
       createdAt: new Date().toISOString(),
     };
     setReviews((prev) => [newReview, ...prev]);
 
     // Track 'new review received' event in Notification Center
-    const targetProject = projects.find((p) => p.id === newReviewData.projectId);
+    const targetProject = projects.find((p) => p.id === projectId);
     const newNotif: AppNotification = {
       id: `notif_${Date.now()}`,
       type: 'new_review',
@@ -364,7 +388,7 @@ export default function App() {
       const bonusNotif: AppNotification = {
         id: `bonus_review_${Date.now()}`,
         type: 'streak_milestone',
-        title: '🌟 Daily Review Bonus (+15 Points)!',
+        title: 'Daily Review Bonus (+15 Points)',
         message: `Daily mission complete! You reviewed a community build today and earned +15 Bonus Points (+${totalPointsEarned} Points total for this review). Thank you for supporting fellow makers!`,
         createdAt: new Date().toISOString(),
         read: false,
@@ -701,7 +725,7 @@ export default function App() {
       const streakNotif: AppNotification = {
         id: `login_streak_${Date.now()}`,
         type: 'streak_milestone',
-        title: `🔥 Day ${streak.currentStreak} Streak Active!`,
+        title: `Day ${streak.currentStreak} Streak Active`,
         message: `Welcome back! Daily login recorded (+${streakBonus} Points awarded). Keep your streak alive — log in everyday to earn +2 points each day!`,
         createdAt: new Date().toISOString(),
         read: false,
@@ -867,7 +891,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#faf7f2] text-slate-800 flex flex-col font-sans">
       {/* Top Bar Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -905,48 +929,29 @@ export default function App() {
         {activeTab === 'feed' && (
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
             {/* Feed Header Banner */}
-            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 p-5 sm:p-7 backdrop-blur-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 h-64 w-64 bg-indigo-500/10 blur-3xl pointer-events-none rounded-full" />
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1.5 max-w-2xl">
-                  <div className="flex items-center gap-2 text-xs font-mono text-indigo-400">
-                    <Compass className="h-4 w-4 text-indigo-400" />
-                    <span className="font-bold uppercase tracking-wider">Community Feed</span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[10px] text-emerald-400 font-mono">Live Creations</span>
+            <div className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 via-emerald-50/70 to-amber-50/60 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-xs">
+              <div className="absolute top-0 right-0 h-64 w-64 bg-sky-200/40 blur-3xl pointer-events-none rounded-full" />
+              <div className="absolute bottom-0 left-1/3 h-48 w-48 bg-emerald-200/30 blur-3xl pointer-events-none rounded-full" />
+
+              {/* Decorative Watermark Mascots from brand logo */}
+              <div className="absolute -right-4 -bottom-4 opacity-15 pointer-events-none select-none hidden md:flex items-center gap-2">
+                <Mascot type="earth" size="xl" className="rotate-6" />
+                <Mascot type="curious" size="lg" className="-rotate-12" />
+                <Mascot type="cheerful" size="lg" className="rotate-12" />
+              </div>
+
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="flex items-center gap-2 text-xs font-bold text-sky-800">
+                    <Mascot type="curious" size="xs" />
+                    <span className="uppercase tracking-wider font-mono text-[11px] text-sky-700">Community Feed</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                    Explore What Creators Are Building
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                    Latest Projects & Creations
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    The real-time social feed for hardware, 3D prints, robots, games, apps, and code. Follow builders, drop reactions, and write constructive peer reviews.
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                    Discover projects across 3D printing, game development, robotics, art, and code. Leave constructive reviews and follow creators.
                   </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                  <button
-                    onClick={() => {
-                      if (!currentUser) {
-                        setAuthModalMode('signup');
-                        setIsGoogleModalOpen(true);
-                      } else {
-                        setActiveTab('studio');
-                      }
-                    }}
-                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors cursor-pointer"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Drop Build</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('streak')}
-                    className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-3.5 py-2 text-xs font-semibold text-amber-300 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
-                    title="View Daily Streak Hub"
-                  >
-                    <Flame className="h-4 w-4 fill-amber-500 text-amber-500" />
-                    <span>Streak</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -954,14 +959,14 @@ export default function App() {
             {/* Real Social Discovery & Showcase Feed - Strictly Just Feeds */}
             <div className="space-y-6">
               {/* Filter Bar & Search */}
-              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-                {/* Feed Sort & Custom YouTube-Style Hashtags */}
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b-2 border-slate-200/80 pb-5">
+                {/* Feed Sort & Tags */}
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                  <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-medium">
+                  <div className="flex items-center gap-1 bg-white border-2 border-slate-200 p-1 rounded-full text-xs font-bold shadow-2xs">
                     <button
                       onClick={() => setFeedSort('trending')}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                        feedSort === 'trending' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                      className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full transition-all cursor-pointer ${
+                        feedSort === 'trending' ? 'bg-gradient-to-r from-sky-400 to-emerald-300 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <TrendingUp className="h-3.5 w-3.5" />
@@ -969,12 +974,12 @@ export default function App() {
                     </button>
                     <button
                       onClick={() => setFeedSort('recent')}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                        feedSort === 'recent' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                      className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full transition-all cursor-pointer ${
+                        feedSort === 'recent' ? 'bg-gradient-to-r from-sky-400 to-emerald-300 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <Clock className="h-3.5 w-3.5" />
-                      Recent
+                      Latest
                     </button>
                     <button
                       onClick={() => {
@@ -985,8 +990,8 @@ export default function App() {
                           setFeedSort('following');
                         }
                       }}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                        feedSort === 'following' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                      className={`flex items-center gap-1.5 px-3.5 py-1 rounded-full transition-all cursor-pointer ${
+                        feedSort === 'following' ? 'bg-gradient-to-r from-sky-400 to-emerald-300 text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <UserCheck className="h-3.5 w-3.5" />
@@ -994,16 +999,16 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="h-4 w-px bg-slate-800 hidden sm:block" />
+                  <div className="h-4 w-px bg-slate-300 hidden sm:block" />
 
                   {/* Custom Hashtags */}
-                  <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 max-w-full">
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 max-w-full">
                     <button
                       onClick={() => setSelectedTag('#all')}
-                      className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
+                      className={`rounded-full px-3.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
                         selectedTag === '#all'
-                          ? 'bg-slate-800 text-indigo-300 border border-indigo-500/50 font-semibold'
-                          : 'border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
+                          ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300 font-bold shadow-xs'
+                          : 'border-2 border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
                       All Builds
@@ -1012,10 +1017,10 @@ export default function App() {
                       <button
                         key={tag}
                         onClick={() => setSelectedTag(selectedTag === tag ? '#all' : tag)}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
+                        className={`rounded-full px-3 py-1 text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
                           selectedTag === tag
-                            ? 'bg-slate-800 text-indigo-300 border border-indigo-500/50 font-semibold'
-                            : 'border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
+                            ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300 font-bold shadow-xs'
+                            : 'border-2 border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                         }`}
                       >
                         {tag}
@@ -1026,25 +1031,25 @@ export default function App() {
 
                 {/* Search Bar */}
                 <div className="relative w-full md:w-72">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search builds, makers, #tags..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-900 pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                    className="w-full rounded-full border-2 border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-sky-400 focus:outline-none shadow-2xs"
                   />
                 </div>
               </div>
 
               {/* Projects Feed Grid - Just Feeds */}
               {filteredProjects.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center space-y-4">
-                  <div className="mx-auto h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/80 p-12 text-center space-y-4">
+                  <div className="mx-auto h-12 w-12 rounded-2xl bg-sky-100 border-2 border-sky-200 flex items-center justify-center text-sky-600">
                     <Sparkles className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-white">No Builds in This Feed Yet</h3>
-                  <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  <h3 className="text-lg font-bold text-slate-900">No Builds in This Feed Yet</h3>
+                  <p className="text-xs text-slate-600 max-w-md mx-auto">
                     Publish the first project in Art, 3D Printing, Game Dev, Robotics, or Code!
                   </p>
                   <button
@@ -1052,18 +1057,19 @@ export default function App() {
                       if (!currentUser) setIsGoogleModalOpen(true);
                       else setActiveTab('studio');
                     }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30 cursor-pointer"
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2.5 text-xs font-black text-slate-900 hover:scale-105 active:scale-95 transition-all shadow-md shadow-sky-300/40 cursor-pointer"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Drop Your Build Now 🚀</span>
+                    <span>Create a Post</span>
                   </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProjects.map((project) => (
+                  {filteredProjects.map((project, idx) => (
                     <ProjectCard
                       key={project.id}
                       project={project}
+                      index={idx}
                       onOpenProject={(p) => setSelectedProject(p)}
                       onShareProject={(p) => setShareProject(p)}
                       onToggleLike={handleToggleLike}
@@ -1081,20 +1087,28 @@ export default function App() {
         {/* 2. Dedicated Points & Streak Hub Tab (Streak, Badges, Leaderboard, Daily Missions) */}
         {activeTab === 'streak' && (
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-            {/* Streak & Daily Missions Hero Card */}
-            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950/40 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 h-64 w-64 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
+            {/* Streak & Daily Missions Hero Card - Warm Cheerful Pastel */}
+            <div className="rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50/70 to-rose-50/50 p-6 sm:p-8 relative overflow-hidden shadow-xs">
+              <div className="absolute top-0 right-0 h-64 w-64 bg-amber-200/40 blur-3xl pointer-events-none rounded-full" />
+              <div className="absolute bottom-0 left-1/3 h-48 w-48 bg-rose-200/30 blur-3xl pointer-events-none rounded-full" />
+
+              {/* Brand Mascot Watermark */}
+              <div className="absolute -right-3 -bottom-3 opacity-15 pointer-events-none select-none hidden md:flex items-center gap-2">
+                <Mascot type="wavy" size="xl" className="rotate-12" />
+                <Mascot type="curious" size="lg" className="-rotate-6" />
+              </div>
+
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl">
-                  <div className="flex items-center gap-2 text-xs font-mono text-amber-400">
-                    <Flame className="h-4 w-4 fill-amber-400 text-amber-400 animate-pulse" />
+                  <div className="flex items-center gap-2 text-xs font-mono text-amber-800">
+                    <Mascot type="wavy" size="xs" />
                     <span className="font-bold tracking-wider">DAILY STREAK & POINTS</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak 🔥
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    Check in every day to keep your streak alive, review projects from other builders, unlock badges, and climb the leaderboard.
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                    Check in every day to keep your streak alive, review projects from other builders, unlock badges, and climb the leaderboard!
                   </p>
                 </div>
 
@@ -1102,7 +1116,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsPointsGuideOpen(true)}
-                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-all shadow-sm cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-full border-2 border-amber-300 bg-white px-4 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100/60 transition-all shadow-2xs cursor-pointer active:scale-95"
                   >
                     <Star className="h-4 w-4 fill-amber-400" />
                     <span>How Points Work</span>
@@ -1110,7 +1124,7 @@ export default function App() {
 
                   <button
                     onClick={() => setActiveTab('feed')}
-                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-5 py-2 text-xs font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                   >
                     <Compass className="h-4 w-4" />
                     <span>Back to Feed</span>
@@ -1124,35 +1138,35 @@ export default function App() {
               {/* Left Column (8 cols): Daily Review Mission + Streak & Badges Hub */}
               <div className="lg:col-span-8 space-y-6">
                 {/* Daily Community Review Quest Booster Card */}
-                <div className="rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/40 via-slate-900 to-slate-950 p-5 space-y-3.5 shadow-xl relative overflow-hidden">
+                <div className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50/60 p-5 space-y-3.5 shadow-xs relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 border border-amber-300 text-amber-700">
                         <Star className="h-4 w-4 fill-amber-400" />
                       </span>
                       <div>
-                        <h3 className="text-xs font-bold text-white tracking-tight">
+                        <h3 className="text-xs font-extrabold text-slate-900 tracking-tight">
                           Daily Review Bonus
                         </h3>
-                        <span className="text-[10px] font-mono text-emerald-400">
+                        <span className="text-[10px] font-mono font-bold text-emerald-700">
                           +15 Bonus Points Today
                         </span>
                       </div>
                     </div>
                     {hasCompletedDailyReviewToday ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-800">
                         <CheckCircle2 className="h-3 w-3" />
                         COMPLETED
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-300 animate-pulse">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-mono font-bold text-amber-800">
                         AVAILABLE
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Review any maker's project today to grab a <strong className="text-amber-300">+15 bonus points</strong> reward on top of your normal review points (+40 points total)!
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Review any maker's project today to grab a <strong className="text-amber-800">+15 bonus points</strong> reward on top of your normal review points (+40 points total)!
                   </p>
 
                   <div className="pt-1 flex items-center justify-between">
@@ -1165,7 +1179,7 @@ export default function App() {
                           setActiveTab('reviews');
                         }
                       }}
-                      className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 py-2 text-xs font-semibold text-white shadow-sm transition-all cursor-pointer"
+                      className="w-full flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 py-2.5 text-xs font-black text-slate-950 shadow-md shadow-sky-300/30 hover:scale-102 active:scale-98 transition-all cursor-pointer"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       <span>{hasCompletedDailyReviewToday ? 'Review Another Build' : 'Complete Daily Review (+15 Pts)'}</span>
@@ -1220,14 +1234,16 @@ export default function App() {
             />
           ) : (
             <div className="mx-auto max-w-md px-4 py-16 text-center space-y-4">
-              <ShieldCheck className="h-10 w-10 text-indigo-400 mx-auto" />
-              <h3 className="text-xl font-bold text-white">Sign In to Drop Your Build</h3>
-              <p className="text-xs text-slate-400">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-sky-100 border-2 border-sky-200 text-sky-700">
+                <ShieldCheck className="h-7 w-7" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900">Sign In to Drop Your Build</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
                 To keep our platform 100% human and free of spam or fake bots, please sign in with Google.
               </p>
               <button
                 onClick={() => setIsGoogleModalOpen(true)}
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2.5 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 shadow-md shadow-sky-300/40 transition-all cursor-pointer"
               >
                 Sign in with Google
               </button>
@@ -1238,25 +1254,30 @@ export default function App() {
         {/* Human Reviews Stream */}
         {activeTab === 'reviews' && (
           <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-200/80 pb-5">
               <div>
-                <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl">
+                <div className="flex items-center gap-2 mb-1">
+                  <Mascot type="friendly" size="xs" />
+                  <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                    Community Evaluations
+                  </span>
+                </div>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight sm:text-2xl">
                   Peer Reviews
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-0.5 font-medium">
                   Constructive feedback and rubric evaluations from fellow creators.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-mono text-slate-300">
-                <Sparkles className="h-4 w-4 text-indigo-400" />
-                <span>Rubric Evaluations</span>
+              <div className="text-xs text-slate-500 font-medium">
+                4-part rubric: clarity, execution, technicality, documentation
               </div>
             </div>
 
             {reviews.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-800 p-12 text-center text-xs text-slate-400 space-y-2">
-                <p>No peer reviews submitted yet.</p>
+              <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/80 p-12 text-center text-xs text-slate-600 space-y-3">
+                <p className="font-bold text-slate-800 text-sm">No peer reviews submitted yet.</p>
                 <p className="text-slate-500">
                   Open any build in the Showcase to submit the first constructive rubric evaluation!
                 </p>
@@ -1268,7 +1289,7 @@ export default function App() {
                   return (
                     <div
                       key={rev.id}
-                      className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-4 backdrop-blur-md"
+                      className="rounded-3xl border-2 border-slate-200 bg-white p-6 space-y-4 shadow-xs text-slate-800"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -1276,14 +1297,14 @@ export default function App() {
                             src={rev.reviewer.avatarUrl}
                             alt={rev.reviewer.displayName}
                             referrerPolicy="no-referrer"
-                            className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-700"
+                            className="h-9 w-9 rounded-full object-cover ring-2 ring-emerald-300"
                           />
                           <div>
-                            <span className="text-sm font-semibold text-white block">
+                            <span className="text-sm font-bold text-slate-900 block">
                               {rev.isBlindReview ? 'Anonymous Creator' : rev.reviewer.displayName}
                             </span>
                             {!rev.isBlindReview && (
-                              <span className="text-xs font-mono text-slate-400">
+                              <span className="text-xs font-mono text-slate-500">
                                 @{rev.reviewer.handle}
                               </span>
                             )}
@@ -1291,10 +1312,10 @@ export default function App() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-xs font-mono text-emerald-400 font-semibold">
+                          <span className="rounded-full bg-emerald-50 border border-emerald-300 px-3 py-1 text-xs font-mono text-emerald-800 font-bold">
                             Rubric: {rev.totalScore}/100
                           </span>
-                          <span className="rounded-lg bg-indigo-500/10 border border-indigo-500/30 px-2.5 py-1 text-xs font-mono text-indigo-300 flex items-center gap-1">
+                          <span className="rounded-full bg-sky-50 border border-sky-300 px-3 py-1 text-xs font-mono text-sky-800 flex items-center gap-1 font-bold">
                             <Sparkles className="h-3.5 w-3.5" />
                             Quality: {rev.aiQualityScore}%
                           </span>
@@ -1302,51 +1323,51 @@ export default function App() {
                       </div>
 
                       {targetProject && (
-                        <div className="rounded-xl border border-slate-800 bg-slate-950 p-3 flex items-center justify-between">
+                        <div className="rounded-2xl border-2 border-sky-100 bg-sky-50/60 p-3 flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] font-mono text-slate-500 block uppercase">
+                            <span className="text-[10px] font-mono text-sky-700 block uppercase font-bold">
                               Project Evaluated
                             </span>
                             <button
                               onClick={() => setSelectedProject(targetProject)}
-                              className="text-xs font-semibold text-indigo-400 hover:underline text-left line-clamp-1"
+                              className="text-xs font-bold text-sky-900 hover:underline text-left line-clamp-1 cursor-pointer"
                             >
                               {targetProject.title}
                             </button>
                           </div>
-                          <span className="text-xs font-mono text-slate-400">
+                          <span className="text-xs font-mono text-slate-500">
                             by @{targetProject.author.handle}
                           </span>
                         </div>
                       )}
 
-                      <div className="grid grid-cols-4 gap-2 rounded-xl bg-slate-950 p-3 text-center text-xs font-mono border border-slate-800">
+                      <div className="grid grid-cols-4 gap-2 rounded-2xl bg-slate-50 p-3 text-center text-xs font-mono border-2 border-slate-100">
                         <div>
                           <span className="text-slate-500 block text-[10px]">Clarity</span>
-                          <span className="text-white font-medium">{rev.rubric.clarity}/25</span>
+                          <span className="text-slate-900 font-bold">{rev.rubric.clarity}/25</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-[10px]">Execution</span>
-                          <span className="text-white font-medium">{rev.rubric.execution}/25</span>
+                          <span className="text-slate-900 font-bold">{rev.rubric.execution}/25</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-[10px]">Technicality</span>
-                          <span className="text-white font-medium">{rev.rubric.technicality}/25</span>
+                          <span className="text-slate-900 font-bold">{rev.rubric.technicality}/25</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block text-[10px]">Documentation</span>
-                          <span className="text-white font-medium">{rev.rubric.documentation}/25</span>
+                          <span className="text-slate-900 font-bold">{rev.rubric.documentation}/25</span>
                         </div>
                       </div>
 
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className="text-xs text-slate-700 leading-relaxed font-medium">
                         {rev.feedbackText}
                       </p>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                         <button
                           onClick={() => handleUpvoteReview(rev.id)}
-                          className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors"
+                          className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors font-medium cursor-pointer"
                         >
                           <span>Helpful ({rev.upvotesCount})</span>
                         </button>
@@ -1387,14 +1408,16 @@ export default function App() {
             />
           ) : (
             <div className="mx-auto max-w-md px-4 py-16 text-center space-y-4">
-              <Users className="h-10 w-10 text-indigo-400 mx-auto" />
-              <h3 className="text-xl font-bold text-white">Sign In to Access Social Chat</h3>
-              <p className="text-xs text-slate-400">
-                Connect with teen creators, create group channels, and chat directly.
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-sky-100 border-2 border-sky-200 text-sky-700">
+                <Users className="h-7 w-7" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900">Sign In to Access Social Chat</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Connect with creators, create group channels, and chat directly in the Lounge!
               </p>
               <button
                 onClick={() => setIsGoogleModalOpen(true)}
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2.5 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 shadow-md shadow-sky-300/40 transition-all cursor-pointer"
               >
                 Sign in with Google
               </button>
@@ -1402,6 +1425,26 @@ export default function App() {
           )
         )}
       </main>
+
+      {/* Theme Footer with Logo Mascots */}
+      <footer className="border-t-2 border-slate-200/80 bg-white/70 py-8 text-center text-xs text-slate-500 font-sans">
+        <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Mascot type="earth" size="sm" />
+            <span className="font-black text-slate-900 tracking-tight text-sm">locked in</span>
+            <span className="text-slate-300">·</span>
+            <span className="text-slate-600 font-medium">Where builders share, review, and collaborate.</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Mascot type="curious" size="xs" title="Curious Star" />
+            <Mascot type="cheerful" size="xs" title="Cheerful Buddy" />
+            <Mascot type="wavy" size="xs" title="Cozy Champ" />
+            <Mascot type="friendly" size="xs" title="Kind Helper" />
+            <span className="text-[11px] font-mono text-slate-400 pl-1">Young Creators Community</span>
+          </div>
+        </div>
+      </footer>
 
       {/* Project Detail Modal */}
       {selectedProject && (

@@ -3,8 +3,58 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #faf7f2;
+    color: #1e293b;
+    overflow-x: hidden;
   }
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
+}
+
+/* Bubbly & Friendly Pastel Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: #f1ede6;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid #f1ede6;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ecaff;
+}
+
+/* Bubbly bounce & float animation helpers */
+@keyframes cute-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes cute-wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+.animate-cute-float {
+  animation: cute-float 3.5s ease-in-out infinite;
+}
+
+.animate-cute-wiggle {
+  animation: cute-wiggle 2s ease-in-out infinite;
 }

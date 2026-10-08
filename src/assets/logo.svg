@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 540" fill="none">
+  <!-- 1. CENTER DIAMOND EARTH -->
+  <g id="diamond-earth">
+    <!-- Base Sky Blue Ocean Fill -->
+    <path
+      d="M 300 92
+         C 316 76, 336 94, 348 106
+         L 464 222
+         C 488 246, 488 294, 464 318
+         L 348 434
+         C 328 454, 272 454, 252 434
+         L 136 318
+         C 112 294, 112 246, 136 222
+         L 252 106
+         C 264 94, 284 76, 300 92 Z"
+      fill="#9ecaff"
+    />
+
+    <!-- Earth Green Continents & Spots - Fully intact, beautifully rounded, never cut off -->
+    <g id="earth-green-continents">
+      <!-- Main Top/North Continent: Prominent, organic, fully visible green landmass -->
+      <path
+        d="M 285 142
+           C 320 138, 350 152, 368 172
+           C 388 194, 385 220, 362 236
+           C 336 250, 312 242, 292 232
+           C 268 220, 246 226, 236 210
+           C 226 192, 244 165, 266 150
+           Z"
+        fill="#9ce29f"
+        stroke="#1e293b"
+        stroke-width="6.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+
+      <!-- Southwest Continent: Distinct, fully rounded green landmass -->
+      <path
+        d="M 226 278
+           C 255 268, 282 278, 290 300
+           C 298 322, 285 348, 268 360
+           C 248 372, 228 365, 218 344
+           C 208 322, 206 292, 226 278
+           Z"
+        fill="#9ce29f"
+        stroke="#1e293b"
+        stroke-width="6.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+
+      <!-- Southeast Island: Intact, bubbly green island -->
+      <path
+        d="M 364 275
+           C 392 268, 418 282, 420 304
+           C 422 324, 402 342, 382 344
+           C 362 345, 348 330, 350 310
+           C 352 292, 352 278, 364 275
+           Z"
+        fill="#9ce29f"
+        stroke="#1e293b"
+        stroke-width="6.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </g>
+
+    <!-- Diamond Charcoal Outer Border -->
+    <path
+      d="M 300 92
+         C 316 76, 336 94, 348 106
+         L 464 222
+         C 488 246, 488 294, 464 318
+         L 348 434
+         C 328 454, 272 454, 252 434
+         L 136 318
+         C 112 294, 112 246, 136 222
+         L 252 106
+         C 264 94, 284 76, 300 92 Z"
+      stroke="#1e293b"
+      stroke-width="7.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+    />
+  </g>
+
+  <!-- 2. TOP-LEFT FACE (YELLOW - CURIOUS / SURPRISED) -->
+  <g transform="translate(125, 120)">
+    <ellipse cx="0" cy="0" rx="52" ry="50" fill="#ffea78" stroke="#1e293b" stroke-width="6.5" />
+    <circle cx="-21" cy="-13" r="4.5" fill="#2aa6cb" />
+    <circle cx="21" cy="-13" r="4.5" fill="#2aa6cb" />
+    <ellipse cx="0" cy="12" rx="16" ry="11" fill="#ebe3dc" stroke="#1e293b" stroke-width="5.5" />
+  </g>
+
+  <!-- 3. TOP-RIGHT FACE (CORAL/PINK - CHEERFUL / LAUGHING) -->
+  <g transform="translate(475, 125)">
+    <ellipse cx="0" cy="0" rx="53" ry="51" fill="#ffadad" stroke="#1e293b" stroke-width="6.5" />
+    <path d="M -30 -24 Q -20 -22 -14 -23" stroke="#1e293b" stroke-width="5.5" stroke-linecap="round" fill="none" />
+    <path d="M 12 -29 Q 23 -32 33 -28" stroke="#1e293b" stroke-width="6" stroke-linecap="round" fill="none" />
+    <circle cx="-19" cy="-13" r="4.5" fill="#1e293b" />
+    <circle cx="22" cy="-13" r="4.5" fill="#1e293b" />
+    <path
+      d="M -17 9 L 17 9 L 2 33 Z"
+      fill="#ffffff"
+      stroke="#1e293b"
+      stroke-width="5.5"
+      stroke-linejoin="round"
+      stroke-linecap="round"
+    />
+  </g>
+
+  <!-- 4. BOTTOM-LEFT FACE (PEACH - CONTENT / WAVY SMILE) -->
+  <g transform="translate(115, 415)">
+    <ellipse cx="0" cy="0" rx="54" ry="50" fill="#ffcb95" stroke="#1e293b" stroke-width="6.5" />
+    <path d="M -28 -11 Q -17 -16 -7 -11" stroke="#1e293b" stroke-width="5.5" stroke-linecap="round" fill="none" />
+    <path d="M 8 -11 Q 18 -16 29 -11" stroke="#1e293b" stroke-width="5.5" stroke-linecap="round" fill="none" />
+    <path
+      d="M -38 4 Q -30 -5 -28 6 Q 0 22 28 6 Q 30 -5 38 4"
+      stroke="#1e293b"
+      stroke-width="5.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+    />
+  </g>
+
+  <!-- 5. BOTTOM-RIGHT FACE (BEIGE/WARM CREAM - FRIENDLY / GENTLE SMILE) -->
+  <g transform="translate(475, 425)">
+    <ellipse cx="0" cy="0" rx="53" ry="51" fill="#ede0d7" stroke="#1e293b" stroke-width="6.5" />
+    <circle cx="-21" cy="-14" r="5" fill="#22c55e" />
+    <circle cx="21" cy="-14" r="4.5" fill="#1e293b" />
+    <path
+      d="M -18 9 Q 0 29 18 9"
+      stroke="#1e293b"
+      stroke-width="5.5"
+      stroke-linecap="round"
+      fill="none"
+    />
+  </g>
+</svg>

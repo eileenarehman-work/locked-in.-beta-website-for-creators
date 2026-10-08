@@ -13,9 +13,11 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
+import { Mascot } from './Mascot';
 
 interface ProjectCardProps {
   project: Project;
+  index?: number;
   onOpenProject: (project: Project) => void;
   onShareProject: (project: Project) => void;
   onToggleLike: (projectId: string) => void;
@@ -26,6 +28,7 @@ interface ProjectCardProps {
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
+  index = 0,
   onOpenProject,
   onShareProject,
   onToggleLike,
@@ -48,8 +51,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const rotX = -((y - centerY) / centerY) * 6; // Max 6 deg
-    const rotY = ((x - centerX) / centerX) * 6;
+    const rotX = -((y - centerY) / centerY) * 4; // Max 4 deg subtle tilt
+    const rotY = ((x - centerX) / centerX) * 4;
 
     setRotateX(rotX);
     setRotateY(rotY);
@@ -73,25 +76,34 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <motion.div
       ref={cardRef}
+      initial={{ opacity: 0, y: 22 }}
+      animate={{
+        opacity: 1,
+        y: isHovered ? -5 : 0,
+        rotateX,
+        rotateY,
+        scale: isHovered ? 1.018 : 1,
+      }}
+      transition={{
+        opacity: { duration: 0.45, delay: Math.min(index * 0.06, 0.45), ease: [0.21, 0.45, 0.27, 0.9] },
+        y: isHovered ? { duration: 0.2, ease: 'easeOut' } : { duration: 0.45, delay: Math.min(index * 0.06, 0.45), ease: [0.21, 0.45, 0.27, 0.9] },
+        rotateX: { type: 'spring', stiffness: 350, damping: 25 },
+        rotateY: { type: 'spring', stiffness: 350, damping: 25 },
+        scale: { type: 'spring', stiffness: 350, damping: 25 },
+      }}
+      style={{ transformStyle: 'preserve-3d', perspective: 1000 }}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
-      animate={{
-        rotateX,
-        rotateY,
-        scale: isHovered ? 1.015 : 1,
-      }}
-      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-      style={{ transformStyle: 'preserve-3d', perspective: 1000 }}
       onClick={() => onOpenProject(project)}
-      className="group relative cursor-pointer rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 shadow-lg backdrop-blur-md transition-shadow hover:border-slate-700 hover:shadow-2xl hover:shadow-indigo-500/10 flex flex-col justify-between"
+      className="group relative cursor-pointer rounded-3xl border-2 border-slate-100 bg-white p-5 shadow-xs transition-all hover:border-sky-300 hover:shadow-xl hover:shadow-sky-100/70 flex flex-col justify-between text-slate-800"
     >
       {/* Subtle glass glow border effect */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/5 via-transparent to-emerald-500/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-sky-400/5 via-transparent to-emerald-400/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       <div>
         {/* Cover Media */}
-        <div className="relative mb-4 aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-950 border border-slate-800">
+        <div className="relative mb-4 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
           {project.mediaUrls[0] ? (
             <img
               src={project.mediaUrls[0]}
@@ -100,21 +112,21 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-950 p-4 text-center">
-              <Sparkles className="h-6 w-6 text-indigo-400 mb-1.5 opacity-80" />
-              <span className="text-xs font-semibold text-indigo-200">
-                {project.qualities?.[0] || 'Working Prototype'}
+            <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-sky-50 to-emerald-50 p-4 text-center">
+              <Mascot type="earth" size="lg" className="mb-2 transition-transform group-hover:scale-110" />
+              <span className="text-xs font-bold text-slate-800">
+                {project.title}
               </span>
-              <span className="text-[10px] font-mono text-slate-400 mt-0.5">
-                {project.tags[0] || '#makers'}
+              <span className="text-[11px] text-slate-500 mt-0.5">
+                {project.category || 'Maker Build'}
               </span>
             </div>
           )}
 
           {/* Actual Qualities Overlay Tag on Image (Top-Left) */}
           <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-950/85 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/40 shadow-sm">
-              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-300 shadow-2xs">
+              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
               <span>{project.qualities?.[0] || 'Working Prototype'}</span>
             </span>
           </div>
@@ -125,7 +137,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               e.stopPropagation();
               onShareProject(project);
             }}
-            className="absolute top-2.5 right-2.5 rounded-lg bg-slate-950/70 p-1.5 text-slate-300 backdrop-blur-md transition-colors hover:bg-slate-900 hover:text-white"
+            className="absolute top-2.5 right-2.5 rounded-full bg-white/90 p-1.5 text-slate-600 backdrop-blur-md transition-colors hover:bg-white hover:text-slate-950 border border-slate-200 shadow-2xs"
             title="Generate Shareable Proof Card"
           >
             <Share2 className="h-4 w-4" />
@@ -133,7 +145,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* YouTube / Instagram Style Custom Hashtags */}
-        <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs font-mono text-slate-400">
+        <div className="mb-2.5 flex flex-wrap items-center gap-1.5 text-xs font-mono">
           {project.tags.map((tag) => (
             <button
               key={tag}
@@ -142,7 +154,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 e.stopPropagation();
                 if (onSelectTag) onSelectTag(tag);
               }}
-              className="text-indigo-400/90 font-medium hover:text-indigo-300 hover:underline transition-colors"
+              className="text-sky-800 rounded-full bg-sky-50 border border-sky-200 px-2.5 py-0.5 text-[11px] font-bold hover:border-sky-400 hover:text-sky-950 transition-colors"
             >
               {tag}
             </button>
@@ -150,12 +162,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Project Title */}
-        <h3 className="text-lg font-semibold text-white tracking-tight group-hover:text-indigo-300 transition-colors line-clamp-1">
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight group-hover:text-sky-700 transition-colors line-clamp-1">
           {project.title}
         </h3>
 
         {/* Tagline */}
-        <p className="mt-2 text-sm text-slate-300 line-clamp-2 leading-relaxed">
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
           {project.tagline}
         </p>
 
@@ -165,9 +177,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             {project.qualities.slice(0, 3).map((quality, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1 rounded-md bg-slate-950/80 px-2 py-0.5 text-[10px] font-mono text-indigo-300 border border-slate-800"
+                className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-800 border border-sky-100 shadow-2xs"
               >
-                <span className="h-1 w-1 rounded-full bg-indigo-400" />
+                <span className="text-emerald-600 font-bold">✓</span>
                 <span>{quality}</span>
               </span>
             ))}
@@ -176,7 +188,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       </div>
 
       {/* Footer Metrics & Author */}
-      <div className="mt-5 flex items-center justify-between border-t border-slate-800/80 pt-3.5">
+      <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3.5">
         {/* Author Avatar & Handle - Click to open Creator Profile */}
         <button
           type="button"
@@ -190,10 +202,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             src={project.author.avatarUrl}
             alt={project.author.displayName}
             referrerPolicy="no-referrer"
-            className="h-6 w-6 rounded-full object-cover ring-1 ring-slate-700 group-hover/author:ring-indigo-400"
+            className="h-6 w-6 rounded-full object-cover ring-2 ring-emerald-300 group-hover/author:ring-sky-400"
           />
           <div className="flex items-center gap-1 min-w-0">
-            <span className="text-xs font-medium text-slate-300 group-hover/author:text-white truncate max-w-[120px]">
+            <span className="text-xs font-bold text-slate-800 group-hover/author:text-sky-700 truncate max-w-[120px]">
               @{project.author.handle}
             </span>
             <VerifiedBadge
@@ -201,11 +213,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               reputationScore={project.author.reputationScore}
             />
             {project.author.reputationScore >= 150 ? (
-              <span title="Helpful Heart Badge Earned" className="text-amber-400 flex items-center">
-                <Star className="h-3 w-3 fill-amber-400/40" />
+              <span title="Helpful Heart Badge Earned" className="text-amber-500 flex items-center">
+                <Star className="h-3 w-3 fill-amber-400" />
               </span>
             ) : project.author.reputationScore >= 100 ? (
-              <span title="Crafty Bee Badge Earned" className="text-amber-400 flex items-center">
+              <span title="Crafty Bee Badge Earned" className="text-amber-500 flex items-center">
                 <Trophy className="h-3 w-3" />
               </span>
             ) : null}
@@ -215,8 +227,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Metrics Engine: Views & Like Micro-animation */}
         <div className="flex items-center gap-3">
           {/* Views count */}
-          <div className="flex items-center gap-1 text-xs text-slate-400 font-mono tabular-nums">
-            <Eye className="h-3.5 w-3.5 text-slate-500" />
+          <div className="flex items-center gap-1 text-xs text-slate-500 font-mono tabular-nums font-semibold">
+            <Eye className="h-3.5 w-3.5 text-slate-400" />
             <span>{project.viewsCount.toLocaleString()}</span>
           </div>
 
@@ -226,10 +238,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               whileTap={{ scale: 0.9 }}
               whileHover={{ scale: 1.1 }}
               onClick={handleLikeClick}
-              className={`relative flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-mono tabular-nums transition-colors ${
+              className={`relative flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono tabular-nums font-bold transition-colors ${
                 isLiked
-                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                  : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border border-slate-700/50'
+                  ? 'bg-rose-50 text-rose-600 border border-rose-300'
+                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               <motion.div

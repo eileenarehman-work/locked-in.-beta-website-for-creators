@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   DirectMessage,
   User,
@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { storage } from '../mock/initialData';
+import { Mascot } from './Mascot';
 
 interface DirectMessagesProps {
   currentUser: User;
@@ -80,6 +81,15 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'dm' | 'group' | 'friends'>('dm');
   const [activeRoomId, setActiveRoomId] = useState<string>(chatRooms[0]?.id || '');
+
+  // Keep activeRoomId in sync when rooms are created or deleted
+  useEffect(() => {
+    if (chatRooms.length === 0) {
+      setActiveRoomId('');
+    } else if (!chatRooms.some((r) => r.id === activeRoomId)) {
+      setActiveRoomId(chatRooms[0].id);
+    }
+  }, [chatRooms, activeRoomId]);
   const [inputText, setInputText] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
@@ -310,44 +320,53 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
         </div>
       )}
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-sky-100 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight sm:text-2xl">
-            Messages & Groups
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Chat directly with creators, collaborate on builds, or start a group channel.
+          <div className="flex items-center gap-2">
+            <Mascot type="cheerful" size="sm" />
+            <h2 className="text-xl font-black text-slate-900 tracking-tight sm:text-2xl">
+              Messages & Chat
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Chat directly with other creators, collaborate on projects, or join group channels.
           </p>
         </div>
 
         {/* Section Navigation Tabs & Create Group */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 rounded-xl bg-slate-900 border border-slate-800 p-1 text-xs">
+          <div className="flex items-center gap-1 rounded-full bg-sky-50 border-2 border-sky-200 p-1 text-xs">
             <button
               onClick={() => setActiveTab('dm')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                activeTab === 'dm' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
+                activeTab === 'dm'
+                  ? 'bg-sky-400 text-slate-950 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               DMs
             </button>
             <button
               onClick={() => setActiveTab('group')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                activeTab === 'group' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all cursor-pointer ${
+                activeTab === 'group'
+                  ? 'bg-amber-300 text-slate-950 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Groups
             </button>
             <button
               onClick={() => setActiveTab('friends')}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
-                activeTab === 'friends' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'friends'
+                  ? 'bg-emerald-300 text-slate-950 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <span>Friends</span>
               {myFriendships.incoming.length > 0 && (
-                <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-[10px] font-bold text-slate-950 animate-pulse">
+                <span className="rounded-full bg-emerald-500 px-1.5 py-0.2 text-[10px] font-bold text-white animate-pulse">
                   {myFriendships.incoming.length}
                 </span>
               )}
@@ -356,7 +375,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
           <button
             onClick={() => setIsCreatingChannel(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all"
+            className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-4 py-2 text-xs font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Create Group</span>
@@ -365,21 +384,21 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
       </div>
 
       {/* Main Split Layout */}
-      <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-md overflow-hidden min-h-[620px]">
+      <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 rounded-3xl border-2 border-sky-200 bg-white shadow-xl overflow-hidden min-h-[620px] text-slate-800">
         {/* Left Column: Channels / Peers / Friends List */}
-        <div className="border-r border-slate-800 p-4 space-y-4">
+        <div className="border-r border-sky-100 p-4 space-y-4 bg-sky-50/20">
           {activeTab === 'dm' && (
             <>
               <div className="flex items-center justify-between px-2">
-                <h3 className="text-xs font-mono uppercase text-slate-400">
+                <h3 className="text-xs font-bold uppercase text-sky-800 tracking-wide">
                   Direct Chats ({Object.keys(conversations).length})
                 </h3>
               </div>
 
               {Object.keys(conversations).length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-400 space-y-2">
-                  <MessageSquare className="h-6 w-6 text-slate-500 mx-auto" />
-                  <p>No active 1-on-1 chats yet.</p>
+                <div className="rounded-2xl border-2 border-dashed border-sky-200 p-6 text-center text-xs text-slate-500 space-y-2 bg-sky-50/30">
+                  <MessageSquare className="h-6 w-6 text-sky-400 mx-auto" />
+                  <p className="font-bold text-slate-700">No active 1-on-1 chats yet.</p>
                   <p className="text-[11px] text-slate-500">
                     Send a friend request in the "Friends" tab or message a creator from their project page!
                   </p>
@@ -396,10 +415,10 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       <button
                         key={peer.id}
                         onClick={() => onSelectUser(peer.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-left ${
+                        className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all text-left cursor-pointer ${
                           isSelected
-                            ? 'bg-indigo-600/20 border border-indigo-500/40 text-white'
-                            : 'hover:bg-slate-800/60 text-slate-300'
+                            ? 'bg-sky-100 border-2 border-sky-300 text-slate-950 shadow-2xs font-bold'
+                            : 'hover:bg-slate-50 text-slate-700 border-2 border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -408,23 +427,23 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               src={peer.avatarUrl}
                               alt={peer.displayName}
                               referrerPolicy="no-referrer"
-                              className="h-10 w-10 rounded-full object-cover ring-1 ring-slate-700"
+                              className="h-10 w-10 rounded-full object-cover ring-2 ring-sky-200"
                             />
-                            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
+                            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white" />
                           </div>
                           <div className="overflow-hidden">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold truncate text-white">
+                              <span className="text-xs font-black truncate text-slate-900">
                                 {peer.displayName}
                               </span>
-                              <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
+                              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                             </div>
                             <span className="text-[11px] font-mono text-slate-400 block truncate">
                               @{peer.handle}
                             </span>
                           </div>
                         </div>
-                        {hasUnread && <span className="h-2 w-2 rounded-full bg-indigo-500" />}
+                        {hasUnread && <span className="h-2 w-2 rounded-full bg-sky-500" />}
                       </button>
                     );
                   })}
@@ -436,13 +455,13 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
           {activeTab === 'group' && (
             <>
               <div className="flex items-center justify-between px-2">
-                <h3 className="text-xs font-mono uppercase text-slate-400">
+                <h3 className="text-xs font-bold uppercase text-amber-800 tracking-wide">
                   Channels ({chatRooms.length})
                 </h3>
                 {onCreateGroupRoom && (
                   <button
                     onClick={() => setIsCreatingChannel(true)}
-                    className="flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-medium"
+                    className="flex items-center gap-1 text-xs text-amber-800 hover:text-amber-950 font-bold cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     <span>New</span>
@@ -451,32 +470,32 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               </div>
 
               {chatRooms.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-400 space-y-3">
-                  <Hash className="h-6 w-6 text-slate-500 mx-auto" />
-                  <p>No group channels created yet.</p>
+                <div className="rounded-2xl border-2 border-dashed border-amber-200 p-6 text-center text-xs text-slate-500 space-y-3 bg-amber-50/20">
+                  <Hash className="h-6 w-6 text-amber-500 mx-auto" />
+                  <p className="font-bold text-slate-700">No group channels created yet.</p>
                   <button
                     onClick={() => setIsCreatingChannel(true)}
-                    className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                    className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-4 py-2 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
                   >
                     Create First Group Channel
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {chatRooms.map((room) => {
                     const isSelected = room.id === activeRoomId;
                     return (
                       <button
                         key={room.id}
                         onClick={() => setActiveRoomId(room.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-left ${
+                        className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all text-left cursor-pointer ${
                           isSelected
-                            ? 'bg-indigo-600/20 border border-indigo-500/40 text-white'
-                            : 'hover:bg-slate-800/60 text-slate-300'
+                            ? 'bg-amber-100 border-2 border-amber-300 text-slate-950 shadow-2xs font-bold'
+                            : 'hover:bg-slate-50 text-slate-700 border-2 border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-2xs">
                             {room.avatarUrl ? (
                               <img
                                 src={room.avatarUrl}
@@ -485,19 +504,19 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <Hash className="h-5 w-5 text-indigo-400" />
+                              <Hash className="h-5 w-5 text-amber-600" />
                             )}
                           </div>
                           <div className="overflow-hidden">
-                            <span className="text-xs font-semibold truncate text-white block">
+                            <span className="text-xs font-black truncate text-slate-900 block">
                               {room.name}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-mono">
+                            <span className="text-[10px] text-slate-500 font-bold">
                               {room.members?.length || 1} members
                             </span>
                           </div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-slate-500" />
+                        <ChevronRight className="h-4 w-4 text-slate-400" />
                       </button>
                     );
                   })}
@@ -509,25 +528,25 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
           {activeTab === 'friends' && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-xs font-mono uppercase text-slate-400 px-2 mb-1.5 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase text-emerald-800 px-2 mb-1.5 flex items-center justify-between">
                   <span>Add Friend (Registered Creators)</span>
-                  <span className="text-[10px] text-indigo-400 lowercase">@handle or name</span>
+                  <span className="text-[10px] text-emerald-700 font-bold lowercase">@handle or name</span>
                 </h3>
                 <form onSubmit={handleSendFriend} className="flex gap-2">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                     <input
                       type="text"
                       placeholder="Search registered creator @handle..."
                       value={newFriendInput}
                       onChange={(e) => setNewFriendInput(e.target.value)}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-white pl-8 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={!newFriendInput.trim()}
-                    className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-40 transition-colors flex items-center gap-1"
+                    className="rounded-full bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-emerald-300 disabled:opacity-40 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
                     title="Send Friend Request"
                   >
                     <UserPlus className="h-3.5 w-3.5" />
@@ -538,31 +557,31 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
               {/* Status messages */}
               {friendSuccessMsg && (
-                <div className="rounded-xl bg-emerald-950/40 border border-emerald-800/60 p-2.5 text-[11px] text-emerald-300 flex items-start gap-2 animate-in fade-in">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 font-bold flex items-start gap-2 animate-in fade-in">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                   <span>{friendSuccessMsg}</span>
                 </div>
               )}
 
               {friendErrorMsg && (
-                <div className="rounded-xl bg-rose-950/40 border border-rose-800/60 p-2.5 text-[11px] text-rose-300 flex items-start gap-2 animate-in fade-in">
-                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                <div className="rounded-2xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 font-bold flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
                   <span>{friendErrorMsg}</span>
                 </div>
               )}
 
               {/* Live search matches */}
               {newFriendInput.trim() && (
-                <div className="space-y-1.5 border border-slate-800/80 rounded-xl bg-slate-950/60 p-2">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase px-1 block">
+                <div className="space-y-1.5 border-2 border-slate-100 rounded-2xl bg-white p-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase px-1 block">
                     Matching Registered Accounts ({searchResults.length})
                   </span>
                   {searchResults.length === 0 ? (
                     <div className="p-3 text-center space-y-1">
-                      <p className="text-xs text-rose-300 font-medium">
+                      <p className="text-xs text-rose-600 font-bold">
                         No registered creator matches "@{newFriendInput.trim().replace(/^@/, '')}"
                       </p>
-                      <p className="text-[10px] text-slate-500">
+                      <p className="text-[10px] text-slate-500 font-medium">
                         Only creators who have completed the sign-up process can be found and friended.
                       </p>
                     </div>
@@ -575,22 +594,22 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       return (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between p-2 rounded-lg bg-slate-900/80 border border-slate-800/70"
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200"
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <img
                               src={user.avatarUrl}
                               alt={user.displayName}
                               referrerPolicy="no-referrer"
-                              className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                              className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-300 shrink-0"
                             />
                             <div className="min-w-0">
-                              <span className="text-xs font-semibold text-white block truncate">
+                              <span className="text-xs font-bold text-slate-900 block truncate">
                                 {user.displayName}
                               </span>
                               <div className="flex items-center gap-1.5 text-[10px]">
-                                <span className="font-mono text-slate-400 truncate">@{user.handle}</span>
-                                <span className="text-amber-400 flex items-center gap-0.5">
+                                <span className="font-mono text-slate-500 truncate">@{user.handle}</span>
+                                <span className="text-amber-600 font-bold flex items-center gap-0.5">
                                   <Star className="h-2.5 w-2.5 fill-amber-400" />
                                   {user.reputationScore}
                                 </span>
@@ -605,20 +624,20 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                                   onSelectUser(user.id);
                                   setActiveTab('dm');
                                 }}
-                                className="flex items-center gap-1 rounded-md bg-indigo-600/20 border border-indigo-500/30 px-2 py-1 text-[10px] font-semibold text-indigo-300 hover:bg-indigo-600 hover:text-white transition-colors"
+                                className="flex items-center gap-1 rounded-full bg-sky-100 border border-sky-300 px-3 py-1 text-xs font-bold text-sky-900 hover:bg-sky-200 transition-colors shadow-2xs cursor-pointer"
                               >
-                                <MessageSquare className="h-3 w-3" />
+                                <MessageSquare className="h-3 w-3 text-sky-700" />
                                 Chat
                               </button>
                             ) : isOutgoing ? (
-                              <span className="flex items-center gap-1 rounded-md bg-amber-500/10 border border-amber-500/30 px-2 py-1 text-[10px] font-mono text-amber-400">
+                              <span className="flex items-center gap-1 rounded-full bg-amber-50 border border-amber-300 px-2.5 py-1 text-[10px] font-bold text-amber-800">
                                 <Clock className="h-3 w-3" />
                                 Sent
                               </span>
                             ) : isIncoming ? (
                               <button
                                 onClick={() => onAcceptFriendRequest(isIncoming.friendship.id)}
-                                className="flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-emerald-500"
+                                className="flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-slate-950 hover:bg-emerald-300 shadow-2xs cursor-pointer"
                               >
                                 <Check className="h-3 w-3" />
                                 Accept
@@ -626,7 +645,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                             ) : (
                               <button
                                 onClick={() => handleQuickAddFriend(user)}
-                                className="flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-indigo-500 transition-colors"
+                                className="flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-slate-950 hover:bg-emerald-300 shadow-2xs transition-colors cursor-pointer"
                               >
                                 <UserPlus className="h-3 w-3" />
                                 Add
@@ -644,8 +663,8 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               {myFriendships.incoming.length > 0 && (
                 <div className="pt-1">
                   <div className="flex items-center justify-between px-2 mb-2">
-                    <h4 className="text-xs font-mono uppercase text-emerald-400 font-bold flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <h4 className="text-xs font-bold uppercase text-emerald-800 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                       Incoming Requests ({myFriendships.incoming.length})
                     </h4>
                   </div>
@@ -653,22 +672,22 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                     {myFriendships.incoming.map(({ friendship, otherUser }) => (
                       <div
                         key={friendship.id}
-                        className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20"
+                        className="flex items-center justify-between p-2.5 rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 shadow-2xs"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <img
                             src={otherUser.avatarUrl}
                             alt={otherUser.displayName}
                             referrerPolicy="no-referrer"
-                            className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-500/40 shrink-0"
+                            className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-300 shrink-0"
                           />
                           <div className="min-w-0">
-                            <span className="text-xs font-semibold text-white block truncate">
+                            <span className="text-xs font-bold text-slate-900 block truncate">
                               {otherUser.displayName}
                             </span>
                             <div className="flex items-center gap-1.5 text-[10px]">
-                              <span className="font-mono text-slate-400">@{otherUser.handle}</span>
-                              <span className="text-amber-400 flex items-center gap-0.5">
+                              <span className="font-mono text-slate-500">@{otherUser.handle}</span>
+                              <span className="text-amber-600 font-bold flex items-center gap-0.5">
                                 <Star className="h-2.5 w-2.5 fill-amber-400" />
                                 {otherUser.reputationScore}
                               </span>
@@ -679,7 +698,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                         <div className="flex items-center gap-1.5 shrink-0 ml-2">
                           <button
                             onClick={() => onAcceptFriendRequest(friendship.id)}
-                            className="flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-500 transition-colors shadow-sm"
+                            className="flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-emerald-300 transition-colors shadow-2xs cursor-pointer"
                             title="Accept Request"
                           >
                             <Check className="h-3 w-3" />
@@ -688,7 +707,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                           {onDeclineFriendRequest && (
                             <button
                               onClick={() => onDeclineFriendRequest(friendship.id)}
-                              className="rounded-lg border border-slate-700 bg-slate-800 p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-700 transition-colors"
+                              className="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                               title="Decline Request"
                             >
                               <X className="h-3 w-3" />
@@ -704,25 +723,25 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               {/* 2. OUTGOING SENT REQUESTS */}
               {myFriendships.outgoing.length > 0 && (
                 <div className="pt-1">
-                  <h4 className="text-xs font-mono uppercase text-slate-400 px-2 mb-2 flex items-center gap-1.5">
-                    <Clock className="h-3 w-3 text-amber-400" />
+                  <h4 className="text-xs font-bold uppercase text-slate-500 px-2 mb-2 flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-amber-500" />
                     Sent Requests ({myFriendships.outgoing.length})
                   </h4>
                   <div className="space-y-1.5">
                     {myFriendships.outgoing.map(({ friendship, otherUser }) => (
                       <div
                         key={friendship.id}
-                        className="flex items-center justify-between p-2 rounded-xl border border-slate-800 bg-slate-950/40"
+                        className="flex items-center justify-between p-2 rounded-2xl border border-slate-200 bg-slate-50/70"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <img
                             src={otherUser.avatarUrl}
                             alt={otherUser.displayName}
                             referrerPolicy="no-referrer"
-                            className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                            className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-300 shrink-0"
                           />
                           <div className="min-w-0">
-                            <span className="text-xs font-semibold text-white block truncate">
+                            <span className="text-xs font-bold text-slate-900 block truncate">
                               {otherUser.displayName}
                             </span>
                             <span className="text-[10px] font-mono text-slate-400 block truncate">
@@ -732,13 +751,13 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0 ml-2">
-                          <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
                             Pending
                           </span>
                           {onDeclineFriendRequest && (
                             <button
                               onClick={() => onDeclineFriendRequest(friendship.id)}
-                              className="text-slate-500 hover:text-rose-400 text-xs p-1"
+                              className="text-slate-400 hover:text-rose-600 text-xs p-1 cursor-pointer"
                               title="Cancel Request"
                             >
                               <X className="h-3 w-3" />
@@ -753,14 +772,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
               {/* 3. CONNECTED FRIENDS LIST */}
               <div className="pt-2">
-                <h4 className="text-xs font-mono uppercase text-slate-400 px-2 mb-2 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase text-slate-600 px-2 mb-2 flex items-center justify-between">
                   <span>Connected Friends ({myFriendships.accepted.length})</span>
-                  <span className="text-[10px] text-emerald-400">Can Chat</span>
+                  <span className="text-[10px] text-emerald-700 font-bold">Can Chat</span>
                 </h4>
 
                 {myFriendships.accepted.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-800 p-4 text-center space-y-2">
-                    <p className="text-xs text-slate-400">No friends connected yet.</p>
+                  <div className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center space-y-2 bg-slate-50/40">
+                    <p className="text-xs text-slate-600 font-bold">No friends connected yet.</p>
                     <p className="text-[11px] text-slate-500">
                       Search signed-up creators above to send a friend request so you can communicate!
                     </p>
@@ -770,7 +789,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                     {myFriendships.accepted.map(({ friendship, otherUser }) => (
                       <div
                         key={friendship.id}
-                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-950/40 hover:border-slate-700 transition-colors"
+                        className="flex items-center justify-between p-2.5 rounded-2xl border-2 border-slate-100 bg-white hover:border-sky-200 transition-colors shadow-2xs"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="relative shrink-0">
@@ -778,17 +797,17 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               src={otherUser.avatarUrl}
                               alt={otherUser.displayName}
                               referrerPolicy="no-referrer"
-                              className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-700"
+                              className="h-8 w-8 rounded-full object-cover ring-2 ring-sky-200"
                             />
-                            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
+                            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-white" />
                           </div>
                           <div className="min-w-0">
-                            <span className="text-xs font-semibold text-white block truncate">
+                            <span className="text-xs font-black text-slate-900 block truncate">
                               {otherUser.displayName}
                             </span>
                             <div className="flex items-center gap-1.5 text-[10px]">
-                              <span className="font-mono text-slate-400">@{otherUser.handle}</span>
-                              <span className="text-amber-400 flex items-center gap-0.5">
+                              <span className="font-mono text-slate-500">@{otherUser.handle}</span>
+                              <span className="text-amber-600 font-bold flex items-center gap-0.5">
                                 <Star className="h-2.5 w-2.5 fill-amber-400" />
                                 {otherUser.reputationScore}
                               </span>
@@ -802,17 +821,17 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               onSelectUser(otherUser.id);
                               setActiveTab('dm');
                             }}
-                            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 transition-colors shadow-sm cursor-pointer"
+                            className="flex items-center gap-1 rounded-full bg-sky-100 border border-sky-300 px-3 py-1.5 text-xs font-bold text-sky-900 hover:bg-sky-200 transition-colors shadow-2xs cursor-pointer"
                             title="Direct Message"
                           >
-                            <MessageSquare className="h-3 w-3" />
+                            <MessageSquare className="h-3 w-3 text-sky-700" />
                             Message
                           </button>
                           {onDeclineFriendRequest && (
                             <button
                               type="button"
                               onClick={() => handleUnfriend(friendship.id, `@${otherUser.handle}`)}
-                              className="flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-500 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 transition-colors cursor-pointer"
                               title={`Unfriend @${otherUser.handle}`}
                             >
                               <UserMinus className="h-3 w-3" />
@@ -830,34 +849,34 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
         </div>
 
         {/* Right Columns: Active Chat Thread (2 cols) */}
-        <div className="md:col-span-2 flex flex-col justify-between p-4 bg-slate-950/40">
+        <div className="md:col-span-2 flex flex-col justify-between p-4 bg-slate-50/40">
           {/* DM Active View */}
           {activeTab === 'dm' && (
             activePeer ? (
               <>
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div className="flex items-center justify-between border-b border-sky-100 pb-3 mb-4 bg-sky-50/40 -mx-4 -mt-4 p-4">
                   <div className="flex items-center gap-3">
                     <img
                       src={activePeer.avatarUrl}
                       alt={activePeer.displayName}
                       referrerPolicy="no-referrer"
-                      className="h-9 w-9 rounded-full object-cover ring-2 ring-emerald-500/30"
+                      className="h-10 w-10 rounded-full object-cover ring-2 ring-sky-300"
                     />
                     <div>
-                      <h4 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                      <h4 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
                         {activePeer.displayName}
-                        <span className="font-mono text-xs text-slate-400">(@{activePeer.handle})</span>
+                        <span className="font-mono text-xs text-sky-700 font-bold">(@{activePeer.handle})</span>
                       </h4>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {activePeer.bio || 'Teen maker & builder'}
+                      <span className="text-xs text-slate-500 font-medium">
+                        {activePeer.bio || 'Teen maker & innovator'}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
-                      <Circle className="h-2 w-2 fill-emerald-400" />
+                    <span className="text-xs text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full shadow-2xs">
+                      <Circle className="h-2 w-2 fill-emerald-500 text-emerald-500" />
                       Live Chat
                     </span>
                     {onDeclineFriendRequest && myFriendships.accepted.some((f) => f.otherUser.id === activePeer.id) && (
@@ -867,7 +886,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                           const f = myFriendships.accepted.find((fr) => fr.otherUser.id === activePeer.id);
                           if (f) handleUnfriend(f.friendship.id, `@${activePeer.handle}`);
                         }}
-                        className="flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-[11px] font-medium text-slate-400 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-500 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 transition-colors cursor-pointer"
                         title={`Unfriend @${activePeer.handle}`}
                       >
                         <UserMinus className="h-3 w-3" />
@@ -880,8 +899,8 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 {/* Thread Messages */}
                 <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                   {threadMessages.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500 font-mono text-center p-6">
-                      Send a message to @{activePeer.handle} to discuss builds, collaborate on games, or share photos!
+                    <div className="flex h-full items-center justify-center text-xs text-slate-500 font-bold text-center p-6 bg-sky-50/20 rounded-2xl border-2 border-dashed border-sky-100">
+                      Send a message to @{activePeer.handle} to discuss builds, collaborate on prototypes, or share ideas! 💡
                     </div>
                   ) : (
                     threadMessages.map((msg) => {
@@ -889,17 +908,17 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       return (
                         <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                           <div
-                            className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                            className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-2xs ${
                               isMe
-                                ? 'bg-indigo-600 text-white rounded-br-sm'
-                                : 'bg-slate-800/90 text-slate-200 rounded-bl-sm border border-slate-700/60'
+                                ? 'bg-gradient-to-r from-sky-400 via-emerald-300 to-sky-300 text-slate-950 font-bold rounded-br-xs'
+                                : 'bg-white text-slate-800 rounded-bl-xs border-2 border-slate-100 font-medium'
                             }`}
                           >
                             {msg.text && <p>{msg.text}</p>}
 
                             {/* Inline Image Attachment */}
                             {msg.imageUrls && msg.imageUrls.length > 0 && (
-                              <div className="mt-2.5 overflow-hidden rounded-xl border border-white/10 max-h-56">
+                              <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 max-h-56">
                                 <img
                                   src={msg.imageUrls[0]}
                                   alt="Attachment"
@@ -911,37 +930,37 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
                             {/* Embedded Collaboration Invite Card */}
                             {msg.inviteCard && (
-                              <div className="mt-3 rounded-xl border border-indigo-400/30 bg-slate-950/80 p-3 text-slate-200">
-                                <div className="flex items-center gap-1.5 text-[10px] font-mono text-indigo-300 uppercase mb-1">
-                                  <Briefcase className="h-3 w-3" />
+                              <div className="mt-3 rounded-2xl border-2 border-sky-200 bg-sky-50/90 p-3 text-slate-800">
+                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-sky-800 uppercase mb-1">
+                                  <Briefcase className="h-3 w-3 text-sky-600" />
                                   Project Collaboration Invite
                                 </div>
-                                <h5 className="font-semibold text-xs text-white">
+                                <h5 className="font-black text-xs text-slate-900">
                                   {msg.inviteCard.projectTitle}
                                 </h5>
-                                <p className="text-[11px] text-slate-400 mt-0.5">
-                                  Role: <span className="text-emerald-400 font-mono">{msg.inviteCard.role}</span>
+                                <p className="text-[11px] text-slate-600 mt-0.5 font-medium">
+                                  Role: <span className="text-emerald-700 font-bold">{msg.inviteCard.role}</span>
                                 </p>
                                 <div className="mt-3 flex items-center gap-2">
                                   {msg.inviteCard.status === 'PENDING' ? (
                                     <>
                                       <button
                                         onClick={() => onUpdateInviteStatus(msg.inviteCard!.id, 'ACCEPTED')}
-                                        className="flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-500"
+                                        className="flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-slate-950 hover:bg-emerald-300 shadow-2xs cursor-pointer"
                                       >
                                         <Check className="h-3 w-3" />
                                         Accept Invite
                                       </button>
                                       <button
                                         onClick={() => onUpdateInviteStatus(msg.inviteCard!.id, 'DECLINED')}
-                                        className="flex items-center gap-1 rounded-md bg-slate-800 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-slate-700"
+                                        className="flex items-center gap-1 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-300 cursor-pointer"
                                       >
                                         <X className="h-3 w-3" />
                                         Decline
                                       </button>
                                     </>
                                   ) : (
-                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
                                       Status: {msg.inviteCard.status}
                                     </span>
                                   )}
@@ -949,7 +968,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               </div>
                             )}
                           </div>
-                          <span className="mt-1 text-[10px] font-mono text-slate-500 px-1">
+                          <span className="mt-1 text-[10px] font-mono text-slate-400 px-1 font-bold">
                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -960,10 +979,10 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-2">
-                <MessageSquare className="h-8 w-8 text-slate-600" />
-                <h4 className="text-sm font-semibold text-white">No Conversation Selected</h4>
-                <p className="text-xs text-slate-500 max-w-xs">
-                  Select a user or add a friend to start chatting!
+                <MessageSquare className="h-8 w-8 text-sky-300" />
+                <h4 className="text-sm font-black text-slate-900">No Conversation Selected</h4>
+                <p className="text-xs text-slate-500 max-w-xs font-medium">
+                  Select a user or connect with friends to start innovating together!
                 </p>
               </div>
             )
@@ -974,9 +993,9 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
             activeGroup ? (
               <>
                 {/* Group Header */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div className="flex items-center justify-between border-b border-amber-100 pb-3 mb-4 bg-amber-50/40 -mx-4 -mt-4 p-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-2xl bg-white border border-amber-200 overflow-hidden flex items-center justify-center shadow-2xs">
                       {activeGroup.avatarUrl ? (
                         <img
                           src={activeGroup.avatarUrl}
@@ -985,29 +1004,29 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <Hash className="h-4 w-4 text-indigo-400" />
+                        <Hash className="h-5 w-5 text-amber-600" />
                       )}
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-white">{activeGroup.name}</h4>
-                      <p className="text-[10px] text-slate-400 line-clamp-1">{activeGroup.description || 'Creator Channel'}</p>
+                      <h4 className="text-sm font-black text-slate-900">{activeGroup.name}</h4>
+                      <p className="text-xs text-slate-500 font-medium line-clamp-1">{activeGroup.description || 'Creator Channel'}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setIsAddMemberModalOpen(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-2.5 py-1 text-xs text-indigo-300 hover:bg-indigo-500/20 hover:text-white transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-full border border-sky-300 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-800 hover:bg-sky-100 transition-colors cursor-pointer shadow-2xs"
                       title="Add people to this group channel"
                     >
-                      <UserPlus className="h-3.5 w-3.5 text-indigo-400" />
+                      <UserPlus className="h-3.5 w-3.5 text-sky-600" />
                       <span>Add People</span>
                     </button>
                     <button
                       onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                      className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-200 hover:text-white transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
                     >
-                      <Users className="h-3.5 w-3.5 text-indigo-400" />
+                      <Users className="h-3.5 w-3.5 text-amber-600" />
                       <span>Members ({activeGroup.members?.length || 1})</span>
                     </button>
                   </div>
@@ -1016,8 +1035,8 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 {/* Group Messages */}
                 <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                   {currentGroupMessages.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500 font-mono text-center p-6">
-                      Welcome to #{activeGroup.name}! Say hi to other creators and share what you are working on.
+                    <div className="flex h-full items-center justify-center text-xs text-slate-500 font-bold text-center p-6 bg-amber-50/20 rounded-2xl border-2 border-dashed border-amber-100">
+                      Welcome to #{activeGroup.name}! Say hi to other creators and share what you are building. 🛠️
                     </div>
                   ) : (
                     currentGroupMessages.map((msg) => {
@@ -1025,21 +1044,21 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       return (
                         <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                           <div className="flex items-center gap-1.5 mb-1 px-1">
-                            <span className="text-[11px] font-semibold text-slate-300">{msg.sender.displayName}</span>
-                            <span className="text-[10px] font-mono text-slate-500">@{msg.sender.handle}</span>
+                            <span className="text-xs font-bold text-slate-800">{msg.sender.displayName}</span>
+                            <span className="text-[10px] font-mono text-slate-400">@{msg.sender.handle}</span>
                           </div>
                           <div
-                            className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                            className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-2xs ${
                               isMe
-                                ? 'bg-indigo-600 text-white rounded-br-sm'
-                                : 'bg-slate-800/90 text-slate-200 rounded-bl-sm border border-slate-700/60'
+                                ? 'bg-gradient-to-r from-sky-400 via-emerald-300 to-sky-300 text-slate-950 font-bold rounded-br-xs'
+                                : 'bg-white text-slate-800 rounded-bl-xs border-2 border-slate-100 font-medium'
                             }`}
                           >
                             {msg.content && <p>{msg.content}</p>}
 
                             {/* Inline Image Attachment */}
                             {msg.imageUrls && msg.imageUrls.length > 0 && (
-                              <div className="mt-2.5 overflow-hidden rounded-xl border border-white/10 max-h-56">
+                              <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 max-h-56">
                                 <img
                                   src={msg.imageUrls[0]}
                                   alt="Attachment"
@@ -1049,7 +1068,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               </div>
                             )}
                           </div>
-                          <span className="mt-1 text-[10px] font-mono text-slate-500 px-1">
+                          <span className="mt-1 text-[10px] font-mono text-slate-400 px-1 font-bold">
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -1060,9 +1079,9 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-2">
-                <Hash className="h-8 w-8 text-slate-600" />
-                <h4 className="text-sm font-semibold text-white">No Group Selected</h4>
-                <p className="text-xs text-slate-500">Create or select a channel on the left to start chatting!</p>
+                <Hash className="h-8 w-8 text-amber-300" />
+                <h4 className="text-sm font-black text-slate-900">No Group Selected</h4>
+                <p className="text-xs text-slate-500 font-medium">Create or select a channel on the left to start chatting!</p>
               </div>
             )
           )}
@@ -1070,19 +1089,19 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
           {/* Friends Tab View */}
           {activeTab === 'friends' && (
             <div className="flex-1 flex flex-col p-4 sm:p-6 space-y-6 overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center justify-between border-b border-sky-100 pb-4">
                 <div>
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <Users className="h-5 w-5 text-indigo-400" />
+                  <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-sky-600" />
                     <span>Creator Friends Network</span>
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Connect and collaborate strictly with real creators who have signed up.
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Connect and collaborate with fellow young innovators.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-xs font-mono text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     Real Creators
                   </span>
                 </div>
@@ -1090,27 +1109,27 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
               {/* Network Stats Cards */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 text-center">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                <div className="rounded-2xl border-2 border-sky-100 bg-sky-50/50 p-3.5 text-center shadow-2xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
                     Connected Friends
                   </span>
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-2xl font-black text-slate-900">
                     {myFriendships.accepted.length}
                   </span>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 text-center">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                <div className="rounded-2xl border-2 border-emerald-100 bg-emerald-50/50 p-3.5 text-center shadow-2xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
                     Incoming Requests
                   </span>
-                  <span className={`text-2xl font-bold ${myFriendships.incoming.length > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  <span className={`text-2xl font-black ${myFriendships.incoming.length > 0 ? 'text-emerald-700' : 'text-slate-400'}`}>
                     {myFriendships.incoming.length}
                   </span>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 text-center">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
+                <div className="rounded-2xl border-2 border-amber-100 bg-amber-50/50 p-3.5 text-center shadow-2xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
                     Sent Requests
                   </span>
-                  <span className="text-2xl font-bold text-slate-300">
+                  <span className="text-2xl font-black text-slate-700">
                     {myFriendships.outgoing.length}
                   </span>
                 </div>
@@ -1118,29 +1137,29 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
               {/* Highlight incoming requests if present */}
               {myFriendships.incoming.length > 0 && (
-                <div className="rounded-2xl border border-emerald-500/40 bg-emerald-950/20 p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-emerald-300 font-semibold text-xs">
-                    <AlertCircle className="h-4 w-4 text-emerald-400" />
+                <div className="rounded-3xl border-2 border-emerald-200 bg-emerald-50/70 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-900 font-black text-xs">
+                    <AlertCircle className="h-4 w-4 text-emerald-600" />
                     <span>Action Required: {myFriendships.incoming.length} Creator(s) want to connect!</span>
                   </div>
                   <div className="space-y-2">
                     {myFriendships.incoming.map(({ friendship, otherUser }) => (
                       <div
                         key={friendship.id}
-                        className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800"
+                        className="flex items-center justify-between p-3 rounded-2xl bg-white border border-emerald-200 shadow-2xs"
                       >
                         <div className="flex items-center gap-2.5">
                           <img
                             src={otherUser.avatarUrl}
                             alt={otherUser.displayName}
                             referrerPolicy="no-referrer"
-                            className="h-8 w-8 rounded-full object-cover ring-1 ring-emerald-500/50"
+                            className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-300"
                           />
                           <div>
-                            <span className="text-xs font-semibold text-white block">
+                            <span className="text-xs font-bold text-slate-900 block">
                               {otherUser.displayName}
                             </span>
-                            <span className="text-[10px] font-mono text-slate-400">
+                            <span className="text-[10px] font-mono text-slate-500">
                               @{otherUser.handle} • ⭐ {otherUser.reputationScore} Points
                             </span>
                           </div>
@@ -1148,7 +1167,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => onAcceptFriendRequest(friendship.id)}
-                            className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 shadow-sm cursor-pointer"
+                            className="flex items-center gap-1 rounded-full bg-emerald-400 px-3.5 py-1.5 text-xs font-black text-slate-950 hover:bg-emerald-300 shadow-2xs cursor-pointer"
                           >
                             <Check className="h-3.5 w-3.5" />
                             Accept Request
@@ -1163,14 +1182,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               {/* Connected Friends Quick Chat Grid */}
               {myFriendships.accepted.length > 0 ? (
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono uppercase text-slate-400">
+                  <h4 className="text-xs font-bold uppercase text-slate-600">
                     Your Connected Friends ({myFriendships.accepted.length})
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {myFriendships.accepted.map(({ friendship, otherUser }) => (
                       <div
                         key={friendship.id}
-                        className="flex items-center justify-between p-3 rounded-2xl border border-slate-800 bg-slate-900/50 hover:border-slate-700 transition-colors"
+                        className="flex items-center justify-between p-3 rounded-2xl border-2 border-slate-100 bg-white hover:border-sky-200 transition-colors shadow-2xs"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="relative shrink-0">
@@ -1178,15 +1197,15 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               src={otherUser.avatarUrl}
                               alt={otherUser.displayName}
                               referrerPolicy="no-referrer"
-                              className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-700"
+                              className="h-9 w-9 rounded-full object-cover ring-2 ring-sky-200"
                             />
-                            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
+                            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white" />
                           </div>
                           <div className="min-w-0">
-                            <span className="text-xs font-semibold text-white block truncate">
+                            <span className="text-xs font-black text-slate-900 block truncate">
                               {otherUser.displayName}
                             </span>
-                            <span className="text-[10px] font-mono text-slate-400 truncate block">
+                            <span className="text-[10px] font-mono text-slate-500 truncate block">
                               @{otherUser.handle} • ⭐ {otherUser.reputationScore} Points
                             </span>
                           </div>
@@ -1198,16 +1217,16 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               onSelectUser(otherUser.id);
                               setActiveTab('dm');
                             }}
-                            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 shadow-sm transition-all cursor-pointer"
+                            className="flex items-center gap-1.5 rounded-full bg-sky-100 border border-sky-300 px-3 py-1.5 text-xs font-bold text-sky-900 hover:bg-sky-200 shadow-2xs transition-all cursor-pointer"
                           >
-                            <MessageSquare className="h-3.5 w-3.5" />
+                            <MessageSquare className="h-3.5 w-3.5 text-sky-700" />
                             <span>Chat</span>
                           </button>
                           {onDeclineFriendRequest && (
                             <button
                               type="button"
                               onClick={() => handleUnfriend(friendship.id, `@${otherUser.handle}`)}
-                              className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900/80 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 transition-colors cursor-pointer"
                               title={`Unfriend @${otherUser.handle}`}
                             >
                               <UserMinus className="h-3.5 w-3.5" />
@@ -1220,28 +1239,28 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-slate-800 p-6 text-center space-y-4">
-                  <div className="h-12 w-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mx-auto text-indigo-400">
+                <div className="rounded-3xl border-2 border-dashed border-sky-200 p-8 text-center space-y-4 bg-sky-50/20">
+                  <div className="h-12 w-12 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center mx-auto text-sky-600 shadow-2xs">
                     <Users className="h-6 w-6" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-semibold text-white">No Friends Connected Yet</h4>
-                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                      Search any registered creator on the left panel to send a friend request. Once accepted, you can chat in real time.
+                    <h4 className="text-sm font-black text-slate-900">No Friends Connected Yet</h4>
+                    <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+                      Search any registered creator on the left panel to send a friend request. Once accepted, you can collaborate in real time!
                     </p>
                   </div>
 
                   {registeredCreators.length > 0 && (
                     <div className="pt-2">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase block mb-2">
-                        Signed-up Creators on locked in.
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block mb-2">
+                        Signed-up Creators on wedidthis
                       </span>
                       <div className="flex flex-wrap items-center justify-center gap-2">
                         {registeredCreators.slice(0, 4).map((c) => (
                           <button
                             key={c.id}
                             onClick={() => handleQuickAddFriend(c)}
-                            className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:border-slate-700 hover:bg-slate-800 transition-colors"
+                            className="flex items-center gap-1.5 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-bold text-sky-900 hover:bg-sky-50 shadow-2xs transition-colors cursor-pointer"
                           >
                             <img
                               src={c.avatarUrl}
@@ -1249,7 +1268,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               className="h-4 w-4 rounded-full"
                             />
                             <span>@{c.handle}</span>
-                            <UserPlus className="h-3 w-3 text-indigo-400 ml-1" />
+                            <UserPlus className="h-3 w-3 text-sky-600 ml-1" />
                           </button>
                         ))}
                       </div>
@@ -1259,13 +1278,13 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               )}
 
               {/* Real Friends Notice */}
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/40 p-4 space-y-1.5 text-xs">
-                <div className="flex items-center gap-2 text-slate-300 font-semibold text-xs">
-                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                  <span>Connecting with builders</span>
+              <div className="rounded-2xl border-2 border-emerald-100 bg-emerald-50/40 p-4 space-y-1.5 text-xs">
+                <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <span>Connecting with fellow innovators</span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Send a friend request to any maker you want to collaborate with. Once they accept, you can DM and exchange build tips.
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                  Send a friend request to any maker you want to collaborate with. Once they accept, you can exchange project insights and feedback.
                 </p>
               </div>
             </div>
@@ -1273,20 +1292,20 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
           {/* Input Bar (For DM & Group) */}
           {activeTab !== 'friends' && (activePeer || activeGroup) && (
-            <form onSubmit={handleSend} className="mt-4 border-t border-slate-800 pt-3 space-y-2">
+            <form onSubmit={handleSend} className="mt-4 border-t border-sky-100 pt-3 space-y-2 bg-white -mx-4 -mb-4 p-4">
               {/* Media Preview chip */}
               {pendingImageUrl && (
-                <div className="flex items-center gap-2 rounded-xl bg-slate-900 border border-slate-800 p-2 text-xs">
-                  <div className="h-8 w-8 rounded-lg overflow-hidden bg-slate-950">
+                <div className="flex items-center gap-2 rounded-2xl bg-sky-50 border border-sky-200 p-2 text-xs">
+                  <div className="h-8 w-8 rounded-lg overflow-hidden bg-white border border-sky-200">
                     <img src={pendingImageUrl} alt="attachment preview" className="h-full w-full object-cover" />
                   </div>
-                  <span className="text-slate-300 font-mono text-[11px] truncate flex-1">
+                  <span className="text-sky-900 font-bold text-xs truncate flex-1">
                     Photo attached
                   </span>
                   <button
                     type="button"
                     onClick={() => setPendingImageUrl(null)}
-                    className="text-slate-500 hover:text-rose-400 font-bold px-1"
+                    className="text-slate-400 hover:text-rose-600 font-bold px-1 cursor-pointer"
                   >
                     ×
                   </button>
@@ -1295,10 +1314,10 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
               <div className="flex items-center gap-2">
                 <label
-                  className="rounded-xl border border-slate-800 bg-slate-900 p-2.5 text-slate-400 hover:text-white hover:border-slate-700 cursor-pointer transition-colors"
+                  className="rounded-full border border-sky-200 bg-sky-50 p-2.5 text-sky-700 hover:bg-sky-100 cursor-pointer transition-colors shadow-2xs"
                   title="Upload an image from your device"
                 >
-                  <ImageIcon className="h-4 w-4 text-indigo-400" />
+                  <ImageIcon className="h-4 w-4 text-sky-600" />
                   <input
                     type="file"
                     accept="image/*"
@@ -1316,13 +1335,13 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                   }
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 rounded-full border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-900 font-medium placeholder-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none transition-colors"
                 />
 
                 <button
                   type="submit"
                   disabled={!inputText.trim() && !pendingImageUrl}
-                  className="rounded-xl bg-indigo-600 p-2.5 text-white hover:bg-indigo-500 active:scale-95 transition-all disabled:opacity-40"
+                  className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 p-2.5 text-slate-950 font-black shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-40 cursor-pointer"
                 >
                   <Send className="h-4 w-4" />
                 </button>
@@ -1338,17 +1357,17 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               initial={{ opacity: 0, x: 260 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 260 }}
-              className="absolute right-0 top-0 bottom-0 w-64 bg-slate-900 border-l border-slate-800 p-4 shadow-2xl z-30 flex flex-col justify-between"
+              className="absolute right-0 top-0 bottom-0 w-72 bg-white border-l-2 border-sky-100 p-4 shadow-2xl z-30 flex flex-col justify-between text-slate-800"
             >
               <div>
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                  <h4 className="text-xs font-mono uppercase text-white flex items-center gap-1.5">
-                    <Users className="h-4 w-4 text-indigo-400" />
+                <div className="flex items-center justify-between border-b border-sky-100 pb-3 mb-4">
+                  <h4 className="text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-sky-600" />
                     Channel Members
                   </h4>
                   <button
                     onClick={() => setIsDrawerOpen(false)}
-                    className="text-slate-400 hover:text-white"
+                    className="text-slate-400 hover:text-slate-700 cursor-pointer"
                   >
                     ×
                   </button>
@@ -1358,9 +1377,9 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddMemberModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-indigo-500/40 bg-indigo-500/10 py-1.5 px-3 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 hover:text-white transition-all mb-3 cursor-pointer"
+                  className="w-full flex items-center justify-center gap-1.5 rounded-full border border-sky-300 bg-sky-50 py-2 px-3 text-xs font-bold text-sky-800 hover:bg-sky-100 transition-all mb-3 cursor-pointer shadow-2xs"
                 >
-                  <UserPlus className="h-3.5 w-3.5 text-indigo-400" />
+                  <UserPlus className="h-3.5 w-3.5 text-sky-600" />
                   <span>+ Add People to Group</span>
                 </button>
 
@@ -1385,17 +1404,17 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                     return (
                       <div
                         key={member.userId}
-                        className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                        className="flex items-center justify-between p-2 rounded-2xl hover:bg-sky-50 transition-colors group"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <img
                             src={memberUser.avatarUrl}
                             alt={memberUser.displayName}
                             referrerPolicy="no-referrer"
-                            className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                            className="h-8 w-8 rounded-full object-cover ring-2 ring-sky-200 shrink-0"
                           />
                           <div className="min-w-0">
-                            <span className="text-xs font-semibold text-white block truncate">
+                            <span className="text-xs font-bold text-slate-900 block truncate">
                               {memberUser.displayName} {isCurrentUser && <span className="text-[10px] text-slate-400 font-normal">(you)</span>}
                             </span>
                             <span className="text-[10px] font-mono text-slate-400 block truncate">
@@ -1406,12 +1425,12 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
                         <div className="flex items-center gap-1.5 shrink-0 ml-2">
                           {member.role === 'ADMIN' ? (
-                            <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
-                              <Crown className="h-3 w-3" />
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                              <Crown className="h-3 w-3 text-amber-600" />
                               Admin
                             </span>
                           ) : (
-                            <span className="text-[10px] font-mono text-slate-500">Member</span>
+                            <span className="text-[10px] font-bold text-slate-400">Member</span>
                           )}
 
                           {/* Remove member button for Room Admin or Creator */}
@@ -1420,7 +1439,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               type="button"
                               onClick={() => handleRemoveMember(member.userId, memberUser.handle)}
                               title={`Remove @${memberUser.handle} from group`}
-                              className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              className="p-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                             >
                               <UserMinus className="h-3.5 w-3.5" />
                             </button>
@@ -1432,7 +1451,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               type="button"
                               onClick={handleLeaveGroup}
                               title="Leave this group channel"
-                              className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-[10px] font-mono cursor-pointer"
+                              className="p-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors text-[10px] font-bold cursor-pointer"
                             >
                               Leave
                             </button>
@@ -1444,8 +1463,9 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                 </div>
               </div>
 
-              <div className="border-t border-slate-800 pt-3 text-[11px] font-mono text-slate-400 text-center">
-                Real Teen Creators Only
+              <div className="border-t border-sky-100 pt-3 text-[11px] font-bold text-slate-400 flex items-center justify-center gap-1.5">
+                <Mascot type="cheerful" size="xs" />
+                <span>Group Channel</span>
               </div>
             </motion.div>
           )}
@@ -1454,21 +1474,21 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
         {/* Add People to Group Modal */}
         <AnimatePresence>
           {isAddMemberModalOpen && activeGroup && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md cursor-default">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm cursor-default">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl"
+                className="w-full max-w-md rounded-3xl border-2 border-sky-200 bg-white p-6 space-y-4 shadow-2xl text-slate-800"
               >
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center justify-between border-b border-sky-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                    <div className="h-9 w-9 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-700">
                       <UserPlus className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white">Add People to #{activeGroup.name}</h3>
-                      <p className="text-[11px] text-slate-400">Invite fellow creators to join this channel</p>
+                      <h3 className="text-sm font-black text-slate-900">Add People to #{activeGroup.name}</h3>
+                      <p className="text-xs text-slate-500 font-medium">Invite fellow creators to join this channel</p>
                     </div>
                   </div>
                   <button
@@ -1477,7 +1497,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       setIsAddMemberModalOpen(false);
                       setAddMemberQuery('');
                     }}
-                    className="text-slate-400 hover:text-white rounded-lg p-1 cursor-pointer"
+                    className="text-slate-400 hover:text-slate-700 rounded-full p-1 cursor-pointer"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -1485,20 +1505,20 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
                 {/* Search creator */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                  <Search className="absolute left-3.5 top-3 h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search creators by name or @handle..."
                     value={addMemberQuery}
                     onChange={(e) => setAddMemberQuery(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-9 pr-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 pl-9 pr-3.5 py-2 text-xs text-slate-900 focus:border-sky-400 focus:bg-white focus:outline-none transition-colors"
                   />
                 </div>
 
                 {/* Creator candidates list */}
                 <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
                   {addMemberCandidates.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-slate-500">
+                    <div className="text-center py-6 text-xs text-slate-400 font-bold">
                       No matching creators found.
                     </div>
                   ) : (
@@ -1509,17 +1529,17 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       return (
                         <div
                           key={candidate.id}
-                          className="flex items-center justify-between p-2.5 rounded-xl border border-slate-800/80 bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                          className="flex items-center justify-between p-2.5 rounded-2xl border-2 border-slate-100 bg-white hover:border-sky-200 transition-colors shadow-2xs"
                         >
                           <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             <img
                               src={candidate.avatarUrl}
                               alt={candidate.displayName}
                               referrerPolicy="no-referrer"
-                              className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-700 shrink-0"
+                              className="h-8 w-8 rounded-full object-cover ring-2 ring-sky-200 shrink-0"
                             />
                             <div className="min-w-0">
-                              <span className="text-xs font-semibold text-white block truncate">
+                              <span className="text-xs font-bold text-slate-900 block truncate">
                                 {candidate.displayName}
                               </span>
                               <span className="text-[10px] font-mono text-slate-400 block truncate">
@@ -1530,7 +1550,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
 
                           <div className="shrink-0 ml-2">
                             {isAlreadyInGroup ? (
-                              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 text-[11px] font-mono font-medium text-emerald-400">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-1 text-[11px] font-bold text-emerald-800 shadow-2xs">
                                 <Check className="h-3 w-3" />
                                 <span>In Group</span>
                               </span>
@@ -1538,7 +1558,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleAddMember(candidate)}
-                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-slate-950 hover:bg-emerald-300 transition-colors shadow-2xs cursor-pointer"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                                 <span>Add</span>
@@ -1551,14 +1571,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                   )}
                 </div>
 
-                <div className="flex justify-end border-t border-slate-800 pt-3">
+                <div className="flex justify-end border-t border-sky-100 pt-3">
                   <button
                     type="button"
                     onClick={() => {
                       setIsAddMemberModalOpen(false);
                       setAddMemberQuery('');
                     }}
-                    className="rounded-xl bg-slate-800 px-4 py-1.5 text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
+                    className="rounded-full bg-sky-100 border border-sky-300 px-5 py-2 text-xs font-bold text-sky-900 hover:bg-sky-200 cursor-pointer shadow-2xs"
                   >
                     Done
                   </button>
@@ -1571,23 +1591,23 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
         {/* Create Group Channel Modal */}
         <AnimatePresence>
           {isCreatingChannel && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4"
+                className="w-full max-w-md rounded-3xl border-2 border-amber-200 bg-white p-6 space-y-4 shadow-2xl text-slate-800"
               >
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h3 className="text-base font-bold text-white">Create Group Channel</h3>
-                  <button onClick={() => setIsCreatingChannel(false)} className="text-slate-400 hover:text-white">
+                <div className="flex items-center justify-between border-b border-amber-100 pb-3">
+                  <h3 className="text-base font-black text-slate-900">Create Group Channel</h3>
+                  <button onClick={() => setIsCreatingChannel(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 <form onSubmit={handleCreateChannelSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
+                    <label className="block text-xs font-black text-slate-800 mb-1">
                       Channel Name
                     </label>
                     <input
@@ -1596,12 +1616,12 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       value={newChannelName}
                       onChange={(e) => setNewChannelName(e.target.value)}
                       required
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-900 font-bold focus:border-amber-400 focus:bg-white focus:outline-none transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
+                    <label className="block text-xs font-black text-slate-800 mb-1">
                       Description / Topic
                     </label>
                     <input
@@ -1609,18 +1629,18 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       placeholder="e.g. Share slicing tips, print fails, and finished prints"
                       value={newChannelDesc}
                       onChange={(e) => setNewChannelDesc(e.target.value)}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-900 font-medium focus:border-amber-400 focus:bg-white focus:outline-none transition-colors"
                     />
                   </div>
 
                   {/* Add Initial People */}
                   <div>
-                    <label className="block text-xs font-mono uppercase text-slate-400 mb-1">
+                    <label className="block text-xs font-black text-slate-800 mb-1">
                       Add People (Optional)
                     </label>
-                    <div className="max-h-36 overflow-y-auto space-y-1.5 rounded-xl border border-slate-800 bg-slate-950 p-2">
+                    <div className="max-h-36 overflow-y-auto space-y-1.5 rounded-2xl border-2 border-slate-100 bg-slate-50 p-2.5">
                       {registeredCreators.length === 0 ? (
-                        <p className="text-[11px] text-slate-500 p-2">No other creators registered yet.</p>
+                        <p className="text-xs text-slate-400 p-2 font-medium">No other creators registered yet.</p>
                       ) : (
                         registeredCreators.map((creator) => {
                           const isSelected = selectedInitialMembers.some((m) => m.id === creator.id);
@@ -1637,10 +1657,10 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                                   setSelectedInitialMembers((prev) => [...prev, creator]);
                                 }
                               }}
-                              className={`w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                              className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-colors cursor-pointer ${
                                 isSelected
-                                  ? 'bg-indigo-600/20 border border-indigo-500/40 text-white'
-                                  : 'hover:bg-slate-900 text-slate-300'
+                                  ? 'bg-amber-100 border border-amber-300 text-amber-950 font-bold shadow-2xs'
+                                  : 'hover:bg-white text-slate-700'
                               }`}
                             >
                               <div className="flex items-center gap-2">
@@ -1655,9 +1675,9 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                                 </span>
                               </div>
                               {isSelected ? (
-                                <Check className="h-3.5 w-3.5 text-indigo-400" />
+                                <Check className="h-3.5 w-3.5 text-amber-600" />
                               ) : (
-                                <Plus className="h-3.5 w-3.5 text-slate-500" />
+                                <Plus className="h-3.5 w-3.5 text-slate-400" />
                               )}
                             </button>
                           );
@@ -1665,7 +1685,7 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                       )}
                     </div>
                     {selectedInitialMembers.length > 0 && (
-                      <p className="mt-1 text-[10px] text-indigo-300 font-mono">
+                      <p className="mt-1 text-xs text-amber-800 font-bold">
                         {selectedInitialMembers.length} creator{selectedInitialMembers.length > 1 ? 's' : ''} will be added
                       </p>
                     )}
@@ -1675,14 +1695,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsCreatingChannel(false)}
-                      className="px-3 py-1.5 text-xs text-slate-400 hover:text-white cursor-pointer"
+                      className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={!newChannelName.trim()}
-                      className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-40 cursor-pointer"
+                      className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-5 py-2.5 text-xs font-black text-slate-950 shadow-md shadow-amber-300/40 hover:scale-105 active:scale-95 transition-colors disabled:opacity-40 cursor-pointer"
                     >
                       Create Channel
                     </button>
