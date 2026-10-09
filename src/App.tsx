@@ -11,6 +11,7 @@ import {
   AppNotification,
   NotificationType,
   NavTabType,
+  ProjectContributor,
 } from './types';
 import { Navbar } from './components/Navbar';
 import { ProjectCard } from './components/ProjectCard';
@@ -26,6 +27,8 @@ import { CreatorProfileModal } from './components/CreatorProfileModal';
 import { IntroLanding } from './components/IntroLanding';
 import { PointsGuideModal } from './components/PointsGuideModal';
 import { Mascot } from './components/Mascot';
+import { DoodleFace, BottomFacesRow } from './components/DoodleFaces';
+import { CollaborationModal } from './components/CollaborationModal';
 import { motion } from 'motion/react';
 import { calculateRealStreak, calculateStreakLoginBonus } from './utils/streakUtils';
 import {
@@ -77,6 +80,9 @@ export default function App() {
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [selectedProfileUser, setSelectedProfileUser] = useState<User | null>(null);
   const [isPointsGuideOpen, setIsPointsGuideOpen] = useState(false);
+  const [collabModalProject, setCollabModalProject] = useState<Project | null>(null);
+  const [collabModalMode, setCollabModalMode] = useState<'request' | 'invite'>('request');
+  const [initialProjectDetailTab, setInitialProjectDetailTab] = useState<'overview' | 'milestones' | 'reviews' | 'team'>('overview');
 
   // Filters & Search
   const [selectedTag, setSelectedTag] = useState<string>('#all');
@@ -819,6 +825,126 @@ export default function App() {
     return activeMap;
   }, [currentUser, friendships, messages, selectedDmUserId, allRealUsers]);
 
+  // Collaboration Request & Contributor Management Handlers
+  const handleSendCollaboration = (data: {
+    projectId: string;
+    targetUser: User;
+    role: string;
+    pitch: string;
+    type: 'REQUEST' | 'INVITE';
+  }) => {
+    const isInvite = data.type === 'INVITE';
+    const targetProject = projects.find((p) => p.id === data.projectId);
+    if (!targetProject || !currentUser) return;
+
+    const newContributor: ProjectContributor = {
+      id: `collab_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      userId: isInvite ? data.targetUser.id : currentUser.id,
+      user: isInvite ? data.targetUser : currentUser,
+      role: data.role,
+      pitch: data.pitch,
+      status: 'PENDING',
+      invitedByUserId: currentUser.id,
+      type: data.type,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedProjects = projects.map((p) => {
+      if (p.id === data.projectId) {
+        const existing = p.contributors || [];
+        const filtered = existing.filter((c) => c.userId !== newContributor.userId);
+        return {
+          ...p,
+          contributors: [...filtered, newContributor],
+        };
+      }
+      return p;
+    });
+
+    setProjects(updatedProjects);
+    storage.saveProjects(updatedProjects);
+
+    if (selectedProject?.id === data.projectId) {
+      setSelectedProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              contributors: [
+                ...(prev.contributors || []).filter((c) => c.userId !== newContributor.userId),
+                newContributor,
+              ],
+            }
+          : null
+      );
+    }
+
+    // Create Notification
+    const notifId = `notif_collab_${Date.now()}`;
+    if (isInvite) {
+      // Invite sent to targetUser
+      const notif: AppNotification = {
+        id: notifId,
+        type: 'collab_invite',
+        title: 'Project Contributor Invite',
+        message: `@${currentUser.handle} invited you to join "${targetProject.title}" as ${data.role}!`,
+        actor: {
+          id: currentUser.id,
+          name: currentUser.displayName,
+          handle: currentUser.handle,
+          avatarUrl: currentUser.avatarUrl,
+        },
+        targetId: targetProject.id,
+        targetType: 'project',
+        meta: {
+          role: data.role,
+          projectTitle: targetProject.title,
+          contributorId: newContributor.id,
+        },
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications((prev) => [notif, ...prev]);
+    } else {
+      // Request sent to author
+      const notif: AppNotification = {
+        id: notifId,
+        type: 'collab_request',
+        title: 'New Collaboration Request',
+        message: `@${currentUser.handle} requested to collaborate on "${targetProject.title}" as ${data.role}: "${data.pitch || 'Ready to build!'}"`,
+        actor: {
+          id: currentUser.id,
+          name: currentUser.displayName,
+          handle: currentUser.handle,
+          avatarUrl: currentUser.avatarUrl,
+        },
+        targetId: targetProject.id,
+        targetType: 'project',
+        meta: {
+          role: data.role,
+          projectTitle: targetProject.title,
+          contributorId: newContributor.id,
+        },
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications((prev) => [notif, ...prev]);
+    }
+  };
+
+  const handleUpdateProjectContributors = (projectId: string, updatedContributors: ProjectContributor[]) => {
+    const updated = projects.map((p) => {
+      if (p.id === projectId) {
+        return { ...p, contributors: updatedContributors };
+      }
+      return p;
+    });
+    setProjects(updated);
+    storage.saveProjects(updated);
+    if (selectedProject?.id === projectId) {
+      setSelectedProject((prev) => (prev ? { ...prev, contributors: updatedContributors } : null));
+    }
+  };
+
   // Notification Center Handlers
   const handleMarkNotificationAsRead = (id: string) => {
     setNotifications((prev) =>
@@ -835,11 +961,27 @@ export default function App() {
   };
 
   const handleNotificationClick = (notif: AppNotification) => {
+    if (
+      notif.type === 'collab_invite' ||
+      notif.type === 'collab_request' ||
+      notif.type === 'collab_accepted'
+    ) {
+      if (notif.targetId) {
+        const found = projects.find((p) => p.id === notif.targetId);
+        if (found) {
+          setSelectedProject(found);
+          setInitialProjectDetailTab('team');
+          return;
+        }
+      }
+    }
+
     if (notif.targetType === 'project') {
       if (notif.targetId) {
         const found = projects.find((p) => p.id === notif.targetId);
         if (found) {
           setSelectedProject(found);
+          setInitialProjectDetailTab('overview');
           return;
         }
       }
@@ -928,30 +1070,53 @@ export default function App() {
         {/* 1. Dedicated Community Feed Tab (like YouTube or Instagram) */}
         {activeTab === 'feed' && (
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-            {/* Feed Header Banner */}
+            {/* Feed Header Banner with Intriguing Maker Hook */}
             <div className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 via-emerald-50/70 to-amber-50/60 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-xs">
               <div className="absolute top-0 right-0 h-64 w-64 bg-sky-200/40 blur-3xl pointer-events-none rounded-full" />
               <div className="absolute bottom-0 left-1/3 h-48 w-48 bg-emerald-200/30 blur-3xl pointer-events-none rounded-full" />
 
-              {/* Decorative Watermark Mascots from brand logo */}
-              <div className="absolute -right-4 -bottom-4 opacity-15 pointer-events-none select-none hidden md:flex items-center gap-2">
-                <Mascot type="earth" size="xl" className="rotate-6" />
-                <Mascot type="curious" size="lg" className="-rotate-12" />
-                <Mascot type="cheerful" size="lg" className="rotate-12" />
+              {/* Scattered Doodle Faces in the Background */}
+              <div className="absolute -right-2 top-3 pointer-events-none select-none hidden md:flex items-center gap-2 opacity-30">
+                <DoodleFace type="surprised_yellow" size="lg" />
+                <DoodleFace type="star_butter" size="md" />
+                <DoodleFace type="blissful_peach" size="lg" />
               </div>
 
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                <div className="space-y-2 max-w-2xl">
+                <div className="space-y-2.5 max-w-2xl">
                   <div className="flex items-center gap-2 text-xs font-bold text-sky-800">
-                    <Mascot type="curious" size="xs" />
-                    <span className="uppercase tracking-wider font-mono text-[11px] text-sky-700">Community Feed</span>
+                    <DoodleFace type="mismatched_mint" size="xs" />
+                    <span className="uppercase tracking-wider font-mono text-[11px] text-sky-700">Makers Collective</span>
                   </div>
                   <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                    Latest Projects & Creations
+                    Where creators stop scrolling and actually build together.
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                    Discover projects across 3D printing, game development, robotics, art, and code. Leave constructive reviews and follow creators.
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans font-medium">
+                    Wondering what locked in is? It's the collaborative lab for builders. Drop physical builds, invite contributors for CAD, UI, or firmware, and maintain your daily maker streak.
                   </p>
+
+                  {/* Live Activity Pulse Ticker */}
+                  <div className="pt-2 flex items-center gap-2 text-xs font-mono text-slate-700 overflow-x-auto no-scrollbar">
+                    <span className="shrink-0 flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      Live Pulse
+                    </span>
+                    <span className="text-[11px] text-slate-500 truncate">
+                      @kyle seeking CAD partner · @maya Day 4 streak · @leo joined Drone Autopilot team · @elena reviewed Smart Rover (+25 pts)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex items-center gap-2 bg-white/80 border-2 border-slate-200 rounded-2xl p-3 shadow-2xs">
+                  <div className="flex -space-x-2">
+                    <DoodleFace type="excited_pink" size="md" />
+                    <DoodleFace type="cool_specs" size="md" />
+                    <DoodleFace type="wink_apricot" size="md" />
+                  </div>
+                  <div className="text-left pl-1">
+                    <div className="text-xs font-bold text-slate-900">Open Collaborations</div>
+                    <div className="text-[10px] font-mono text-slate-500">Tap any build to team up</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1070,12 +1235,20 @@ export default function App() {
                       key={project.id}
                       project={project}
                       index={idx}
-                      onOpenProject={(p) => setSelectedProject(p)}
+                      currentUser={currentUser}
+                      onOpenProject={(p) => {
+                        setSelectedProject(p);
+                        setInitialProjectDetailTab('overview');
+                      }}
                       onShareProject={(p) => setShareProject(p)}
                       onToggleLike={handleToggleLike}
                       isLiked={likedProjectIds.has(project.id)}
                       onOpenAuthorProfile={(author) => setSelectedProfileUser(author)}
                       onSelectTag={(tag) => setSelectedTag(tag)}
+                      onOpenCollaboration={(p, mode) => {
+                        setCollabModalProject(p);
+                        setCollabModalMode(mode);
+                      }}
                     />
                   ))}
                 </div>
@@ -1426,6 +1599,9 @@ export default function App() {
         )}
       </main>
 
+      {/* Interactive Themed Maker Faces Row Across the Bottom */}
+      <BottomFacesRow />
+
       {/* Theme Footer with Logo Mascots */}
       <footer className="border-t-2 border-slate-200/80 bg-white/70 py-8 text-center text-xs text-slate-500 font-sans">
         <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1446,7 +1622,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Project Detail Modal */}
+      {/* Project Detail Modal with Manage Team Section */}
       {selectedProject && (
         <ProjectDetailModal
           project={selectedProject}
@@ -1473,6 +1649,27 @@ export default function App() {
           onOpenAuthorProfile={(author) => setSelectedProfileUser(author)}
           isFollowingAuthor={followingUserIds.has(selectedProject.authorId)}
           onToggleFollowAuthor={handleToggleFollow}
+          initialTab={initialProjectDetailTab}
+          allUsers={allRealUsers}
+          onUpdateProjectContributors={handleUpdateProjectContributors}
+          onSendCollaboration={handleSendCollaboration}
+        />
+      )}
+
+      {/* Collaboration Modal (Workflow to Invite or Request) */}
+      {collabModalProject && (
+        <CollaborationModal
+          isOpen={Boolean(collabModalProject)}
+          onClose={() => setCollabModalProject(null)}
+          project={collabModalProject}
+          currentUser={currentUser}
+          mode={collabModalMode}
+          allUsers={allRealUsers}
+          onSendCollaboration={handleSendCollaboration}
+          onOpenGoogleLogin={() => {
+            setAuthModalMode('login');
+            setIsGoogleModalOpen(true);
+          }}
         />
       )}
 

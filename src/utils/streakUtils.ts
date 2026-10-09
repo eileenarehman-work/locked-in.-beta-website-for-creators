@@ -33,6 +33,25 @@ export function calculateStreakLoginBonus(_currentStreak?: number): number {
   return 2;
 }
 
+/**
+ * Format a Date object to YYYY-MM-DD in local time
+ */
+export function formatDateLocal(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Get date N days before a reference date (at local midnight)
+ */
+function getDaysAgo(refDate: Date, days: number): Date {
+  const d = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
+  d.setDate(d.getDate() - days);
+  return d;
+}
+
 export function calculateRealStreak(
   projects: Project[],
   reviews: Review[],
@@ -40,13 +59,14 @@ export function calculateRealStreak(
   loginDates: string[] = []
 ): StreakInfo {
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const now = new Date();
+  const todayStr = formatDateLocal(now);
+
   const getEmptyWeek = () => {
     const arr: DayStreakItem[] = [];
-    const now = new Date();
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const d = getDaysAgo(now, i);
+      const dateStr = formatDateLocal(d);
       const dayOfWeek = d.getDay();
       arr.push({
         date: dateStr,
@@ -89,12 +109,14 @@ export function calculateRealStreak(
 
   // 1. Daily login dates - logging in everyday counts towards the streak!
   loginDates.forEach((d) => {
-    activityDates.add(d);
-    activityCountsByDate[d] = (activityCountsByDate[d] || 0) + 1;
+    if (d) {
+      const clean = d.split('T')[0];
+      activityDates.add(clean);
+      activityCountsByDate[clean] = (activityCountsByDate[clean] || 0) + 1;
+    }
   });
 
-  // Since user is currently logged in, ensure today's login counts!
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Since user is currently active/logged in, ensure today's login counts!
   activityDates.add(todayStr);
   activityCountsByDate[todayStr] = Math.max(1, (activityCountsByDate[todayStr] || 0) + 1);
 
@@ -120,35 +142,69 @@ export function calculateRealStreak(
   const totalContributions =
     userProjects.length + userReviews.length + (loginDates.length > 0 ? loginDates.length : 1);
 
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayDate = getDaysAgo(now, 1);
+  const yesterdayStr = formatDateLocal(yesterdayDate);
 
   const isActiveToday = activityDates.has(todayStr);
   const isActiveYesterday = activityDates.has(yesterdayStr);
 
+  // Calculate consecutive active days going backwards
   let currentStreak = 0;
-  if (isActiveToday || isActiveYesterday) {
-    let checkDate = isActiveToday ? new Date() : yesterday;
-    const visitedDates = new Set<string>();
-    for (let step = 0; step < 365; step++) {
-      const dateStr = checkDate.toISOString().split('T')[0];
-      if (visitedDates.has(dateStr)) {
-        checkDate = new Date(checkDate.getTime() - 12 * 60 * 60 * 1000);
-        continue;
-      }
-      visitedDates.add(dateStr);
-      if (activityDates.has(dateStr)) {
+  if (isActiveToday) {
+    // Count today + previous consecutive days
+    for (let dayOffset = 0; dayOffset < 365; dayOffset++) {
+      const targetDate = getDaysAgo(now, dayOffset);
+      const targetStr = formatDateLocal(targetDate);
+      if (activityDates.has(targetStr)) {
         currentStreak++;
-        checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000);
+      } else {
+        break;
+      }
+    }
+  } else if (isActiveYesterday) {
+    // Yesterday was active, user hasn't logged in yet today
+    for (let dayOffset = 1; dayOffset < 365; dayOffset++) {
+      const targetDate = getDaysAgo(now, dayOffset);
+      const targetStr = formatDateLocal(targetDate);
+      if (activityDates.has(targetStr)) {
+        currentStreak++;
       } else {
         break;
       }
     }
   }
 
-  // Ensure an active logged-in user always starts with at least a 1-day streak for today's session
-  if (currentUser && currentStreak === 0 && isActiveToday) {
+  // Active logged-in users are always at least Day 1 for today's session
+  if (currentStreak === 0 && isActiveToday) {
     currentStreak = 1;
+  }
+
+  // Calculate longest historical streak
+  let longestStreak = currentStreak;
+  const ascendingDates = Array.from(activityDates).sort();
+  if (ascendingDates.length > 0) {
+    let tempStreak = 0;
+    let prevTime: number | null = null;
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+    for (const dStr of ascendingDates) {
+      const [y, m, d] = dStr.split('-').map(Number);
+      const curTime = new Date(y, m - 1, d).getTime();
+      if (prevTime === null) {
+        tempStreak = 1;
+      } else {
+        const diffDays = Math.round((curTime - prevTime) / ONE_DAY_MS);
+        if (diffDays === 1) {
+          tempStreak++;
+        } else if (diffDays > 1) {
+          tempStreak = 1;
+        }
+      }
+      prevTime = curTime;
+      if (tempStreak > longestStreak) {
+        longestStreak = tempStreak;
+      }
+    }
   }
 
   // Next milestone determination
@@ -185,11 +241,9 @@ export function calculateRealStreak(
 
   // Build past 7 days breakdown (ending today)
   const pastWeek: DayStreakItem[] = [];
-  const now = new Date();
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const d = getDaysAgo(now, i);
+    const dateStr = formatDateLocal(d);
     const dayOfWeek = d.getDay();
     const isToday = i === 0;
 
@@ -211,7 +265,7 @@ export function calculateRealStreak(
 
   return {
     currentStreak,
-    longestStreak: Math.max(currentStreak, sortedDates.length > 0 ? currentStreak : 1),
+    longestStreak: Math.max(longestStreak, currentStreak),
     totalContributions,
     lastActiveDate: sortedDates[0] || todayStr,
     isActiveToday,
@@ -225,7 +279,8 @@ export function calculateRealStreak(
 export function calculateStreakInfo(
   currentUser: User | null,
   projects: Project[] = [],
-  reviews: Review[] = []
+  reviews: Review[] = [],
+  loginDates: string[] = []
 ): StreakInfo {
-  return calculateRealStreak(projects, reviews, currentUser);
+  return calculateRealStreak(projects, reviews, currentUser, loginDates);
 }

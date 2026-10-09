@@ -30,6 +30,7 @@ import {
   getAllMilestoneBadgesWithStatus,
   getNextMilestoneBadge,
 } from '../utils/badgeSystem';
+import { MediaDisplay } from './MediaDisplay';
 
 interface CreatorProfileModalProps {
   profileUser: User;
@@ -513,10 +514,10 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
                         {/* Build Cover Media */}
                         <div className="h-28 w-full rounded-2xl overflow-hidden bg-slate-100 mb-2.5 relative border border-slate-200">
                           {p.mediaUrls[0] ? (
-                            <img
-                              src={p.mediaUrls[0]}
-                              alt={p.title}
+                            <MediaDisplay
+                              url={p.mediaUrls[0]}
                               className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              autoPlayPreview={true}
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-50 to-emerald-50 p-4 text-center">

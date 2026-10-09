@@ -11,30 +11,37 @@ import {
   Trophy,
   Star,
   ShieldCheck,
+  Users,
 } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
 import { Mascot } from './Mascot';
+import { MediaDisplay, isVideoUrl } from './MediaDisplay';
+import { DoodleFace } from './DoodleFaces';
 
 interface ProjectCardProps {
   project: Project;
   index?: number;
+  currentUser?: User | null;
   onOpenProject: (project: Project) => void;
   onShareProject: (project: Project) => void;
   onToggleLike: (projectId: string) => void;
   isLiked: boolean;
   onOpenAuthorProfile?: (author: User) => void;
   onSelectTag?: (tag: string) => void;
+  onOpenCollaboration?: (project: Project, mode: 'request' | 'invite') => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   index = 0,
+  currentUser = null,
   onOpenProject,
   onShareProject,
   onToggleLike,
   isLiked,
   onOpenAuthorProfile,
   onSelectTag,
+  onOpenCollaboration,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState(0);
@@ -105,10 +112,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Cover Media */}
         <div className="relative mb-4 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
           {project.mediaUrls[0] ? (
-            <img
-              src={project.mediaUrls[0]}
+            <MediaDisplay
+              url={project.mediaUrls[0]}
               alt={project.title}
-              referrerPolicy="no-referrer"
+              showBadge={true}
+              autoPlay={false}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
@@ -185,6 +193,98 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             ))}
           </div>
         )}
+
+        {/* Collaboration Team & Request Button */}
+        {(() => {
+          const isOwner = currentUser?.id === project.authorId;
+          const contributors = project.contributors || [];
+          const acceptedContributors = contributors.filter((c) => c.status === 'ACCEPTED');
+          const hasPendingRequest = Boolean(
+            currentUser &&
+              contributors.some(
+                (c) => c.userId === currentUser.id && c.status === 'PENDING'
+              )
+          );
+          const isAcceptedContributor = Boolean(
+            currentUser &&
+              contributors.some(
+                (c) => c.userId === currentUser.id && c.status === 'ACCEPTED'
+              )
+          );
+
+          return (
+            <div className="mt-3.5 flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Users className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+                {acceptedContributors.length > 0 ? (
+                  <div className="flex items-center gap-1 text-[11px] font-mono text-slate-600">
+                    <span className="font-bold text-slate-800">{acceptedContributors.length + 1}</span>
+                    <span>team</span>
+                    <div className="flex -space-x-1.5 ml-1">
+                      {acceptedContributors.slice(0, 3).map((c) => (
+                        <img
+                          key={c.id}
+                          src={c.user.avatarUrl}
+                          alt={c.user.displayName}
+                          title={`${c.user.displayName} (${c.role})`}
+                          className="h-4 w-4 rounded-full ring-1 ring-white object-cover"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-sans text-slate-400 font-medium truncate">
+                    {isOwner ? 'Add team members' : 'Seeking collaborators'}
+                  </span>
+                )}
+              </div>
+
+              {/* The Collaboration Action Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenCollaboration) {
+                    onOpenCollaboration(project, isOwner ? 'invite' : 'request');
+                  } else {
+                    onOpenProject(project);
+                  }
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                  isOwner
+                    ? 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-300'
+                    : hasPendingRequest
+                    ? 'bg-amber-50 text-amber-800 border border-amber-300'
+                    : isAcceptedContributor
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                    : 'bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 text-slate-950 shadow-2xs hover:scale-103 active:scale-97'
+                }`}
+              >
+                {isOwner ? (
+                  <>
+                    <Users className="h-3 w-3 text-sky-700" />
+                    <span>Invite Contributor</span>
+                  </>
+                ) : hasPendingRequest ? (
+                  <>
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span>Request Pending</span>
+                  </>
+                ) : isAcceptedContributor ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                    <span>On Team</span>
+                  </>
+                ) : (
+                  <>
+                    <Users className="h-3 w-3 text-slate-900" />
+                    <span>Collaboration Request</span>
+                  </>
+                )}
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Footer Metrics & Author */}

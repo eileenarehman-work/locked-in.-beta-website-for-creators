@@ -18,6 +18,7 @@ import {
   Circle,
   Users,
   Image as ImageIcon,
+  Video,
   UserPlus,
   Hash,
   Crown,
@@ -37,6 +38,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { storage } from '../mock/initialData';
 import { Mascot } from './Mascot';
+import { MediaDisplay, isVideoUrl } from './MediaDisplay';
 
 interface DirectMessagesProps {
   currentUser: User;
@@ -231,10 +233,15 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
     setPendingImageUrl(null);
   };
 
-  // Real file upload reader
+  // Real file upload reader (photo or video)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 80 * 1024 * 1024) {
+      alert('File must be under 80MB.');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -916,14 +923,13 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                           >
                             {msg.text && <p>{msg.text}</p>}
 
-                            {/* Inline Image Attachment */}
+                            {/* Inline Media Attachment (Photo or Video) */}
                             {msg.imageUrls && msg.imageUrls.length > 0 && (
-                              <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 max-h-56">
-                                <img
-                                  src={msg.imageUrls[0]}
-                                  alt="Attachment"
-                                  referrerPolicy="no-referrer"
-                                  className="h-full w-full object-cover"
+                              <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 max-h-64">
+                                <MediaDisplay
+                                  url={msg.imageUrls[0]}
+                                  className="max-h-64 w-full object-cover rounded-xl"
+                                  autoPlayPreview={false}
                                 />
                               </div>
                             )}
@@ -1056,14 +1062,13 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
                           >
                             {msg.content && <p>{msg.content}</p>}
 
-                            {/* Inline Image Attachment */}
+                            {/* Inline Media Attachment (Photo or Video) */}
                             {msg.imageUrls && msg.imageUrls.length > 0 && (
-                              <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 max-h-56">
-                                <img
-                                  src={msg.imageUrls[0]}
-                                  alt="Attachment"
-                                  referrerPolicy="no-referrer"
-                                  className="h-full w-full object-cover"
+                              <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 max-h-64">
+                                <MediaDisplay
+                                  url={msg.imageUrls[0]}
+                                  className="max-h-64 w-full object-cover rounded-xl"
+                                  autoPlayPreview={false}
                                 />
                               </div>
                             )}
@@ -1297,10 +1302,14 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               {pendingImageUrl && (
                 <div className="flex items-center gap-2 rounded-2xl bg-sky-50 border border-sky-200 p-2 text-xs">
                   <div className="h-8 w-8 rounded-lg overflow-hidden bg-white border border-sky-200">
-                    <img src={pendingImageUrl} alt="attachment preview" className="h-full w-full object-cover" />
+                    <MediaDisplay
+                      url={pendingImageUrl}
+                      alt="attachment preview"
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <span className="text-sky-900 font-bold text-xs truncate flex-1">
-                    Photo attached
+                    {isVideoUrl(pendingImageUrl) ? 'Video attached' : 'Photo attached'}
                   </span>
                   <button
                     type="button"
@@ -1315,12 +1324,15 @@ export const DirectMessages: React.FC<DirectMessagesProps> = ({
               <div className="flex items-center gap-2">
                 <label
                   className="rounded-full border border-sky-200 bg-sky-50 p-2.5 text-sky-700 hover:bg-sky-100 cursor-pointer transition-colors shadow-2xs"
-                  title="Upload an image from your device"
+                  title="Upload photo or video from your device"
                 >
-                  <ImageIcon className="h-4 w-4 text-sky-600" />
+                  <div className="flex items-center gap-1">
+                    <ImageIcon className="h-4 w-4 text-sky-600" />
+                    <Video className="h-3.5 w-3.5 text-amber-500" />
+                  </div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     onChange={handleFileUpload}
                     className="hidden"
                   />

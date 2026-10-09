@@ -54,41 +54,58 @@ export const Mascot: React.FC<MascotProps> = ({
         </defs>
 
         <g clipPath="url(#mascotDiamondClip)">
-          <rect x="60" y="40" width="500" height="500" fill="#9ecaff" />
-          {/* Top/Left Continents */}
+          <rect x="60" y="40" width="500" height="500" fill="#88c3ff" />
+          {/* Top/Apex Continent */}
           <path
-            d="M 120 180 C 180 200, 200 240, 195 270 C 190 310, 180 340, 230 360 C 260 370, 255 430, 220 460 L 100 450 L 80 120 Z"
-            fill="#a2e8af"
+            d="M 190 70 C 230 115, 280 125, 320 100 C 355 80, 400 115, 435 80 L 400 30 L 210 30 Z"
+            fill="#7ee29d"
           />
           <path
-            d="M 120 180 C 180 200, 200 240, 195 270 C 190 310, 180 340, 230 360 C 260 370, 255 430, 220 460"
+            d="M 190 70 C 230 115, 280 125, 320 100 C 355 80, 400 115, 435 80"
+            stroke="#1e293b"
+            strokeWidth="7"
+            strokeLinecap="round"
+            fill="none"
+          />
+          {/* Western/Left Continents */}
+          <path
+            d="M 90 160 C 165 190, 215 230, 205 270 C 195 315, 225 350, 245 380 C 265 405, 245 450, 210 475 L 80 440 L 60 140 Z"
+            fill="#7ee29d"
+          />
+          <path
+            d="M 90 160 C 165 190, 215 230, 205 270 C 195 315, 225 350, 245 380 C 265 405, 245 450, 210 475"
             stroke="#1e293b"
             strokeWidth="7"
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
           />
-          {/* Top continent */}
-          <path d="M 230 90 C 270 145, 330 140, 360 110 L 320 60 Z" fill="#a2e8af" />
+          {/* Eastern/Right continent */}
           <path
-            d="M 230 90 C 270 145, 330 140, 360 110"
+            d="M 350 200 C 390 230, 460 220, 500 190 L 530 330 L 490 440 C 430 445, 385 410, 370 360 C 355 315, 390 270, 350 230 Z"
+            fill="#7ee29d"
+          />
+          <path
+            d="M 350 200 C 390 230, 460 220, 500 190"
             stroke="#1e293b"
             strokeWidth="7"
             strokeLinecap="round"
             fill="none"
           />
-          {/* Right continent */}
           <path
-            d="M 390 230 C 420 250, 480 240, 520 220 L 520 440 L 330 520 C 360 480, 370 420, 350 370 C 340 330, 370 290, 420 265 Z"
-            fill="#a2e8af"
-          />
-          <path
-            d="M 390 230 C 420 250, 480 240, 520 220"
+            d="M 490 440 C 430 445, 385 410, 370 360 C 355 315, 390 270, 350 230"
             stroke="#1e293b"
             strokeWidth="7"
             strokeLinecap="round"
             fill="none"
           />
+          {/* Southern patch */}
+          <path
+            d="M 250 440 C 285 415, 340 420, 370 445 L 310 520 Z"
+            fill="#7ee29d"
+          />
+          {/* Archipelago Island */}
+          <ellipse cx="230" cy="190" rx="12" ry="8" fill="#7ee29d" stroke="#1e293b" strokeWidth="4.5" />
         </g>
 
         {/* Charcoal border */}

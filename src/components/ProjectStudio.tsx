@@ -3,6 +3,7 @@ import { Project, ProjectStatus, User } from '../types';
 import { generateProjectDraft, assignSmartTags } from '../services/geminiService';
 import { storage } from '../mock/initialData';
 import { Mascot } from './Mascot';
+import { MediaDisplay, isVideoUrl } from './MediaDisplay';
 import {
   Sparkles,
   ShieldCheck,
@@ -10,6 +11,7 @@ import {
   Tag,
   CheckCircle,
   Image as ImageIcon,
+  Video,
   Upload,
   X,
   Palette,
@@ -206,12 +208,17 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
     }, 3500);
   };
 
-  // Real file upload handler using FileReader
+  // Real file upload handler using FileReader (supporting photos and video demo clips)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     Array.from(files).forEach((file) => {
+      // 100MB limit for demo videos / images
+      if (file.size > 100 * 1024 * 1024) {
+        showToast('File size must be under 100MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         if (typeof event.target?.result === 'string') {
@@ -722,52 +729,81 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
             <div className="rounded-3xl border-2 border-slate-200 bg-white p-5 space-y-3.5 shadow-2xs">
               <label className="block text-xs font-bold text-slate-800 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
-                  <ImageIcon className="h-4 w-4 text-sky-600" />
-                  Photos & Screenshots
+                  <div className="flex items-center gap-1 text-sky-600">
+                    <ImageIcon className="h-4 w-4" />
+                    <span className="text-slate-300">/</span>
+                    <Video className="h-4 w-4 text-amber-500" />
+                  </div>
+                  <span>Photos & Video Demos</span>
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium">
-                  Up to 4 images
+                  Up to 6 media files
                 </span>
               </label>
 
               {/* Upload Dropzone */}
-              <label className="block border-2 border-dashed border-sky-300 hover:border-sky-400 rounded-2xl p-4 text-center cursor-pointer transition-colors bg-sky-50/50">
-                <Upload className="h-6 w-6 text-sky-600 mx-auto mb-1.5" />
-                <p className="text-xs font-bold text-slate-900">Click or drag photos of your project</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">PNG, JPEG, GIF, or WebP</p>
+              <label className="block border-2 border-dashed border-sky-300 hover:border-sky-400 rounded-2xl p-4 text-center cursor-pointer transition-colors bg-sky-50/50 group">
+                <div className="flex items-center justify-center gap-2 mb-1.5">
+                  <Upload className="h-6 w-6 text-sky-600 group-hover:scale-110 transition-transform" />
+                  <Video className="h-5 w-5 text-amber-500 group-hover:scale-110 transition-transform" />
+                </div>
+                <p className="text-xs font-bold text-slate-900">Click or drag photos or videos of your project</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">MP4, WebM, MOV, PNG, JPEG, GIF, or WebP (up to 100MB)</p>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   multiple
                   onChange={handleFileUpload}
                   className="hidden"
                 />
               </label>
 
-              {/* Image Previews */}
+              {/* Image & Video Previews */}
               {uploadedImages.length > 0 ? (
                 <div className="space-y-2">
                   <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 border-2 border-slate-200 relative group">
-                    <img
-                      src={uploadedImages[0]}
+                    <MediaDisplay
+                      url={uploadedImages[0]}
                       alt="Cover Preview"
-                      referrerPolicy="no-referrer"
+                      autoPlay={false}
+                      controls={isVideoUrl(uploadedImages[0])}
+                      showBadge={true}
                       className="h-full w-full object-cover"
                     />
-                    <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-mono text-emerald-800 border border-emerald-300 backdrop-blur-md font-bold">
-                      Cover Photo
-                    </span>
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                      <span className="rounded-full bg-white/95 px-2.5 py-0.5 text-[10px] font-mono text-emerald-800 border border-emerald-300 backdrop-blur-md font-bold shadow-2xs">
+                        Cover Media
+                      </span>
+                      {isVideoUrl(uploadedImages[0]) && (
+                        <span className="rounded-full bg-slate-950/80 px-2 py-0.5 text-[10px] font-mono text-amber-300 border border-amber-400/40 backdrop-blur-md font-bold">
+                          Video
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(0)}
+                      className="absolute top-2 right-2 h-6 w-6 rounded-full bg-slate-900/80 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-rose-600"
+                      title="Remove cover"
+                    >
+                      ×
+                    </button>
                   </div>
 
                   {uploadedImages.length > 1 && (
                     <div className="grid grid-cols-3 gap-2">
-                      {uploadedImages.slice(1).map((img, idx) => (
-                        <div key={idx} className="relative aspect-[16/9] rounded-xl overflow-hidden border-2 border-slate-200 group">
-                          <img src={img} alt={`asset-${idx}`} className="h-full w-full object-cover" />
+                      {uploadedImages.slice(1).map((media, idx) => (
+                        <div key={idx} className="relative aspect-[16/9] rounded-xl overflow-hidden border-2 border-slate-200 group bg-slate-100">
+                          <MediaDisplay
+                            url={media}
+                            alt={`asset-${idx}`}
+                            className="h-full w-full object-cover"
+                            showBadge={true}
+                          />
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(idx + 1)}
-                            className="absolute top-1 right-1 h-5 w-5 rounded-full bg-slate-900/80 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            className="absolute top-1 right-1 h-5 w-5 rounded-full bg-slate-900/80 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-rose-600"
                           >
                             ×
                           </button>
@@ -778,7 +814,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                 </div>
               ) : (
                 <div className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center text-xs text-slate-500 font-medium">
-                  No photos added yet. Upload a screenshot, 3D print photo, or bench test snapshot!
+                  No media added yet. Upload a video walkthrough, benchmark run, CAD render, or workshop photo!
                 </div>
               )}
             </div>

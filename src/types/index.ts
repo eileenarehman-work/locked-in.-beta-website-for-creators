@@ -38,6 +38,20 @@ export interface ProjectMilestone {
   completed: boolean;
 }
 
+export type ContributorStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+
+export interface ProjectContributor {
+  id: string;
+  userId: string;
+  user: User;
+  role: string;
+  pitch?: string;
+  status: ContributorStatus;
+  invitedByUserId: string;
+  type: 'INVITE' | 'REQUEST';
+  createdAt: string;
+}
+
 export interface Project {
   id: string;
   authorId: string;
@@ -54,6 +68,7 @@ export interface Project {
   qualities?: string[]; // Actual qualities that interest the user (e.g., 'Working Prototype', 'Open Source CAD', 'Tested Schematics')
   status: ProjectStatus;
   milestones: ProjectMilestone[];
+  contributors?: ProjectContributor[];
   demoUrl?: string;
   repoUrl?: string;
   createdAt: string;
@@ -165,7 +180,11 @@ export type NotificationType =
   | 'invite_accepted'
   | 'new_like'
   | 'new_project'
-  | 'streak_milestone';
+  | 'streak_milestone'
+  | 'collab_invite'
+  | 'collab_request'
+  | 'collab_accepted'
+  | 'collab_declined';
 
 export interface AppNotification {
   id: string;
@@ -179,7 +198,13 @@ export interface AppNotification {
     avatarUrl: string;
   };
   targetId?: string;
-  targetType?: 'project' | 'profile' | 'message';
+  targetType?: 'project' | 'profile' | 'message' | 'team';
+  meta?: {
+    role?: string;
+    projectTitle?: string;
+    contributorId?: string;
+    action?: string;
+  };
   read: boolean;
   createdAt: string;
 }

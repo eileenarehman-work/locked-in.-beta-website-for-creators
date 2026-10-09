@@ -51,76 +51,100 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 'md', showTex
             {/* Continent & Ocean interior clipped to the diamond */}
             <g clipPath="url(#diamondClip)">
               {/* Sky Blue Ocean background */}
-              <rect x="80" y="40" width="540" height="540" fill="#9ecaff" />
+              <rect x="80" y="40" width="540" height="540" fill="#88c3ff" />
 
-              {/* Mint Green Continents with exact organic hand-drawn shapes from the drawing */}
-              {/* Top Apex continent patch */}
+              {/* Mint Green Continents - bold, lush, prominent landmasses */}
+              {/* 1. Large Top/Northern Continent */}
               <path
-                d="M 270 80
-                   C 310 140, 360 140, 410 90
-                   L 370 40
+                d="M 220 70
+                   C 260 125, 310 135, 350 115
+                   C 390 95, 435 130, 480 85
+                   L 440 30
+                   L 250 30
                    Z"
-                fill="#a2e8af"
+                fill="#7ee29d"
               />
               <path
-                d="M 270 80
-                   C 310 140, 360 140, 410 90"
+                d="M 220 70
+                   C 260 125, 310 135, 350 115
+                   C 390 95, 435 130, 480 85"
                 stroke="#1e293b"
                 strokeWidth="7"
                 strokeLinecap="round"
                 fill="none"
               />
 
-              {/* Left & Bottom-Left Green Continent */}
+              {/* 2. Prominent Western/Left Continent */}
               <path
-                d="M 130 180
-                   C 195 210, 215 250, 205 285
-                   C 195 325, 205 375, 255 395
-                   C 285 405, 280 470, 240 500
-                   L 110 490
-                   L 80 140
+                d="M 110 160
+                   C 185 190, 240 235, 230 280
+                   C 220 325, 250 370, 275 400
+                   C 295 425, 275 480, 230 515
+                   L 90 470
+                   L 70 140
                    Z"
-                fill="#a2e8af"
+                fill="#7ee29d"
               />
               <path
-                d="M 130 180
-                   C 195 210, 215 250, 205 285
-                   C 195 325, 205 375, 255 395
-                   C 285 405, 280 470, 240 500"
+                d="M 110 160
+                   C 185 190, 240 235, 230 280
+                   C 220 325, 250 370, 275 400
+                   C 295 425, 275 480, 230 515"
                 stroke="#1e293b"
                 strokeWidth="7.5"
                 strokeLinecap="round"
                 fill="none"
               />
 
-              {/* Right & Bottom-Right Green Continent */}
+              {/* 3. Prominent Eastern/Right Continent */}
               <path
-                d="M 430 250
-                   C 460 270, 520 260, 570 230
-                   L 570 470
-                   L 370 560
-                   C 400 515, 410 450, 390 395
-                   C 380 355, 410 310, 465 285
+                d="M 395 210
+                   C 435 240, 505 230, 555 195
+                   L 590 350
+                   L 560 490
+                   C 490 495, 440 455, 420 395
+                   C 405 345, 440 295, 395 245
                    Z"
-                fill="#a2e8af"
+                fill="#7ee29d"
               />
               <path
-                d="M 430 250
-                   C 460 270, 520 260, 570 230"
+                d="M 395 210
+                   C 435 240, 505 230, 555 195"
                 stroke="#1e293b"
                 strokeWidth="7.5"
                 strokeLinecap="round"
                 fill="none"
               />
               <path
-                d="M 370 560
-                   C 400 515, 410 450, 390 395
-                   C 380 355, 410 310, 465 285"
+                d="M 560 490
+                   C 490 495, 440 455, 420 395
+                   C 405 345, 440 295, 395 245"
                 stroke="#1e293b"
                 strokeWidth="7.5"
                 strokeLinecap="round"
                 fill="none"
               />
+
+              {/* 4. Southern Continent / Bottom Apex */}
+              <path
+                d="M 280 495
+                   C 320 465, 380 470, 420 500
+                   L 350 580
+                   Z"
+                fill="#7ee29d"
+              />
+              <path
+                d="M 280 495
+                   C 320 465, 380 470, 420 500"
+                stroke="#1e293b"
+                strokeWidth="7"
+                strokeLinecap="round"
+                fill="none"
+              />
+
+              {/* 5. Center-Left Archipelago Islands */}
+              <ellipse cx="260" cy="205" rx="14" ry="9" fill="#7ee29d" stroke="#1e293b" strokeWidth="5" />
+              <ellipse cx="440" cy="165" rx="12" ry="7" fill="#7ee29d" stroke="#1e293b" strokeWidth="5" />
             </g>
 
             {/* Hand-Drawn Charcoal Diamond Outer Border */}

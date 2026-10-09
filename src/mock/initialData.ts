@@ -551,7 +551,11 @@ export const storage = {
   recordDailyLogin: (userId: string): { loginDates: string[]; isNewDayLogin: boolean } => {
     try {
       const existing = storage.getLoginDates(userId);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
       const isNewDayLogin = !existing.includes(todayStr);
       if (isNewDayLogin) {
         const updated = [todayStr, ...existing.filter((d) => d !== todayStr)];
@@ -574,7 +578,11 @@ export const storage = {
   recordDailyReview: (userId: string): { reviewDates: string[]; isNewDayReview: boolean } => {
     try {
       const existing = storage.getDailyReviewDates(userId);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
       const isNewDayReview = !existing.includes(todayStr);
       if (isNewDayReview) {
         const updated = [todayStr, ...existing.filter((d) => d !== todayStr)];
@@ -589,7 +597,11 @@ export const storage = {
   hasCompletedDailyReviewToday: (userId: string): boolean => {
     try {
       const dates = storage.getDailyReviewDates(userId);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
       return dates.includes(todayStr);
     } catch {
       return false;

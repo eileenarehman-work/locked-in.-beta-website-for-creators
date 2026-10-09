@@ -8,6 +8,7 @@ import {
   Globe2,
 } from 'lucide-react';
 import { Logo } from './Logo';
+import { MediaDisplay } from './MediaDisplay';
 
 interface IntroLandingProps {
   onEnterApp: () => void;
@@ -248,11 +249,10 @@ export const IntroLanding: React.FC<IntroLandingProps> = ({
                   <div>
                     <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 mb-3.5 border border-slate-200 relative">
                       {project.mediaUrls[0] ? (
-                        <img
-                          src={project.mediaUrls[0]}
-                          alt={project.title}
-                          referrerPolicy="no-referrer"
+                        <MediaDisplay
+                          url={project.mediaUrls[0]}
                           className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          autoPlayPreview={true}
                         />
                       ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-sky-50 text-xs text-slate-600 font-medium p-4 text-center">
