@@ -13,6 +13,10 @@ import {
   Star,
   Trash2,
   ChevronDown,
+  Lock,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { getUnlockedBadgesForUser } from '../utils/badgeSystem';
@@ -65,6 +69,61 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStatus, setPasswordStatus] = useState<{
+    type: 'idle' | 'success' | 'error';
+    message: string;
+  }>({
+    type: 'idle',
+    message: '',
+  });
+
+  const handleUpdatePassword = (e?: React.MouseEvent | React.FormEvent) => {
+    if (e && 'preventDefault' in e) e.preventDefault();
+    setPasswordStatus({ type: 'idle', message: '' });
+
+    if (currentUser.password && currentUser.password.trim() !== '') {
+      if (!currentPassword) {
+        setPasswordStatus({ type: 'error', message: 'Please enter your current password.' });
+        return false;
+      }
+      if (currentPassword !== currentUser.password) {
+        setPasswordStatus({ type: 'error', message: 'Current password is incorrect.' });
+        return false;
+      }
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordStatus({ type: 'error', message: 'New password must be at least 6 characters long.' });
+      return false;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus({ type: 'error', message: 'New passwords do not match.' });
+      return false;
+    }
+
+    const updatedUser: User = {
+      ...currentUser,
+      password: newPassword,
+    };
+    storage.setUser(updatedUser);
+    storage.registerUser(updatedUser);
+    onUpdateUser(updatedUser);
+
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordStatus({ type: 'success', message: 'Password updated successfully!' });
+    return true;
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -158,8 +217,36 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
       return;
     }
 
+    let finalPassword = currentUser.password;
+    if (newPassword || confirmPassword || currentPassword) {
+      if (currentUser.password && currentUser.password.trim() !== '') {
+        if (!currentPassword) {
+          setErrorMessage('Please enter your current password to change your password.');
+          setPasswordStatus({ type: 'error', message: 'Current password is required.' });
+          return;
+        }
+        if (currentPassword !== currentUser.password) {
+          setErrorMessage('Your current password is incorrect.');
+          setPasswordStatus({ type: 'error', message: 'Current password is incorrect.' });
+          return;
+        }
+      }
+      if (!newPassword || newPassword.length < 6) {
+        setErrorMessage('New password must be at least 6 characters long.');
+        setPasswordStatus({ type: 'error', message: 'New password must be at least 6 characters long.' });
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setErrorMessage('New passwords do not match.');
+        setPasswordStatus({ type: 'error', message: 'New passwords do not match.' });
+        return;
+      }
+      finalPassword = newPassword;
+    }
+
     const updatedUser: User = {
       ...currentUser,
+      password: finalPassword,
       displayName: cleanDisplayName,
       handle: cleanHandle,
       bio: bio.trim(),
@@ -517,6 +604,138 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
               </div>
             </div>
 
+            {/* Password & Security */}
+            <div className="rounded-3xl border-2 border-indigo-100 bg-indigo-50/40 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h5 className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                    <Lock className="h-4 w-4 text-indigo-600" />
+                    <span>Change Password</span>
+                  </h5>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {currentUser.password ? 'Update your account login password.' : 'Create a password to secure your account.'}
+                  </p>
+                </div>
+                {currentUser.password ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <ShieldCheck className="h-3 w-3 text-emerald-600" />
+                    Password set
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                    No password set
+                  </span>
+                )}
+              </div>
+
+              {passwordStatus.message && (
+                <div
+                  className={`flex items-center gap-2 rounded-2xl p-3 text-xs font-bold ${
+                    passwordStatus.type === 'success'
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border border-rose-200 text-rose-700'
+                  }`}
+                >
+                  {passwordStatus.type === 'success' ? (
+                    <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                  )}
+                  <span>{passwordStatus.message}</span>
+                </div>
+              )}
+
+              <div className="space-y-3 pt-1">
+                {currentUser.password && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Current Password
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter your current password"
+                        className="w-full rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-2 pr-10 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-400 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showCurrentPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      New Password
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                        className="w-full rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-2 pr-10 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-400 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showNewPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Confirm New Password
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-type new password"
+                        className="w-full rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-2 pr-10 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-400 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Minimum 6 characters. Letters, numbers, and symbols are supported.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleUpdatePassword}
+                    disabled={!newPassword || !confirmPassword}
+                    className="flex items-center gap-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    <span>Update Password</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Danger Zone: Delete Account */}
             <div className="rounded-3xl border-2 border-rose-200 bg-rose-50/40 p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
@@ -581,7 +800,7 @@ export const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
           {/* Fixed Footer */}
           <div className="flex items-center justify-between px-6 py-3.5 border-t border-sky-100 bg-sky-50/70 backdrop-blur-sm shrink-0">
             <span className="text-[11px] text-slate-500 font-bold">
-              Join the Fight for Innovation
+              Built for Creators & Makers of All Ages
             </span>
 
             <div className="flex items-center gap-2">

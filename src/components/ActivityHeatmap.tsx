@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { User, Project, Review } from '../types';
 import {
-  Flame,
   Award,
   Calendar,
   Zap,
@@ -23,6 +22,7 @@ import {
 } from '../utils/badgeSystem';
 import { PointsGuideModal } from './PointsGuideModal';
 import { calculateStreakInfo } from '../utils/streakUtils';
+import { CuteFlame } from './CuteFlame';
 
 interface ContributionDay {
   date: string;
@@ -85,7 +85,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       case 'star':
         return <Star className={`${className} fill-amber-400 text-amber-500`} />;
       case 'flame':
-        return <Flame className={`${className} fill-amber-400 text-amber-500`} />;
+        return <CuteFlame size="sm" className={className} />;
       case 'sparkles':
         return <Sparkles className={className} />;
       case 'shield-check':
@@ -106,7 +106,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <Flame className="h-5 w-5 text-amber-500 fill-amber-400" />
+              <CuteFlame size="sm" />
               <span>Daily Streak Hub</span>
             </h3>
             <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-800 flex items-center gap-1">
@@ -120,8 +120,8 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-full border-2 border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-mono font-black text-amber-900 shadow-2xs">
-            <Flame className="h-4 w-4 fill-amber-500 text-amber-500 animate-bounce" />
+          <div className="flex items-center gap-2 rounded-full border-2 border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-mono font-black text-amber-900 shadow-2xs">
+            <CuteFlame size="xs" />
             <span>{streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Day Streak</span>
           </div>
         </div>
@@ -134,14 +134,10 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
           {/* Top row: Flame hero & Streak Count */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 pb-4 border-b-2 border-amber-100">
             <div className="flex items-center gap-4">
-              {/* Animated Flame Container */}
-              <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-orange-200 border-2 border-amber-300 shadow-inner">
-                <Flame
-                  className={`h-8 w-8 sm:h-9 sm:w-9 ${
-                    streakInfo.currentStreak > 0
-                      ? 'text-amber-600 fill-amber-500 drop-shadow-sm'
-                      : 'text-slate-400 fill-slate-300'
-                  }`}
+              {/* Animated Cute Flame Hero */}
+              <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 via-orange-100 to-amber-200 border-2 border-amber-300 shadow-sm p-1">
+                <CuteFlame
+                  size="lg"
                 />
                 {streakInfo.isActiveToday && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -234,7 +230,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
                   <div className="my-1">
                     {dayItem.hasActivity ? (
-                      <Flame className="h-5 w-5 text-amber-500 fill-amber-400 drop-shadow-2xs" />
+                      <CuteFlame size="sm" />
                     ) : (
                       <div
                         className={`h-4 w-4 rounded-full border-2 border-dashed ${
@@ -397,7 +393,7 @@ export const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-amber-100 border border-amber-300 text-amber-600">
-                    <Flame className="h-4 w-4 fill-amber-400 text-amber-500" />
+                    <CuteFlame size="xs" />
                   </span>
                   <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
                     +10 PTS / DAY

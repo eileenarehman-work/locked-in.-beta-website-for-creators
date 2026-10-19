@@ -1,0 +1,108 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: default-deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUser(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.email is string && data.email.size() <= 128
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.handle is string && data.handle.size() <= 60;
+    }
+
+    function isValidProject(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.authorId is string && data.authorId.size() <= 128
+        && data.title is string && data.title.size() <= 200
+        && (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 300))
+        && (!('category' in data) || (data.category is string && data.category.size() <= 60));
+    }
+
+    function isValidReview(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.projectId is string && data.projectId.size() <= 128
+        && data.reviewerId is string && data.reviewerId.size() <= 128
+        && data.feedbackText is string && data.feedbackText.size() <= 5000;
+    }
+
+    // Test connection doc used to verify Firestore connection on boot
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && (request.auth.uid == userId || incoming().id == request.auth.uid) && isValidUser(incoming());
+      allow update: if isSignedIn() && (request.auth.uid == userId || existing().id == request.auth.uid) && isValidUser(incoming());
+      allow delete: if isOwner(userId);
+    }
+
+    // Projects collection
+    match /projects/{projectId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid && isValidProject(incoming());
+      allow update: if isSignedIn() && (
+        (existing().authorId == request.auth.uid && isValidProject(incoming()))
+        || incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount', 'likesCount'])
+      );
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    // Reviews collection
+    match /reviews/{reviewId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && incoming().reviewerId == request.auth.uid && isValidReview(incoming());
+      allow update: if isSignedIn() && existing().reviewerId == request.auth.uid && isValidReview(incoming());
+      allow delete: if isSignedIn() && existing().reviewerId == request.auth.uid;
+    }
+
+    // Likes collection
+    match /likes/{likeId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Direct Messages collection
+    match /messages/{messageId} {
+      allow get, list: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().senderId == request.auth.uid;
+      allow update: if isSignedIn() && existing().recipientId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isSignedIn() && existing().senderId == request.auth.uid;
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}

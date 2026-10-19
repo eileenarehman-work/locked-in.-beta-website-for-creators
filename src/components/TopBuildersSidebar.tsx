@@ -111,7 +111,7 @@ export const TopBuildersSidebar: React.FC<TopBuildersSidebarProps> = ({
                 <button
                   type="button"
                   onClick={onOpenLogin}
-                  className="mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-3.5 py-1.5 text-xs font-bold text-slate-900 shadow-xs"
+                  className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 px-3.5 py-1.5 text-xs font-bold text-slate-900 shadow-xs cursor-pointer"
                 >
                   <span>Sign Up / Log In</span>
                 </button>

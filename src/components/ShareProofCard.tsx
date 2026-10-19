@@ -152,9 +152,9 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
                 {project.qualities.slice(0, 3).map((q, idx) => (
                   <span
                     key={idx}
-                    className="rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200 shadow-2xs"
+                    className="rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-bold text-sky-800 border border-sky-200 shadow-2xs"
                   >
-                    ✓ {q}
+                    {q}
                   </span>
                 ))}
               </div>
@@ -183,8 +183,8 @@ export const ShareProofCard: React.FC<ShareProofCardProps> = ({ project, onClose
               </div>
             </div>
 
-            <div className="text-right text-[11px] font-bold text-slate-500">
-              <span>JOIN THE FIGHT FOR INNOVATION</span>
+            <div className="text-right text-[11px] font-bold text-slate-500 font-mono">
+              <span>LOCKED IN · SOCIAL BUILDER NETWORK</span>
             </div>
           </div>
         </div>

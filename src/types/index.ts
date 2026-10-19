@@ -26,6 +26,8 @@ export interface User {
   interestTags: string[];
   badges?: Badge[];
   githubUrl?: string;
+  isEmailVerified?: boolean;
+  emailVerifiedAt?: string;
   createdAt: string;
 }
 
@@ -69,6 +71,8 @@ export interface Project {
   status: ProjectStatus;
   milestones: ProjectMilestone[];
   contributors?: ProjectContributor[];
+  openForCollab?: boolean; // Owner decides if collaborator applications are open
+  hidden?: boolean; // Owner can hide post from public feed
   demoUrl?: string;
   repoUrl?: string;
   createdAt: string;
@@ -93,6 +97,7 @@ export interface Review {
   projectId: string;
   reviewerId: string;
   reviewer: User;
+  rating?: number;        // 1 - 5 stars
   rubric: RubricScore;
   totalScore: number;     // 0 - 100
   feedbackText: string;

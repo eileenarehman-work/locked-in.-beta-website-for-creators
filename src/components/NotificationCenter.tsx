@@ -8,10 +8,10 @@ import {
   Trash2,
   CheckCheck,
   ExternalLink,
-  Flame,
   X,
 } from 'lucide-react';
 import { Mascot } from './Mascot';
+import { CuteFlame } from './CuteFlame';
 
 interface NotificationCenterProps {
   notifications: AppNotification[];
@@ -51,7 +51,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       case 'invite_accepted':
         return <CheckCircle2 className="h-4 w-4 text-amber-600" />;
       case 'streak_milestone':
-        return <Flame className="h-4 w-4 text-amber-500 fill-amber-400" />;
+        return <CuteFlame size="xs" />;
       default:
         return <Bell className="h-4 w-4 text-slate-500" />;
     }

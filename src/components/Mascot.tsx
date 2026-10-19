@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export type MascotType = 'curious' | 'cheerful' | 'wavy' | 'friendly' | 'earth' | 'bulb';
 
@@ -15,6 +15,9 @@ export const Mascot: React.FC<MascotProps> = ({
   className = '',
   title,
 }) => {
+  const rawId = useId();
+  const uid = rawId.replace(/[^a-zA-Z0-9]/g, '_');
+
   const sizeMap = {
     xs: 'h-4 w-4',
     sm: 'h-6 w-6',
@@ -32,16 +35,29 @@ export const Mascot: React.FC<MascotProps> = ({
         viewBox="0 0 600 540"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={`${currentSizeClass} ${className} shrink-0`}
+        className={`${currentSizeClass} ${className} shrink-0 overflow-visible`}
         aria-label={title || 'Diamond Earth with Lightbulb'}
       >
         <defs>
-          <radialGradient id="mascotBulbGrad" cx="45%" cy="40%" r="55%">
-            <stop offset="0%" stopColor="#ffea75" />
-            <stop offset="65%" stopColor="#ffc526" />
-            <stop offset="100%" stopColor="#f59e0b" />
+          <radialGradient id={`mascotBulbGrad_${uid}`} cx="45%" cy="40%" r="55%">
+            <stop offset="0%" stopColor="#fff3a8" />
+            <stop offset="45%" stopColor="#ffd84d" />
+            <stop offset="85%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#d97706" />
           </radialGradient>
-          <clipPath id="mascotDiamondClip">
+          <filter id={`mascotGlowFilter_${uid}`} x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="7" result="blur" />
+            <feColorMatrix
+              type="matrix"
+              values="1 0 0 0 0.98   0 1 0 0 0.75   0 0 1 0 0.15  0 0 0 0.6 0"
+              result="coloredBlur"
+            />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <clipPath id={`mascotDiamondClip_${uid}`}>
             <rect
               x="165"
               y="145"
@@ -53,59 +69,64 @@ export const Mascot: React.FC<MascotProps> = ({
           </clipPath>
         </defs>
 
-        <g clipPath="url(#mascotDiamondClip)">
+        <g clipPath={`url(#mascotDiamondClip_${uid})`}>
+          {/* Sky blue ocean */}
           <rect x="60" y="40" width="500" height="500" fill="#88c3ff" />
-          {/* Top/Apex Continent */}
+
+          {/* 1. Even TOP Landmass */}
           <path
-            d="M 190 70 C 230 115, 280 125, 320 100 C 355 80, 400 115, 435 80 L 400 30 L 210 30 Z"
+            d="M 230 75
+               Q 255 125 260 160
+               C 280 195 295 200 310 198
+               C 325 200 340 195 360 160
+               Q 365 125 390 75
+               Z"
             fill="#7ee29d"
-          />
-          <path
-            d="M 190 70 C 230 115, 280 125, 320 100 C 355 80, 400 115, 435 80"
             stroke="#1e293b"
-            strokeWidth="7"
+            strokeWidth="6"
             strokeLinecap="round"
-            fill="none"
           />
-          {/* Western/Left Continents */}
+
+          {/* 2. Even LEFT Landmass */}
           <path
-            d="M 90 160 C 165 190, 215 230, 205 270 C 195 315, 225 350, 245 380 C 265 405, 245 450, 210 475 L 80 440 L 60 140 Z"
+            d="M 105 180
+               Q 155 198 185 225
+               C 215 258 220 290 218 290
+               C 220 290 215 322 185 355
+               Q 155 382 105 400
+               Z"
             fill="#7ee29d"
-          />
-          <path
-            d="M 90 160 C 165 190, 215 230, 205 270 C 195 315, 225 350, 245 380 C 265 405, 245 450, 210 475"
             stroke="#1e293b"
-            strokeWidth="7"
+            strokeWidth="6"
             strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
           />
-          {/* Eastern/Right continent */}
+
+          {/* 3. Even RIGHT Landmass (Even with left) */}
           <path
-            d="M 350 200 C 390 230, 460 220, 500 190 L 530 330 L 490 440 C 430 445, 385 410, 370 360 C 355 315, 390 270, 350 230 Z"
+            d="M 515 180
+               Q 465 198 435 225
+               C 405 258 400 290 402 290
+               C 400 290 405 322 435 355
+               Q 465 382 515 400
+               Z"
             fill="#7ee29d"
-          />
-          <path
-            d="M 350 200 C 390 230, 460 220, 500 190"
             stroke="#1e293b"
-            strokeWidth="7"
+            strokeWidth="6"
             strokeLinecap="round"
-            fill="none"
           />
+
+          {/* 4. Small Even BOTTOM Landmass */}
           <path
-            d="M 490 440 C 430 445, 385 410, 370 360 C 355 315, 390 270, 350 230"
-            stroke="#1e293b"
-            strokeWidth="7"
-            strokeLinecap="round"
-            fill="none"
-          />
-          {/* Southern patch */}
-          <path
-            d="M 250 440 C 285 415, 340 420, 370 445 L 310 520 Z"
+            d="M 280 425
+               C 295 408 325 408 340 425
+               Q 335 458 310 482
+               Q 285 458 280 425
+               Z"
             fill="#7ee29d"
+            stroke="#1e293b"
+            strokeWidth="5.5"
+            strokeLinecap="round"
           />
-          {/* Archipelago Island */}
-          <ellipse cx="230" cy="190" rx="12" ry="8" fill="#7ee29d" stroke="#1e293b" strokeWidth="4.5" />
         </g>
 
         {/* Charcoal border */}
@@ -123,37 +144,37 @@ export const Mascot: React.FC<MascotProps> = ({
           strokeLinejoin="round"
         />
 
-        {/* Light rays */}
-        <g stroke="#f59e0b" strokeWidth="6" strokeLinecap="round">
-          <line x1="310" y1="80" x2="310" y2="116" />
-          <line x1="358" y1="104" x2="378" y2="132" />
-          <line x1="392" y1="140" x2="416" y2="182" />
-          <line x1="416" y1="228" x2="460" y2="224" />
-          <line x1="282" y1="88" x2="290" y2="116" />
-          <line x1="228" y1="116" x2="252" y2="148" />
-          <line x1="202" y1="236" x2="238" y2="232" />
-          <line x1="230" y1="318" x2="252" y2="306" />
+        {/* Light rays centered around (310, 290) with consistent glow */}
+        <g stroke="#e69500" strokeWidth="5.5" strokeLinecap="round" filter={`url(#mascotGlowFilter_${uid})`}>
+          <line x1="310" y1="205" x2="310" y2="175" />
+          <line x1="350" y1="220" x2="375" y2="195" />
+          <line x1="370" y1="255" x2="400" y2="240" />
+          <line x1="380" y1="290" x2="410" y2="290" />
+          <line x1="360" y1="330" x2="388" y2="355" />
+          <line x1="270" y1="220" x2="245" y2="195" />
+          <line x1="250" y1="255" x2="220" y2="240" />
+          <line x1="240" y1="290" x2="210" y2="290" />
+          <line x1="260" y1="330" x2="232" y2="355" />
         </g>
 
-        {/* Center glowing lightbulb */}
-        <g transform="translate(310, 270)">
+        {/* Center glowing lightbulb dead center at (310, 290) */}
+        <g transform="translate(310, 290)" filter={`url(#mascotGlowFilter_${uid})`}>
           {/* Base */}
-          <rect
-            x="-30"
-            y="52"
-            width="60"
-            height="80"
-            rx="10"
-            fill="#c0c7d4"
-            stroke="#1e293b"
-            strokeWidth="5.5"
-          />
-          <line x1="-28" y1="68" x2="28" y2="68" stroke="#718096" strokeWidth="4.5" strokeLinecap="round" />
-          <line x1="-28" y1="84" x2="28" y2="84" stroke="#718096" strokeWidth="4.5" strokeLinecap="round" />
-          <line x1="-28" y1="100" x2="28" y2="100" stroke="#718096" strokeWidth="4.5" strokeLinecap="round" />
-          <line x1="-26" y1="116" x2="26" y2="116" stroke="#718096" strokeWidth="4.5" strokeLinecap="round" />
-          {/* Bulb Globe */}
-          <circle cx="0" cy="-22" r="74" fill="url(#mascotBulbGrad)" stroke="#f59e0b" strokeWidth="5.5" />
+          <g id="mascot-bulb-base">
+            <path
+              d="M -20 32 L 20 32 L 18 68 C 18 74 10 78 0 78 C -10 78 -18 74 -18 68 Z"
+              fill="#c5cbd6"
+              stroke="#1e293b"
+              strokeWidth="4"
+              strokeLinejoin="round"
+            />
+            <line x1="-18" y1="42" x2="18" y2="42" stroke="#718096" strokeWidth="3.5" strokeLinecap="round" />
+            <line x1="-17" y1="52" x2="17" y2="52" stroke="#718096" strokeWidth="3.5" strokeLinecap="round" />
+            <line x1="-16" y1="62" x2="16" y2="62" stroke="#718096" strokeWidth="3.5" strokeLinecap="round" />
+          </g>
+          {/* Bulb Globe centered */}
+          <ellipse cx="0" cy="-12" rx="52" ry="54" fill={`url(#mascotBulbGrad_${uid})`} stroke="#e69500" strokeWidth="4.5" />
+          <ellipse cx="-14" cy="-24" rx="12" ry="7" transform="rotate(-25 -14 -24)" fill="#ffffff" opacity="0.65" />
         </g>
       </svg>
     );

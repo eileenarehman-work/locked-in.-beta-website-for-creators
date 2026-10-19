@@ -14,10 +14,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import { DoodleFace } from './DoodleFaces';
 
 const COMMON_ROLES = [
-  'Frontend & UI Engineer',
+  'CAD Designer & 3D Modeling',
+  'Mechanical Engineer & Enclosures',
+  '3D Printing & Prototyping',
   'Hardware & PCB Designer',
   'Firmware & Embedded Systems',
-  '3D CAD & Prototyping',
+  'Robotics & Motion Control',
+  'Frontend & UI Engineer',
+  'Full-Stack & Backend Developer',
+  'Game Dev & Physics (Unity/Godot)',
+  'CNC & Precision Machining',
+  'Woodworking & Physical Craft',
+  'Sound & Audio Designer',
   'Field Tester & QA',
   'Content & Technical Writer',
   'Co-Builder / General Maker',

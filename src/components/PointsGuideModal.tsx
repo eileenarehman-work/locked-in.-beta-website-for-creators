@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Star,
-  Flame,
   CheckCircle2,
   Trophy,
   ShieldCheck,
@@ -18,6 +17,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mascot } from './Mascot';
+import { Logo } from './Logo';
+import { CuteFlame } from './CuteFlame';
 
 interface PointsGuideModalProps {
   isOpen: boolean;
@@ -112,7 +113,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
 
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 border border-amber-300 text-amber-700">
-                <Flame className="h-4 w-4 fill-amber-500 text-amber-500 animate-bounce" />
+                <CuteFlame size="sm" />
               </div>
               <div>
                 <span className="text-[10px] font-mono text-slate-500 uppercase block font-bold">Daily Streak</span>
@@ -175,7 +176,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Flame className="h-3.5 w-3.5 text-amber-600" />
+              <CuteFlame size="xs" />
               <span>Streak Rules</span>
             </button>
           </div>
@@ -189,7 +190,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 border border-amber-300 text-amber-700">
-                        <Flame className="h-4 w-4 fill-amber-500 text-amber-500" />
+                        <CuteFlame size="xs" />
                       </span>
                       <div>
                         <span className="text-xs font-bold text-slate-900 block">1. Daily Login</span>
@@ -264,7 +265,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
-                    Evaluate another creator's build using our 4-criteria rubric (Clarity, Execution, Technicality, Documentation).
+                    Leave a 1 to 5 star peer review and helpful feedback for another creator's build.
                   </p>
                 </div>
 
@@ -332,8 +333,8 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
                 </div>
 
                 <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/60 p-3.5 text-center space-y-1.5 shadow-2xs">
-                  <div className="flex items-center justify-center">
-                    <Mascot type="earth" size="md" />
+                  <div className="flex items-center justify-center py-0.5">
+                    <Logo size="sm" showText={false} />
                   </div>
                   <span className="text-xs font-black text-slate-900 block">locked in</span>
                   <span className="text-[11px] font-mono font-bold text-amber-800 block">500 Points</span>
@@ -356,7 +357,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
               <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/60 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 border border-amber-300 text-amber-700">
-                    <Flame className="h-5 w-5 fill-amber-500 text-amber-500 animate-bounce" />
+                    <CuteFlame size="sm" />
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-slate-900">How Daily Streaks Work</h4>
@@ -406,7 +407,7 @@ export const PointsGuideModal: React.FC<PointsGuideModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2 text-xs font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              className="rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 px-6 py-2 text-xs font-black text-slate-950 shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer"
             >
               Got It, Let's Lock In Now!
             </button>

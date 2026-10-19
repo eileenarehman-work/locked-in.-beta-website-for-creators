@@ -14,6 +14,7 @@ import {
   Award,
   Layers,
   ChevronRight,
+  ChevronLeft,
   TrendingUp,
   Users,
   UserPlus,
@@ -24,13 +25,17 @@ import {
   Search,
   Check,
   AlertCircle,
+  EyeOff,
+  Eye,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { evaluateReviewDraft } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { VerifiedBadge } from './VerifiedBadge';
 import { Mascot } from './Mascot';
 import { MediaDisplay, isVideoUrl } from './MediaDisplay';
-import { DoodleFace } from './DoodleFaces';
+import { DoodleFace, FacesSurroundBox } from './DoodleFaces';
 
 interface ProjectDetailModalProps {
   project: Project;
@@ -66,6 +71,9 @@ interface ProjectDetailModalProps {
     pitch: string;
     type: 'REQUEST' | 'INVITE';
   }) => void;
+  onDeleteProject?: (projectId: string) => void;
+  onToggleHideProject?: (projectId: string) => void;
+  onToggleCollabApplications?: (projectId: string, isOpen: boolean) => void;
 }
 
 export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
@@ -85,17 +93,16 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
   allUsers = [],
   onUpdateProjectContributors,
   onSendCollaboration,
+  onDeleteProject,
+  onToggleHideProject,
+  onToggleCollabApplications,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'milestones' | 'reviews' | 'team'>(initialTab);
+  const [activeMediaIdx, setActiveMediaIdx] = useState(0);
 
-  // Rubric state (4 parts, out of 25 each = 100 total)
-  const [rubric, setRubric] = useState({
-    clarity: 20,
-    execution: 20,
-    technicality: 20,
-    documentation: 20,
-  });
-
+  // Peer Review state (1 to 5 stars + optional description)
+  const [rating, setRating] = useState<number>(5);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [isBlindReview, setIsBlindReview] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -203,7 +210,13 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  const totalScore = rubric.clarity + rubric.execution + rubric.technicality + rubric.documentation;
+  const totalScore = rating * 20;
+  const currentRubric = {
+    clarity: rating * 5,
+    execution: rating * 5,
+    technicality: rating * 5,
+    documentation: rating * 5,
+  };
 
   const handleEvaluate = async () => {
     if (!feedbackText.trim()) return;
@@ -219,10 +232,10 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
       });
     } catch {
       setEvalResult({
-        qualityScore: 85,
+        qualityScore: 92,
         isApproved: true,
-        constructivenessFeedback: 'Solid constructive feedback on build mechanics.',
-        strengths: ['Clear observations'],
+        constructivenessFeedback: 'Solid, constructive feedback on this project build.',
+        strengths: ['Authentic peer review'],
         critiqueGaps: [],
       });
     } finally {
@@ -231,11 +244,17 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
   };
 
   const handleSubmitReview = () => {
-    if (!evalResult || !evalResult.isApproved) return;
-    onAddReview(project.id, rubric, feedbackText, isBlindReview, {
-      qualityScore: evalResult.qualityScore,
-      feedback: evalResult.constructivenessFeedback,
-    });
+    const defaultQuality = {
+      qualityScore: evalResult?.qualityScore || 95,
+      feedback: evalResult?.constructivenessFeedback || 'Community peer review submitted.',
+    };
+    onAddReview(
+      project.id,
+      currentRubric,
+      feedbackText.trim() || `${rating}-star peer review rating`,
+      isBlindReview,
+      defaultQuality
+    );
     setFeedbackText('');
     setEvalResult(null);
   };
@@ -263,6 +282,59 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {isOwner && (
+              <>
+                {onToggleCollabApplications && (
+                  <button
+                    type="button"
+                    onClick={() => onToggleCollabApplications(project.id, project.openForCollab === false)}
+                    className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 ${
+                      project.openForCollab !== false
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                        : 'border-slate-300 bg-slate-100 text-slate-600'
+                    }`}
+                    title="Toggle collaborator applications"
+                  >
+                    {project.openForCollab !== false ? <Unlock className="h-3.5 w-3.5 text-emerald-600" /> : <Lock className="h-3.5 w-3.5" />}
+                    <span>{project.openForCollab !== false ? 'Apps Open' : 'Apps Closed'}</span>
+                  </button>
+                )}
+
+                {onToggleHideProject && (
+                  <button
+                    type="button"
+                    onClick={() => onToggleHideProject(project.id)}
+                    className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 ${
+                      project.hidden
+                        ? 'border-amber-300 bg-amber-50 text-amber-800'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                    title={project.hidden ? 'Unhide post (make public in feed)' : 'Hide post from feed'}
+                  >
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span>{project.hidden ? 'Hidden' : 'Hide'}</span>
+                  </button>
+                )}
+
+                {onDeleteProject && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Permanently delete "${project.title}"?`)) {
+                        onDeleteProject(project.id);
+                        onClose();
+                      }
+                    }}
+                    className="rounded-full border-2 border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                    title="Delete project post"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete</span>
+                  </button>
+                )}
+              </>
+            )}
+
             <button
               onClick={() => onShareProject(project)}
               className="rounded-full border-2 border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:border-sky-300 hover:bg-sky-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
@@ -284,14 +356,14 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
 
         {/* Modal Scroll Content */}
         <div className="overflow-y-auto p-6 space-y-6">
-          {/* Hero Banner with Actual Qualities Overlay */}
+          {/* Hero Banner with Multi-Image/Video Carousel */}
           <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl border-2 border-slate-200 bg-slate-100">
-            {project.mediaUrls[0] ? (
+            {project.mediaUrls && project.mediaUrls.length > 0 ? (
               <MediaDisplay
-                url={project.mediaUrls[0]}
-                alt={project.title}
+                url={project.mediaUrls[activeMediaIdx] || project.mediaUrls[0]}
+                alt={`${project.title} asset ${activeMediaIdx + 1}`}
                 autoPlay={false}
-                controls={isVideoUrl(project.mediaUrls[0])}
+                controls={isVideoUrl(project.mediaUrls[activeMediaIdx] || project.mediaUrls[0])}
                 showBadge={true}
                 className="h-full w-full object-cover"
               />
@@ -302,10 +374,39 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
               </div>
             )}
 
+            {/* Carousel Arrows if multiple images/videos */}
+            {project.mediaUrls && project.mediaUrls.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaIdx((prev) => (prev > 0 ? prev - 1 : project.mediaUrls.length - 1))}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-slate-900/70 text-white backdrop-blur-md hover:bg-slate-900 active:scale-95 transition-all shadow-md cursor-pointer"
+                  title="Previous image/video"
+                  aria-label="Previous image/video"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaIdx((prev) => (prev < project.mediaUrls.length - 1 ? prev + 1 : 0))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-slate-900/70 text-white backdrop-blur-md hover:bg-slate-900 active:scale-95 transition-all shadow-md cursor-pointer"
+                  title="Next image/video"
+                  aria-label="Next image/video"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-1 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-mono font-bold text-white backdrop-blur-md shadow-xs pointer-events-none">
+                  <span>{activeMediaIdx + 1} / {project.mediaUrls.length}</span>
+                </div>
+              </>
+            )}
+
             {/* Actual Qualities Overlay Chips on the Image */}
             <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2 z-10 pointer-events-none">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 shadow-2xs">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-slate-800 border border-slate-200 shadow-2xs">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                 <span>{project.qualities?.[0] || 'Working Hardware Prototype'}</span>
               </span>
               {project.qualities?.[1] && (
@@ -515,7 +616,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                       key={idx}
                       className="rounded-2xl bg-white border-2 border-slate-200 p-2.5 text-center shadow-2xs"
                     >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 mx-auto mb-1" />
+                      <Sparkles className="h-4 w-4 text-amber-500 mx-auto mb-1" />
                       <span className="text-[11px] font-bold text-slate-800 block leading-tight">
                         {quality}
                       </span>
@@ -544,18 +645,23 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {project.mediaUrls.slice(1).map((mediaUrl, idx) => (
-                      <div
+                      <button
                         key={idx}
-                        className="relative aspect-[16/9] rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-100 group shadow-2xs"
+                        type="button"
+                        onClick={() => setActiveMediaIdx(idx + 1)}
+                        className={`relative aspect-[16/9] rounded-2xl overflow-hidden border-2 transition-all cursor-pointer group shadow-2xs text-left ${
+                          activeMediaIdx === idx + 1 ? 'border-sky-500 ring-2 ring-sky-300' : 'border-slate-200 hover:border-sky-300'
+                        }`}
+                        title="Click to view in main preview"
                       >
                         <MediaDisplay
                           url={mediaUrl}
                           alt={`${project.title} asset ${idx + 2}`}
-                          controls={isVideoUrl(mediaUrl)}
+                          controls={false}
                           showBadge={true}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -596,203 +702,194 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
                     Reviews ({reviews.length})
                   </h3>
                   <span className="text-xs font-mono text-slate-500 font-bold">
-                    Constructive Peer Rubrics
+                    1 to 5 Star Peer Ratings
                   </span>
                 </div>
 
                 {reviews.length === 0 ? (
                   <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/80 p-8 text-center text-slate-600 text-sm">
-                    No peer reviews yet. Be the first to evaluate this project build!
+                    No peer reviews yet. Be the first to give this build a star rating and review!
                   </div>
                 ) : (
-                  reviews.map((rev) => (
-                    <div
-                      key={rev.id}
-                      className="rounded-3xl border-2 border-slate-200 bg-white p-5 space-y-3 shadow-xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <img
-                            src={rev.reviewer.avatarUrl}
-                            alt={rev.reviewer.displayName}
-                            referrerPolicy="no-referrer"
-                            className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-300"
-                          />
-                          <div>
-                            <span className="text-xs font-bold text-slate-900">
-                              {rev.isBlindReview ? 'Anonymous Peer Reviewer' : rev.reviewer.displayName}
-                            </span>
-                            {!rev.isBlindReview && (
-                              <span className="text-xs font-mono text-slate-500 ml-1.5">
-                                @{rev.reviewer.handle}
+                  reviews.map((rev) => {
+                    const stars =
+                      rev.rating ||
+                      Math.max(1, Math.min(5, Math.round((rev.totalScore || 80) / 20)));
+
+                    return (
+                      <div
+                        key={rev.id}
+                        className="rounded-3xl border-2 border-slate-200 bg-white p-5 space-y-3 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={rev.reviewer.avatarUrl}
+                              alt={rev.reviewer.displayName}
+                              referrerPolicy="no-referrer"
+                              className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-300"
+                            />
+                            <div>
+                              <span className="text-xs font-bold text-slate-900">
+                                {rev.isBlindReview
+                                  ? 'Anonymous Peer Reviewer'
+                                  : rev.reviewer.displayName}
                               </span>
-                            )}
+                              {!rev.isBlindReview && (
+                                <span className="text-xs font-mono text-slate-500 ml-1.5">
+                                  @{rev.reviewer.handle}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* 1 to 5 Star Rating Display */}
+                            <div className="flex items-center gap-1 rounded-full bg-amber-50 border border-amber-300 px-3 py-1">
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`h-3.5 w-3.5 ${
+                                      s <= stars
+                                        ? 'fill-amber-400 text-amber-500'
+                                        : 'text-slate-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs font-black font-mono text-amber-900 ml-1">
+                                {stars}/5
+                              </span>
+                            </div>
+
+                            <div className="rounded-full bg-sky-50 border border-sky-300 px-2.5 py-0.5 text-xs font-mono text-sky-800 flex items-center gap-1 font-bold">
+                              <Sparkles className="h-3 w-3" />
+                              Helpfulness {rev.aiQualityScore}%
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <div className="rounded-full bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 text-xs font-mono text-emerald-800 font-bold">
-                            Rubric: {rev.totalScore}/100
-                          </div>
-                          <div className="rounded-full bg-sky-50 border border-sky-300 px-2.5 py-0.5 text-xs font-mono text-sky-800 flex items-center gap-1 font-bold">
-                            <Sparkles className="h-3 w-3" />
-                            Helpfulness {rev.aiQualityScore}%
-                          </div>
+                        {/* Review Description */}
+                        {rev.feedbackText && (
+                          <p className="text-xs text-slate-700 leading-relaxed font-normal bg-slate-50/70 rounded-2xl p-3 border border-slate-100">
+                            {rev.feedbackText}
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                          <button
+                            onClick={() => onUpvoteReview(rev.id)}
+                            className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors font-medium cursor-pointer"
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5 text-sky-600" />
+                            <span>Helpful ({rev.upvotesCount})</span>
+                          </button>
+                          <span className="text-slate-500 font-mono text-[11px]">
+                            {new Date(rev.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
-
-                      {/* Rubric Breakdown Grid */}
-                      <div className="grid grid-cols-4 gap-2 rounded-2xl bg-slate-50 p-2.5 text-center text-xs font-mono border-2 border-slate-100">
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Clarity</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.clarity}/25</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Execution</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.execution}/25</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Technicality</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.technicality}/25</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Documentation</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.documentation}/25</span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-slate-700 leading-relaxed font-normal">
-                        {rev.feedbackText}
-                      </p>
-
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                        <button
-                          onClick={() => onUpvoteReview(rev.id)}
-                          className="flex items-center gap-1.5 text-slate-600 hover:text-slate-900 transition-colors font-medium cursor-pointer"
-                        >
-                          <ThumbsUp className="h-3.5 w-3.5 text-sky-600" />
-                          <span>Helpful ({rev.upvotesCount})</span>
-                        </button>
-                        <span className="text-slate-500 font-mono text-[11px]">
-                          {new Date(rev.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
-              {/* Review Submission Form with Live Gemini Quality Pre-Screen */}
+              {/* Review Submission Form with Star Rating + Optional Description */}
               {!currentUser ? (
-                <div className="rounded-3xl border-2 border-sky-200 bg-sky-50/50 p-6 text-center space-y-3">
-                  <ShieldCheck className="h-8 w-8 text-sky-600 mx-auto" />
+                <div className="rounded-3xl border-2 border-amber-200 bg-amber-50/50 p-6 text-center space-y-3">
+                  <ShieldCheck className="h-8 w-8 text-amber-600 mx-auto" />
                   <h4 className="text-sm font-bold text-slate-900">Sign In to Leave a Peer Review</h4>
                   <p className="text-xs text-slate-600 max-w-sm mx-auto font-normal">
-                    Sign in with Google to evaluate this build with our friendly 4-part rubrics.
+                    Sign in with Google to give this project a star rating and helpful review.
                   </p>
                   {onOpenGoogleLogin && (
                     <button
                       type="button"
                       onClick={onOpenGoogleLogin}
-                      className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-5 py-2 text-xs font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      className="rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 px-5 py-2 text-xs font-black text-slate-950 shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer"
                     >
                       Sign in with Google
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50/50 via-white to-emerald-50/40 p-5 space-y-4 shadow-xs">
+                <div className="rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/30 p-5 space-y-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Mascot type="friendly" size="xs" />
                       <h4 className="text-sm font-bold text-slate-900">
-                        Leave a Review
+                        Leave a Peer Review
                       </h4>
                     </div>
-                    <span className="text-xs font-mono font-bold text-sky-800">
-                      Score: {totalScore} / 100
+                    <span className="text-xs font-mono font-bold text-amber-800">
+                      {rating} of 5 Stars
                     </span>
                   </div>
 
                   <p className="text-xs text-slate-600 font-normal">
-                    Reviews are checked for constructiveness and positive community feedback before publishing.
+                    Give a 1 to 5 star rating, and add an optional description or tips for the creator.
                   </p>
 
-                  {/* 4-part Rubric Sliders */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="rounded-2xl bg-white border border-slate-200 p-3">
-                      <div className="flex justify-between text-xs font-mono mb-1 font-bold">
-                        <span className="text-slate-700">1. Clarity & Scope</span>
-                        <span className="text-sky-700">{rubric.clarity}/25</span>
+                  {/* 1 to 5 Star Rating Selector */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-white border-2 border-amber-200 p-4 shadow-2xs">
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 block mb-1">Your Rating</span>
+                      <div className="flex items-center gap-1.5">
+                        {[1, 2, 3, 4, 5].map((starNum) => {
+                          const isFilled = starNum <= (hoverRating ?? rating);
+                          return (
+                            <button
+                              key={starNum}
+                              type="button"
+                              onMouseEnter={() => setHoverRating(starNum)}
+                              onMouseLeave={() => setHoverRating(null)}
+                              onClick={() => setRating(starNum)}
+                              className="p-1 rounded-lg hover:scale-115 active:scale-95 transition-transform cursor-pointer"
+                              title={`${starNum} Star${starNum > 1 ? 's' : ''}`}
+                            >
+                              <Star
+                                className={`h-8 w-8 transition-colors ${
+                                  isFilled
+                                    ? 'fill-amber-400 text-amber-500 drop-shadow-xs'
+                                    : 'text-slate-300 hover:text-amber-300'
+                                }`}
+                              />
+                            </button>
+                          );
+                        })}
                       </div>
-                      <input
-                        type="range"
-                        min="5"
-                        max="25"
-                        value={rubric.clarity}
-                        onChange={(e) => setRubric({ ...rubric, clarity: parseInt(e.target.value) })}
-                        className="w-full accent-sky-500 cursor-pointer"
-                      />
                     </div>
 
-                    <div className="rounded-2xl bg-white border border-slate-200 p-3">
-                      <div className="flex justify-between text-xs font-mono mb-1 font-bold">
-                        <span className="text-slate-700">2. Execution & Reliability</span>
-                        <span className="text-sky-700">{rubric.execution}/25</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="5"
-                        max="25"
-                        value={rubric.execution}
-                        onChange={(e) => setRubric({ ...rubric, execution: parseInt(e.target.value) })}
-                        className="w-full accent-sky-500 cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="rounded-2xl bg-white border border-slate-200 p-3">
-                      <div className="flex justify-between text-xs font-mono mb-1 font-bold">
-                        <span className="text-slate-700">3. Technicality & Depth</span>
-                        <span className="text-sky-700">{rubric.technicality}/25</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="5"
-                        max="25"
-                        value={rubric.technicality}
-                        onChange={(e) => setRubric({ ...rubric, technicality: parseInt(e.target.value) })}
-                        className="w-full accent-sky-500 cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="rounded-2xl bg-white border border-slate-200 p-3">
-                      <div className="flex justify-between text-xs font-mono mb-1 font-bold">
-                        <span className="text-slate-700">4. Documentation & Proof</span>
-                        <span className="text-sky-700">{rubric.documentation}/25</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="5"
-                        max="25"
-                        value={rubric.documentation}
-                        onChange={(e) => setRubric({ ...rubric, documentation: parseInt(e.target.value) })}
-                        className="w-full accent-sky-500 cursor-pointer"
-                      />
+                    <div className="text-left sm:text-right">
+                      <span className="text-xs font-black text-slate-900 block">
+                        {rating === 1 && '⭐ 1 Star · Needs Work'}
+                        {rating === 2 && '⭐⭐ 2 Stars · Fair Start'}
+                        {rating === 3 && '⭐⭐⭐ 3 Stars · Good Build'}
+                        {rating === 4 && '⭐⭐⭐⭐ 4 Stars · Great Work'}
+                        {rating === 5 && '⭐⭐⭐⭐⭐ 5 Stars · Fully Locked In!'}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-mono">
+                        Tap stars to rate
+                      </span>
                     </div>
                   </div>
 
-                  {/* Feedback Input */}
+                  {/* Optional Description */}
                   <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                      Review Description (Optional)
+                    </label>
                     <textarea
-                      rows={4}
-                      placeholder="Provide constructive, friendly observations on build qualities, physical execution, documentation clarity, and actionable maker tips..."
+                      rows={3}
+                      placeholder="Add a description or feedback for this build (optional)..."
                       value={feedbackText}
                       onChange={(e) => setFeedbackText(e.target.value)}
-                      className="w-full rounded-2xl border-2 border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-sky-400 focus:outline-none shadow-2xs font-normal"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-amber-400 focus:outline-none shadow-2xs font-normal"
                     />
                   </div>
 
@@ -803,10 +900,10 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                       id="blind-review"
                       checked={isBlindReview}
                       onChange={(e) => setIsBlindReview(e.target.checked)}
-                      className="rounded border-slate-300 text-sky-600 focus:ring-0 cursor-pointer"
+                      className="rounded border-slate-300 text-amber-600 focus:ring-0 cursor-pointer"
                     />
                     <label htmlFor="blind-review" className="text-xs text-slate-600 font-medium cursor-pointer">
-                      Submit as Blind Review (anonymizes your handle to prevent peer bias)
+                      Submit as Blind Review (anonymizes your handle to prevent bias)
                     </label>
                   </div>
 
@@ -825,8 +922,8 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-bold flex items-center gap-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-sky-600" />
-                            Gemini Quality Evaluation: {evalResult.qualityScore}/100
+                            <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                            Quality Check: {evalResult.qualityScore}/100
                           </span>
                           <span className="font-mono text-[10px] uppercase font-bold">
                             {evalResult.isApproved ? 'Approved for Publication' : 'Revision Required'}
@@ -850,24 +947,25 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3 justify-end">
-                    <button
-                      type="button"
-                      onClick={handleEvaluate}
-                      disabled={isEvaluating || !feedbackText.trim()}
-                      className="flex items-center gap-1.5 rounded-full border-2 border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:border-sky-300 hover:bg-sky-50 transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
-                    >
-                      <Sparkles className="h-3.5 w-3.5 text-sky-600" />
-                      <span>{isEvaluating ? 'Evaluating with Gemini...' : 'Run Gemini Pre-Screen'}</span>
-                    </button>
+                    {feedbackText.trim() && (
+                      <button
+                        type="button"
+                        onClick={handleEvaluate}
+                        disabled={isEvaluating}
+                        className="flex items-center gap-1.5 rounded-full border-2 border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:border-amber-300 hover:bg-amber-50 transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                        <span>{isEvaluating ? 'Checking...' : 'Check Feedback Quality'}</span>
+                      </button>
+                    )}
 
                     <button
                       type="button"
                       onClick={handleSubmitReview}
-                      disabled={!evalResult || !evalResult.isApproved}
-                      className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-5 py-2 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 transition-all disabled:opacity-40 shadow-md shadow-emerald-300/40 cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 text-xs font-black text-slate-950 px-6 py-2 hover:scale-105 active:scale-95 transition-all shadow-xs cursor-pointer"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      <span>Publish Review</span>
+                      <span>Submit Peer Review</span>
                     </button>
                   </div>
                 </div>
@@ -1170,10 +1268,17 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                           onChange={(e) => setInviteRole(e.target.value)}
                           className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-sky-400"
                         >
-                          <option value="Frontend & UI Engineer">Frontend & UI Engineer</option>
+                          <option value="CAD Designer & 3D Modeling">CAD Designer & 3D Modeling</option>
+                          <option value="Mechanical Engineer & Enclosures">Mechanical Engineer & Enclosures</option>
+                          <option value="3D Printing & Prototyping">3D Printing & Prototyping</option>
                           <option value="Hardware & PCB Designer">Hardware & PCB Designer</option>
                           <option value="Firmware & Embedded Systems">Firmware & Embedded Systems</option>
-                          <option value="3D CAD & Prototyping">3D CAD & Prototyping</option>
+                          <option value="Robotics & Motion Control">Robotics & Motion Control</option>
+                          <option value="Frontend & UI Engineer">Frontend & UI Engineer</option>
+                          <option value="Full-Stack & Backend Developer">Full-Stack & Backend Developer</option>
+                          <option value="Game Dev & Physics (Unity/Godot)">Game Dev & Physics (Unity/Godot)</option>
+                          <option value="CNC & Precision Machining">CNC & Precision Machining</option>
+                          <option value="Woodworking & Physical Craft">Woodworking & Physical Craft</option>
                           <option value="Field Tester & QA">Field Tester & QA</option>
                           <option value="Content & Technical Writer">Content & Technical Writer</option>
                           <option value="Custom">Custom Role...</option>
@@ -1210,7 +1315,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                       <button
                         type="submit"
                         disabled={!selectedUserToInvite}
-                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-slate-950 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 shadow-2xs hover:scale-102 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
+                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-slate-950 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 shadow-2xs hover:scale-102 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
                       >
                         <Send className="h-3.5 w-3.5" />
                         <span>Send Contributor Invite</span>
@@ -1266,7 +1371,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleAcceptContributor(myContributorRecord.id)}
-                          className="px-4 py-1.5 text-xs font-black text-slate-950 rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 cursor-pointer shadow-2xs"
+                          className="px-4 py-1.5 text-xs font-black text-slate-950 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 cursor-pointer shadow-2xs"
                         >
                           Accept Invitation
                         </button>
@@ -1279,78 +1384,97 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    /* Visitor Application Form */
-                    <form onSubmit={handleSendRequest} className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-sky-600" />
-                          <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                            Apply to Collaborate on this Build
-                          </h4>
-                        </div>
-                        <DoodleFace type="wink_apricot" size="sm" />
+                  ) : project.openForCollab === false ? (
+                    <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2.5">
+                      <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-slate-600 mx-auto">
+                        <Lock className="h-5 w-5" />
                       </div>
-
-                      <p className="text-xs text-slate-600 font-sans leading-relaxed">
-                        Love this prototype? Propose what you can help build (UI, hardware, firmware, testing) and collaborate directly with @{project.author.handle}!
+                      <h4 className="text-sm font-bold text-slate-800">Collaborator Applications Closed</h4>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        @{project.author.handle} is not currently accepting new collaborator applications for this build.
                       </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Your Proposed Role</label>
-                          <select
-                            value={visitorRole}
-                            onChange={(e) => setVisitorRole(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-sky-400"
-                          >
-                            <option value="Hardware & PCB Designer">Hardware & PCB Designer</option>
-                            <option value="Frontend & UI Engineer">Frontend & UI Engineer</option>
-                            <option value="Firmware & Embedded Systems">Firmware & Embedded Systems</option>
-                            <option value="3D CAD & Prototyping">3D CAD & Prototyping</option>
-                            <option value="Field Tester & QA">Field Tester & QA</option>
-                            <option value="Content & Technical Writer">Content & Technical Writer</option>
-                            <option value="Custom">Custom Role...</option>
-                          </select>
+                    </div>
+                  ) : (
+                    /* Visitor Application Form framed with faces all around that box */
+                    <FacesSurroundBox>
+                      <form onSubmit={handleSendRequest} className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-sky-600" />
+                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                              Apply to Collaborate on this Build
+                            </h4>
+                          </div>
+                          <DoodleFace type="wink_apricot" size="sm" interactive={false} />
                         </div>
 
-                        {visitorRole === 'Custom' && (
+                        <p className="text-xs text-slate-600 font-sans leading-relaxed">
+                          Love this prototype? Propose what you can help build (UI, hardware, firmware, testing) and collaborate directly with @{project.author.handle}!
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">Role Title</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Lead Roboticist"
-                              value={customVisitorRole}
-                              onChange={(e) => setCustomVisitorRole(e.target.value)}
-                              className="w-full rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-sky-400"
-                              required
-                            />
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1">Your Proposed Role</label>
+                            <select
+                              value={visitorRole}
+                              onChange={(e) => setVisitorRole(e.target.value)}
+                              className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-sky-400"
+                            >
+                              <option value="CAD Designer & 3D Modeling">CAD Designer & 3D Modeling</option>
+                              <option value="Mechanical Engineer & Enclosures">Mechanical Engineer & Enclosures</option>
+                              <option value="3D Printing & Prototyping">3D Printing & Prototyping</option>
+                              <option value="Hardware & PCB Designer">Hardware & PCB Designer</option>
+                              <option value="Firmware & Embedded Systems">Firmware & Embedded Systems</option>
+                              <option value="Robotics & Motion Control">Robotics & Motion Control</option>
+                              <option value="Frontend & UI Engineer">Frontend & UI Engineer</option>
+                              <option value="Full-Stack & Backend Developer">Full-Stack & Backend Developer</option>
+                              <option value="Game Dev & Physics (Unity/Godot)">Game Dev & Physics (Unity/Godot)</option>
+                              <option value="CNC & Precision Machining">CNC & Precision Machining</option>
+                              <option value="Woodworking & Physical Craft">Woodworking & Physical Craft</option>
+                              <option value="Field Tester & QA">Field Tester & QA</option>
+                              <option value="Content & Technical Writer">Content & Technical Writer</option>
+                              <option value="Custom">Custom Role...</option>
+                            </select>
                           </div>
-                        )}
-                      </div>
 
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">How can you help?</label>
-                        <textarea
-                          rows={2}
-                          placeholder="Hey @author! I loved your prototype. I have experience with this hardware and can help test and write documentation..."
-                          value={visitorPitch}
-                          onChange={(e) => setVisitorPitch(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 font-sans focus:outline-none focus:border-sky-400 resize-none leading-relaxed"
-                          required
-                        />
-                      </div>
+                          {visitorRole === 'Custom' && (
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1">Role Title</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Lead Roboticist"
+                                value={customVisitorRole}
+                                onChange={(e) => setCustomVisitorRole(e.target.value)}
+                                className="w-full rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-sky-400"
+                                required
+                              />
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="flex justify-end pt-1">
-                        <button
-                          type="submit"
-                          className="flex items-center gap-1.5 px-5 py-2 text-xs font-black text-slate-950 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 shadow-2xs hover:scale-102 active:scale-98 transition-all cursor-pointer"
-                        >
-                          <Send className="h-3.5 w-3.5" />
-                          <span>Submit Collaboration Request</span>
-                        </button>
-                      </div>
-                    </form>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">How can you help?</label>
+                          <textarea
+                            rows={2}
+                            placeholder="Hey @author! I loved your prototype. I have experience with this hardware and can help test and write documentation..."
+                            value={visitorPitch}
+                            onChange={(e) => setVisitorPitch(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-800 font-sans focus:outline-none focus:border-sky-400 resize-none leading-relaxed"
+                            required
+                          />
+                        </div>
+
+                        <div className="flex justify-end pt-1">
+                          <button
+                            type="submit"
+                            className="flex items-center gap-1.5 px-5 py-2 text-xs font-black text-slate-950 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 shadow-2xs hover:scale-102 active:scale-98 transition-all cursor-pointer"
+                          >
+                            <Send className="h-3.5 w-3.5" />
+                            <span>Submit Collaboration Request</span>
+                          </button>
+                        </div>
+                      </form>
+                    </FacesSurroundBox>
                   )}
                 </div>
               )}

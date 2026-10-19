@@ -23,21 +23,42 @@ interface DoodleFaceData {
   quip: string;
 }
 
+export const MAKER_QUIPS_POOL = [
+  'hey baddie',
+  'whatcha building?',
+  'show me what you made',
+  'cookin up something fire?',
+  'you are awesomee',
+  'drop the prototype',
+  'need a teammate?',
+  'you got this',
+  'looking good today',
+  'let them cook',
+  'locking in',
+  'tell me about your project',
+  'wanna team up?',
+  'wowwww',
+  '10/10 prototype',
+  'whats a cool thing you did today?',
+  'who needs a co-builder?',
+  'whats your next big idea',
+];
+
 export const DOODLE_FACES_LIST: DoodleFaceData[] = [
-  { key: 'surprised_yellow', label: 'Amazed', quip: 'yo wait who built that autonomous drone?' },
-  { key: 'excited_pink', label: 'Pumped', quip: 'i need a frontend wizard for my project ASAP' },
-  { key: 'blissful_peach', label: 'Zen Maker', quip: 'just soldered my 12th test board. pure peace.' },
-  { key: 'mismatched_mint', label: 'Curious', quip: 'can i request to collaborate on your build?' },
-  { key: 'star_butter', label: 'Inspired', quip: 'this community is where makers actually lock in' },
-  { key: 'cool_specs', label: 'Engineer', quip: 'already writing the firmware docs for the repo' },
-  { key: 'sleepy_lavender', label: 'Night Owl', quip: 'debugging CAD models at 3am hits different' },
-  { key: 'sparkle_mint', label: 'Builder', quip: 'drop your build in the feed and let’s review it' },
-  { key: 'wink_apricot', label: 'Playful', quip: 'my daily streak flame is literally on fire' },
-  { key: 'determined_coral', label: 'Locked In', quip: 'no talk, just pure prototype progress' },
-  { key: 'nerdy_teal', label: 'Hardware Nerd', quip: 'open sourcing the schematics for everyone' },
-  { key: 'zen_cream', label: 'Cozy', quip: 'reviewing fellow makers builds gives you bonus points' },
-  { key: 'mischief_violet', label: 'Crafty', quip: 'working on a secret project with my collaborator' },
-  { key: 'laughing_sun', label: 'Stoked', quip: 'invited 2 builders to my team and we shipped!' },
+  { key: 'surprised_yellow', label: 'Amazed', quip: 'hey baddie' },
+  { key: 'excited_pink', label: 'Pumped', quip: 'whatcha building?' },
+  { key: 'blissful_peach', label: 'Zen', quip: 'show me what you made' },
+  { key: 'mismatched_mint', label: 'Curious', quip: 'need a teammate?' },
+  { key: 'star_butter', label: 'Inspired', quip: 'drop the prototype' },
+  { key: 'cool_specs', label: 'Specs', quip: 'show me the CAD' },
+  { key: 'sleepy_lavender', label: 'Cozy', quip: 'let them cook' },
+  { key: 'sparkle_mint', label: 'Sparkle', quip: 'looking good today' },
+  { key: 'wink_apricot', label: 'Playful', quip: 'cookin up something fire?' },
+  { key: 'determined_coral', label: 'Locked In', quip: 'locking in' },
+  { key: 'nerdy_teal', label: 'Hacker', quip: 'wanna team up?' },
+  { key: 'zen_cream', label: 'Chill', quip: 'you got this' },
+  { key: 'mischief_violet', label: 'Crafty', quip: 'tell me about your project' },
+  { key: 'laughing_sun', label: 'Stoked', quip: '10/10 prototype' },
 ];
 
 interface DoodleFaceProps {
@@ -53,12 +74,27 @@ export const DoodleFace: React.FC<DoodleFaceProps> = ({
   type,
   size = 'md',
   className = '',
-  interactive = false,
+  interactive = false, // strictly non-clickable by default! Only bottom row and center of feed are interactive.
   onClick,
   showQuipOnHover = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [clickedQuip, setClickedQuip] = useState<string | null>(null);
   const data = DOODLE_FACES_LIST.find((f) => f.key === type) || DOODLE_FACES_LIST[0];
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!interactive) return;
+    e.stopPropagation();
+    // Pick from maker quips
+    const randomQuip =
+      MAKER_QUIPS_POOL[Math.floor(Math.random() * MAKER_QUIPS_POOL.length)];
+    setClickedQuip(randomQuip);
+    setTimeout(() => {
+      setClickedQuip(null);
+    }, 3500);
+
+    onClick?.();
+  };
 
   const sizeClasses = {
     xs: 'h-5 w-5',
@@ -259,25 +295,154 @@ export const DoodleFace: React.FC<DoodleFaceProps> = ({
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={onClick}
-      title={data.label}
+      onClick={interactive ? handleClick : undefined}
+      title={interactive ? data.label : undefined}
     >
       {renderSvg()}
 
-      {/* Floating Quip Bubble on Hover */}
+      {/* Speech bubble when clicked (only if interactive) */}
       <AnimatePresence>
-        {showQuipOnHover && isHovered && (
+        {interactive && clickedQuip && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.95 }}
-            animate={{ opacity: 1, y: -8, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.95 }}
-            className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pointer-events-none mb-1 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-1.5 text-left text-[11px] font-sans font-medium text-white shadow-xl"
+            initial={{ opacity: 0, y: 4, scale: 0.92 }}
+            animate={{ opacity: 1, y: -6, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.92 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 z-[100] pointer-events-none mb-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-center shadow-lg shadow-slate-900/10"
           >
-            <p className="leading-tight text-amber-200">{data.quip}</p>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+            <span className="text-xs font-sans font-semibold text-slate-900 leading-snug block">
+              {clickedQuip}
+            </span>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 h-2 w-2 rotate-45 border-r border-b border-slate-200 bg-white" />
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Floating Quip Bubble on Hover (only if interactive) */}
+      <AnimatePresence>
+        {interactive && showQuipOnHover && isHovered && !clickedQuip && (
+          <motion.div
+            initial={{ opacity: 0, y: 4, scale: 0.95 }}
+            animate={{ opacity: 1, y: -6, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.95 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pointer-events-none mb-1 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-1 text-center text-xs font-sans font-medium text-slate-800 shadow-md"
+          >
+            <p className="leading-tight">{data.quip}</p>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 h-1.5 w-1.5 rotate-45 border-r border-b border-slate-200 bg-white" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+interface FacesSurroundBoxProps {
+  children: React.ReactNode;
+  className?: string;
+  badge?: React.ReactNode;
+  innerClassName?: string;
+}
+
+/**
+ * Adorable decorative box framed on all sides (top, bottom, left, right)
+ * with the signature pastel doodle maker faces!
+ */
+export const FacesSurroundBox: React.FC<FacesSurroundBoxProps> = ({
+  children,
+  className = '',
+  badge,
+  innerClassName = '',
+}) => {
+  const topFaces: DoodleFaceKey[] = [
+    'surprised_yellow',
+    'excited_pink',
+    'blissful_peach',
+    'mismatched_mint',
+    'star_butter',
+    'cool_specs',
+    'sleepy_lavender',
+    'sparkle_mint',
+    'wink_apricot',
+    'determined_coral',
+    'nerdy_teal',
+    'laughing_sun',
+  ];
+
+  const bottomFaces: DoodleFaceKey[] = [
+    'laughing_sun',
+    'nerdy_teal',
+    'mischief_violet',
+    'zen_cream',
+    'determined_coral',
+    'wink_apricot',
+    'sparkle_mint',
+    'sleepy_lavender',
+    'cool_specs',
+    'star_butter',
+    'mismatched_mint',
+    'surprised_yellow',
+  ];
+
+  const sideFacesLeft: DoodleFaceKey[] = [
+    'excited_pink',
+    'blissful_peach',
+    'mismatched_mint',
+  ];
+
+  const sideFacesRight: DoodleFaceKey[] = [
+    'wink_apricot',
+    'determined_coral',
+    'sparkle_mint',
+  ];
+
+  return (
+    <div
+      className={`relative rounded-3xl border-2 border-slate-200/90 bg-white shadow-xs p-2 sm:p-2.5 overflow-hidden select-none ${className}`}
+    >
+      {/* Top Border Row of Faces */}
+      <div className="flex items-center justify-between gap-1 overflow-hidden px-1 pb-1.5 pt-0.5 border-b border-slate-100/80">
+        {topFaces.map((f, i) => (
+          <div key={`top-${f}-${i}`} className="shrink-0 opacity-85 hover:opacity-100 transition-opacity">
+            <DoodleFace type={f} size="xs" interactive={false} />
+          </div>
+        ))}
+      </div>
+
+      {/* Middle row: Left Column Faces + Content + Right Column Faces */}
+      <div className="flex items-stretch justify-between py-1.5 gap-2">
+        {/* Left Side Faces Column */}
+        <div className="hidden sm:flex flex-col justify-around py-1 shrink-0 px-0.5 opacity-85">
+          {sideFacesLeft.map((f, i) => (
+            <div key={`left-${f}-${i}`} className="my-auto">
+              <DoodleFace type={f} size="xs" interactive={false} />
+            </div>
+          ))}
+        </div>
+
+        {/* Center Content Box */}
+        <div className={`flex-1 rounded-2xl bg-slate-50/60 p-3 sm:p-5 border border-slate-100 ${innerClassName}`}>
+          {badge && <div className="mb-2">{badge}</div>}
+          {children}
+        </div>
+
+        {/* Right Side Faces Column */}
+        <div className="hidden sm:flex flex-col justify-around py-1 shrink-0 px-0.5 opacity-85">
+          {sideFacesRight.map((f, i) => (
+            <div key={`right-${f}-${i}`} className="my-auto">
+              <DoodleFace type={f} size="xs" interactive={false} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Border Row of Faces */}
+      <div className="flex items-center justify-between gap-1 overflow-hidden px-1 pt-1.5 pb-0.5 border-t border-slate-100/80">
+        {bottomFaces.map((f, i) => (
+          <div key={`bottom-${f}-${i}`} className="shrink-0 opacity-85 hover:opacity-100 transition-opacity">
+            <DoodleFace type={f} size="xs" interactive={false} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -290,66 +455,61 @@ export const BottomFacesRow: React.FC<BottomFacesRowProps> = ({ onFaceClick }) =
   const [activeSpeech, setActiveSpeech] = useState<{ quip: string; faceKey: DoodleFaceKey } | null>(null);
 
   const handleFaceClick = (item: DoodleFaceData) => {
-    setActiveSpeech({ quip: item.quip, faceKey: item.key });
+    // Pick from pool with bias toward "hey baddie" and "whatcha building?"
+    const quip =
+      Math.random() < 0.35
+        ? Math.random() < 0.5
+          ? 'hey baddie'
+          : 'whatcha building?'
+        : MAKER_QUIPS_POOL[Math.floor(Math.random() * MAKER_QUIPS_POOL.length)];
+    setActiveSpeech({ quip, faceKey: item.key });
     if (onFaceClick) {
-      onFaceClick(item.quip, item.key);
+      onFaceClick(quip, item.key);
     }
     setTimeout(() => {
       setActiveSpeech((prev) => (prev?.faceKey === item.key ? null : prev));
-    }, 4500);
+    }, 4000);
   };
 
   return (
-    <div className="w-full bg-amber-50/70 border-t-2 border-amber-200/60 py-3 px-4 relative overflow-hidden select-none">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-        {/* Left Side: Informal Maker Intrigue Hook */}
-        <div className="flex items-center gap-2 shrink-0 text-left">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-900/80">
-            Makers locked in
-          </span>
-          <span className="text-slate-300">·</span>
-          <span className="text-xs font-sans text-slate-600 hidden sm:inline">
-            Click any face to see what people are building right now
-          </span>
-        </div>
+    <div className="w-full bg-slate-50/80 border-t border-slate-200/90 py-1.5 px-4 relative overflow-visible select-none">
+      <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 sm:gap-4 flex-wrap overflow-visible">
+        {DOODLE_FACES_LIST.map((item, index) => {
+          const isSpeaking = activeSpeech?.faceKey === item.key;
+          return (
+            <div key={item.key} className="relative group overflow-visible">
+              <button
+                type="button"
+                onClick={() => handleFaceClick(item)}
+                className={`p-0.5 rounded-full transition-all cursor-pointer opacity-80 hover:opacity-100 hover:scale-135 active:scale-95 ${
+                  index % 2 === 0 ? 'hover:-rotate-6' : 'hover:rotate-6'
+                }`}
+                title={item.label}
+                aria-label={item.label}
+              >
+                <DoodleFace type={item.key} size="xs" interactive={false} />
+              </button>
 
-        {/* Center / Right: The Row of Faces */}
-        <div className="relative flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-          {DOODLE_FACES_LIST.map((item, index) => {
-            const isSpeaking = activeSpeech?.faceKey === item.key;
-            return (
-              <div key={item.key} className="relative group">
-                <button
-                  type="button"
-                  onClick={() => handleFaceClick(item)}
-                  className={`p-1 rounded-full transition-transform cursor-pointer hover:scale-120 active:scale-90 ${
-                    index % 2 === 0 ? 'hover:-rotate-6' : 'hover:rotate-6'
-                  }`}
-                  aria-label={item.label}
-                >
-                  <DoodleFace type={item.key} size="md" />
-                </button>
-
-                {/* Speech Bubble when clicked */}
-                <AnimatePresence>
-                  {isSpeaking && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                      animate={{ opacity: 1, y: -6, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.9 }}
-                      className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pointer-events-none mb-1.5 w-48 rounded-2xl border-2 border-slate-900 bg-white p-2.5 text-center text-xs font-sans font-medium text-slate-900 shadow-xl"
-                    >
-                      <p className="text-[11px] text-slate-800 leading-snug">
-                        "{activeSpeech.quip}"
-                      </p>
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1.5 border-6 border-transparent border-t-slate-900" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-        </div>
+              {/* Speech Bubble when clicked */}
+              <AnimatePresence>
+                {isSpeaking && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.92 }}
+                    animate={{ opacity: 1, y: -6, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.92 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 z-[100] pointer-events-none mb-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-center shadow-lg shadow-slate-900/10"
+                  >
+                    <span className="text-xs font-sans font-semibold text-slate-800 leading-snug block">
+                      {activeSpeech.quip}
+                    </span>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 h-2 w-2 rotate-45 border-r border-b border-slate-200 bg-white" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -27,10 +27,24 @@ import { CreatorProfileModal } from './components/CreatorProfileModal';
 import { IntroLanding } from './components/IntroLanding';
 import { PointsGuideModal } from './components/PointsGuideModal';
 import { Mascot } from './components/Mascot';
-import { DoodleFace, BottomFacesRow } from './components/DoodleFaces';
+import { DoodleFace, DoodleFaceKey, BottomFacesRow } from './components/DoodleFaces';
 import { CollaborationModal } from './components/CollaborationModal';
 import { motion } from 'motion/react';
+import { CuteFlame } from './components/CuteFlame';
 import { calculateRealStreak, calculateStreakLoginBonus } from './utils/streakUtils';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
+import {
+  subscribeFirestoreProjects,
+  saveProjectToFirestore,
+  deleteProjectFromFirestore,
+  subscribeFirestoreReviews,
+  saveReviewToFirestore,
+  subscribeFirestoreUsers,
+  syncUserToFirestore,
+  signOutFromFirebase,
+  mapFirebaseUserToAppUser,
+} from './services/firestoreService';
 import {
   ShieldCheck,
   Compass,
@@ -46,7 +60,6 @@ import {
   Gamepad2,
   Code2,
   Music,
-  Flame,
   Star,
   CheckCircle2,
   Zap,
@@ -55,7 +68,7 @@ import {
 export default function App() {
   // Real user state (no default fake profile)
   const [currentUser, setCurrentUser] = useState<User | null>(() => storage.getUser());
-  const [viewMode, setViewMode] = useState<'app' | 'intro'>('intro');
+  const [viewMode, setViewMode] = useState<'app' | 'intro'>('app');
   const [projects, setProjects] = useState<Project[]>(() => storage.getProjects());
   const [reviews, setReviews] = useState<Review[]>(() => storage.getReviews());
   const [messages, setMessages] = useState<DirectMessage[]>(() => storage.getMessages());
@@ -86,13 +99,58 @@ export default function App() {
 
   // Filters & Search
   const [selectedTag, setSelectedTag] = useState<string>('#all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [feedSort, setFeedSort] = useState<'trending' | 'recent' | 'following'>('trending');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDmUserId, setSelectedDmUserId] = useState<string>('');
 
+  // Listen to Firebase Auth state for real Google sign-in
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        const mapped = mapFirebaseUserToAppUser(fbUser, storage.getUser());
+        setCurrentUser(mapped);
+        storage.setUser(mapped);
+        syncUserToFirestore(mapped);
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Real-time synchronization of Projects from Firestore
+  useEffect(() => {
+    const unsubProjects = subscribeFirestoreProjects((firestoreProjects) => {
+      if (firestoreProjects && firestoreProjects.length > 0) {
+        setProjects(firestoreProjects);
+      }
+    });
+    return () => unsubProjects();
+  }, []);
+
+  // Real-time synchronization of Reviews from Firestore
+  useEffect(() => {
+    const unsubReviews = subscribeFirestoreReviews((firestoreReviews) => {
+      if (firestoreReviews && firestoreReviews.length > 0) {
+        setReviews(firestoreReviews);
+      }
+    });
+    return () => unsubReviews();
+  }, []);
+
+  // Real-time synchronization of Users from Firestore (Supports various accounts)
+  useEffect(() => {
+    const unsubUsers = subscribeFirestoreUsers((_firestoreUsers) => {
+      // Synchronized in memory & storage
+    });
+    return () => unsubUsers();
+  }, []);
+
   // Persist state changes
   useEffect(() => {
     storage.setUser(currentUser);
+    if (currentUser) {
+      syncUserToFirestore(currentUser);
+    }
   }, [currentUser]);
 
   useEffect(() => {
@@ -179,7 +237,20 @@ export default function App() {
   );
 
   // Dynamic custom hashtags extracted from all builds + starter hashtags
-  const defaultPopularTags = ['#3dprinting', '#robotics', '#art', '#gamedev', '#coding', '#music', '#makers'];
+  const defaultPopularTags = [
+    '#cad',
+    '#3dprinting',
+    '#robotics',
+    '#hardware',
+    '#firmware',
+    '#coding',
+    '#gamedev',
+    '#art',
+    '#music',
+    '#machining',
+    '#science',
+    '#makers',
+  ];
   const allCustomHashtags = Array.from(
     new Set([
       ...defaultPopularTags,
@@ -187,19 +258,38 @@ export default function App() {
     ])
   ).filter(Boolean);
 
+  // Diverse Categories for dropdown filtering
+  const FEED_CATEGORIES = [
+    { id: 'all', label: 'All Categories' },
+    { id: 'cad', label: 'CAD & 3D Mechanical Design' },
+    { id: '3dprinting', label: '3D Printing & Rapid Prototyping' },
+    { id: 'robotics', label: 'Robotics, RC & Drone Hardware' },
+    { id: 'hardware', label: 'Electronics & PCB Circuits' },
+    { id: 'firmware', label: 'Embedded Firmware & IoT' },
+    { id: 'coding', label: 'Websites & Code Apps' },
+    { id: 'gamedev', label: 'Game Dev (Unity/Godot)' },
+    { id: 'machining', label: 'CNC, Machining & Metalworking' },
+    { id: 'woodworking', label: 'Woodworking & Physical Craft' },
+    { id: 'art', label: 'Digital Art & 3D Renders' },
+    { id: 'music', label: 'Music Beats & Audio Tech' },
+    { id: 'aerospace', label: 'Aerospace & Rockets' },
+    { id: 'science', label: 'Biotech & Science Experiments' },
+    { id: 'wearables', label: 'Wearables & Custom Keyboards' },
+    { id: 'makers', label: 'Crafts & General Inventions' },
+  ];
+
   // Gather only real existing users (strictly zero fabricated users)
   const allRealUsers = useMemo(() => {
     const usersMap = new Map<string, User>();
     storage.getAllUsers().forEach((u) => {
-      if (u && u.id && u.displayName) {
+      if (
+        u &&
+        u.id &&
+        u.displayName &&
+        !u.id.startsWith('fake_') &&
+        !u.email?.endsWith('@wedidthis.dev')
+      ) {
         usersMap.set(u.id, u);
-      }
-    });
-    projects.forEach((p) => {
-      if (p.author && p.author.id && p.author.displayName) {
-        if (!usersMap.has(p.author.id)) {
-          usersMap.set(p.author.id, p.author);
-        }
       }
     });
     if (currentUser && currentUser.id) {
@@ -208,7 +298,7 @@ export default function App() {
     return Array.from(usersMap.values()).sort(
       (a, b) => (b.reputationScore || 0) - (a.reputationScore || 0)
     );
-  }, [currentUser, projects]);
+  }, [currentUser]);
 
   // Follow / Unfollow creator
   const handleToggleFollow = (creatorId: string) => {
@@ -263,6 +353,16 @@ export default function App() {
   // Filter projects
   const filteredProjects = projects
     .filter((p) => {
+      // Hidden projects are only visible to the project author
+      if (p.hidden && p.authorId !== currentUser?.id) {
+        return false;
+      }
+
+      const matchesCategory =
+        selectedCategory === 'all' ||
+        (p.category && p.category.toLowerCase().includes(selectedCategory.toLowerCase())) ||
+        p.tags.some((t) => t.toLowerCase().includes(selectedCategory.toLowerCase()));
+
       const matchesTag = selectedTag === '#all' || p.tags.includes(selectedTag);
       const matchesQuery =
         searchQuery.trim() === '' ||
@@ -274,9 +374,9 @@ export default function App() {
 
       if (feedSort === 'following' && currentUser) {
         const isFollowed = followingUserIds.has(p.authorId) || p.authorId === currentUser.id;
-        return matchesTag && matchesQuery && isFollowed;
+        return matchesCategory && matchesTag && matchesQuery && isFollowed;
       }
-      return matchesTag && matchesQuery;
+      return matchesCategory && matchesTag && matchesQuery;
     })
     .sort((a, b) => {
       if (feedSort === 'recent') {
@@ -354,6 +454,7 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
     setReviews((prev) => [newReview, ...prev]);
+    saveReviewToFirestore(newReview);
 
     // Track 'new review received' event in Notification Center
     const targetProject = projects.find((p) => p.id === projectId);
@@ -417,9 +518,51 @@ export default function App() {
 
   // Publish Project
   const handlePublishProject = (newProject: Project) => {
-    setProjects((prev) => [newProject, ...prev]);
+    setProjects((prev) => {
+      const updated = [newProject, ...prev];
+      storage.saveProjects(updated);
+      return updated;
+    });
+    saveProjectToFirestore(newProject);
     setActiveTab('feed');
     setSelectedProject(newProject);
+  };
+
+  // Delete Project
+  const handleDeleteProject = (projectId: string) => {
+    setProjects((prev) => {
+      const updated = prev.filter((p) => p.id !== projectId);
+      storage.saveProjects(updated);
+      return updated;
+    });
+    deleteProjectFromFirestore(projectId);
+    if (selectedProject?.id === projectId) {
+      setSelectedProject(null);
+    }
+  };
+
+  // Toggle Hide Project
+  const handleToggleHideProject = (projectId: string) => {
+    setProjects((prev) => {
+      const updated = prev.map((p) => (p.id === projectId ? { ...p, hidden: !p.hidden } : p));
+      storage.saveProjects(updated);
+      return updated;
+    });
+    if (selectedProject?.id === projectId) {
+      setSelectedProject((prev) => (prev ? { ...prev, hidden: !prev.hidden } : null));
+    }
+  };
+
+  // Toggle Collaborator Applications Open/Closed
+  const handleToggleCollabOpen = (projectId: string, isOpen: boolean) => {
+    setProjects((prev) => {
+      const updated = prev.map((p) => (p.id === projectId ? { ...p, openForCollab: isOpen } : p));
+      storage.saveProjects(updated);
+      return updated;
+    });
+    if (selectedProject?.id === projectId) {
+      setSelectedProject((prev) => (prev ? { ...prev, openForCollab: isOpen } : null));
+    }
   };
 
   // Send Direct Message
@@ -747,6 +890,7 @@ export default function App() {
   const handleUpdateUserProfile = (updatedUser: User) => {
     setCurrentUser(updatedUser);
     storage.setUser(updatedUser);
+    syncUserToFirestore(updatedUser);
 
     // Sync updated display name and avatar across all projects authored by this user
     setProjects((prev) =>
@@ -765,6 +909,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    signOutFromFirebase();
     setCurrentUser(null);
     storage.setUser(null);
   };
@@ -1067,66 +1212,94 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 pb-16">
-        {/* 1. Dedicated Community Feed Tab (like YouTube or Instagram) */}
+        {/* 1. Dedicated Community Feed Tab (like Instagram) */}
         {activeTab === 'feed' && (
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-            {/* Feed Header Banner with Intriguing Maker Hook */}
-            <div className="rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 via-emerald-50/70 to-amber-50/60 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-xs">
-              <div className="absolute top-0 right-0 h-64 w-64 bg-sky-200/40 blur-3xl pointer-events-none rounded-full" />
-              <div className="absolute bottom-0 left-1/3 h-48 w-48 bg-emerald-200/30 blur-3xl pointer-events-none rounded-full" />
-
-              {/* Scattered Doodle Faces in the Background */}
-              <div className="absolute -right-2 top-3 pointer-events-none select-none hidden md:flex items-center gap-2 opacity-30">
-                <DoodleFace type="surprised_yellow" size="lg" />
-                <DoodleFace type="star_butter" size="md" />
-                <DoodleFace type="blissful_peach" size="lg" />
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 space-y-4">
+            {/* Sleek Instagram-Style Header */}
+            <div className="flex items-center justify-between pb-1">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                  <span>Explore Builds</span>
+                  <DoodleFace type="wink_apricot" size="sm" />
+                </h1>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Real projects in CAD, hardware, robotics, code, and creative fabrication.
+                </p>
               </div>
 
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                <div className="space-y-2.5 max-w-2xl">
-                  <div className="flex items-center gap-2 text-xs font-bold text-sky-800">
-                    <DoodleFace type="mismatched_mint" size="xs" />
-                    <span className="uppercase tracking-wider font-mono text-[11px] text-sky-700">Makers Collective</span>
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                    Where creators stop scrolling and actually build together.
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans font-medium">
-                    Wondering what locked in is? It's the collaborative lab for builders. Drop physical builds, invite contributors for CAD, UI, or firmware, and maintain your daily maker streak.
-                  </p>
-
-                  {/* Live Activity Pulse Ticker */}
-                  <div className="pt-2 flex items-center gap-2 text-xs font-mono text-slate-700 overflow-x-auto no-scrollbar">
-                    <span className="shrink-0 flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                      Live Pulse
-                    </span>
-                    <span className="text-[11px] text-slate-500 truncate">
-                      @kyle seeking CAD partner · @maya Day 4 streak · @leo joined Drone Autopilot team · @elena reviewed Smart Rover (+25 pts)
-                    </span>
-                  </div>
-                </div>
-
-                <div className="shrink-0 flex items-center gap-2 bg-white/80 border-2 border-slate-200 rounded-2xl p-3 shadow-2xs">
-                  <div className="flex -space-x-2">
-                    <DoodleFace type="excited_pink" size="md" />
-                    <DoodleFace type="cool_specs" size="md" />
-                    <DoodleFace type="wink_apricot" size="md" />
-                  </div>
-                  <div className="text-left pl-1">
-                    <div className="text-xs font-bold text-slate-900">Open Collaborations</div>
-                    <div className="text-[10px] font-mono text-slate-500">Tap any build to team up</div>
-                  </div>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) setIsGoogleModalOpen(true);
+                  else setActiveTab('studio');
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-black text-slate-950 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 shadow-xs hover:scale-103 active:scale-97 transition-all cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Post Build</span>
+              </button>
             </div>
 
-            {/* Real Social Discovery & Showcase Feed - Strictly Just Feeds */}
-            <div className="space-y-6">
+            {/* Sleek Instagram-Style Stories Tray */}
+            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none select-none border-b border-slate-100">
+              {/* Story 1: Current User Post / Create */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) setIsGoogleModalOpen(true);
+                  else setActiveTab('studio');
+                }}
+                className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer"
+              >
+                <div className="relative h-14 w-14 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-rose-400 to-sky-400 group-hover:scale-105 transition-transform">
+                  <div className="h-full w-full rounded-full bg-white p-0.5 flex items-center justify-center overflow-hidden">
+                    {currentUser?.avatarUrl ? (
+                      <img src={currentUser.avatarUrl} alt="You" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-slate-100 flex items-center justify-center text-slate-500 font-black">
+                        +
+                      </div>
+                    )}
+                  </div>
+                  <span className="absolute bottom-0 right-0 h-4.5 w-4.5 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] font-black border-2 border-white shadow-xs">
+                    +
+                  </span>
+                </div>
+                <span className="text-[11px] font-medium text-slate-700 truncate max-w-16">
+                  {currentUser ? 'Your Build' : 'Post Build'}
+                </span>
+              </button>
+
+              {/* Real Registered Builders */}
+              {allRealUsers.slice(0, 8).map((builder) => (
+                <button
+                  key={builder.id}
+                  type="button"
+                  onClick={() => setSelectedProfileUser(builder)}
+                  className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer"
+                >
+                  <div className="h-14 w-14 rounded-full p-0.5 bg-gradient-to-tr from-sky-400 via-emerald-300 to-amber-300 group-hover:scale-105 transition-transform">
+                    <div className="h-full w-full rounded-full bg-white p-0.5">
+                      <img
+                        src={builder.avatarUrl}
+                        alt={builder.displayName}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-700 truncate max-w-16">
+                    @{builder.handle}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Real Social Discovery & Showcase Feed - Feed is front and center */}
+            <div className="space-y-4">
               {/* Filter Bar & Search */}
-              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b-2 border-slate-200/80 pb-5">
-                {/* Feed Sort & Tags */}
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-b-2 border-slate-200/80 pb-3">
+                {/* Feed Sort, Category Dropdown & Tags */}
+                <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
                   <div className="flex items-center gap-1 bg-white border-2 border-slate-200 p-1 rounded-full text-xs font-bold shadow-2xs">
                     <button
                       onClick={() => setFeedSort('trending')}
@@ -1164,6 +1337,21 @@ export default function App() {
                     </button>
                   </div>
 
+                  {/* Category Dropdown (including CAD, 3D printing, robotics, etc.) */}
+                  <div className="relative">
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="rounded-full border-2 border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-800 hover:border-slate-300 focus:border-sky-400 focus:outline-none shadow-2xs cursor-pointer"
+                    >
+                      {FEED_CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="h-4 w-px bg-slate-300 hidden sm:block" />
 
                   {/* Custom Hashtags */}
@@ -1195,7 +1383,7 @@ export default function App() {
                 </div>
 
                 {/* Search Bar */}
-                <div className="relative w-full md:w-72">
+                <div className="relative w-full md:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
@@ -1207,26 +1395,47 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Projects Feed Grid - Just Feeds */}
+              {/* Projects Feed Grid - Clean Instagram-Style Visual Focus */}
               {filteredProjects.length === 0 ? (
-                <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/80 p-12 text-center space-y-4">
-                  <div className="mx-auto h-12 w-12 rounded-2xl bg-sky-100 border-2 border-sky-200 flex items-center justify-center text-sky-600">
-                    <Sparkles className="h-6 w-6" />
+                <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/70 p-10 text-center space-y-3">
+                  <div className="mx-auto flex justify-center">
+                    <DoodleFace type="star_butter" size="lg" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">No Builds in This Feed Yet</h3>
-                  <p className="text-xs text-slate-600 max-w-md mx-auto">
-                    Publish the first project in Art, 3D Printing, Game Dev, Robotics, or Code!
+                  <h3 className="text-base font-black text-slate-900">
+                    {selectedCategory !== 'all' || selectedTag !== '#all' || searchQuery
+                      ? 'No builds match this filter'
+                      : 'No builds published yet'}
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    {selectedCategory !== 'all' || selectedTag !== '#all' || searchQuery
+                      ? 'Try choosing All Categories or clearing your search filter.'
+                      : 'Be the first to post a build in CAD, 3D printing, robotics, or code!'}
                   </p>
-                  <button
-                    onClick={() => {
-                      if (!currentUser) setIsGoogleModalOpen(true);
-                      else setActiveTab('studio');
-                    }}
-                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2.5 text-xs font-black text-slate-900 hover:scale-105 active:scale-95 transition-all shadow-md shadow-sky-300/40 cursor-pointer"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Create a Post</span>
-                  </button>
+                  <div className="pt-2 flex items-center justify-center gap-2">
+                    {(selectedCategory !== 'all' || selectedTag !== '#all' || searchQuery) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory('all');
+                          setSelectedTag('#all');
+                          setSearchQuery('');
+                        }}
+                        className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Reset Filters
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (!currentUser) setIsGoogleModalOpen(true);
+                        else setActiveTab('studio');
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 px-5 py-2 text-xs font-black text-slate-950 hover:scale-103 active:scale-97 transition-all cursor-pointer shadow-xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Post a Build</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1249,6 +1458,9 @@ export default function App() {
                         setCollabModalProject(p);
                         setCollabModalMode(mode);
                       }}
+                      onDeleteProject={handleDeleteProject}
+                      onToggleHideProject={handleToggleHideProject}
+                      onToggleCollabOpen={handleToggleCollabOpen}
                     />
                   ))}
                 </div>
@@ -1274,11 +1486,12 @@ export default function App() {
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl">
                   <div className="flex items-center gap-2 text-xs font-mono text-amber-800">
-                    <Mascot type="wavy" size="xs" />
+                    <CuteFlame size="xs" />
                     <span className="font-bold tracking-wider">DAILY STREAK & POINTS</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                    Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
+                    <CuteFlame size="md" />
+                    <span>Day {streakInfo.currentStreak > 0 ? streakInfo.currentStreak : 1} Streak</span>
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
                     Check in every day to keep your streak alive, review projects from other builders, unlock badges, and climb the leaderboard!
@@ -1297,7 +1510,7 @@ export default function App() {
 
                   <button
                     onClick={() => setActiveTab('feed')}
-                    className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-5 py-2 text-xs font-black text-slate-950 shadow-md shadow-sky-300/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 px-5 py-2 text-xs font-black text-slate-950 shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer"
                   >
                     <Compass className="h-4 w-4" />
                     <span>Back to Feed</span>
@@ -1352,7 +1565,7 @@ export default function App() {
                           setActiveTab('reviews');
                         }
                       }}
-                      className="w-full flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 py-2.5 text-xs font-black text-slate-950 shadow-md shadow-sky-300/30 hover:scale-102 active:scale-98 transition-all cursor-pointer"
+                      className="w-full flex items-center justify-center gap-1.5 rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 py-2.5 text-xs font-black text-slate-950 shadow-xs hover:scale-102 active:scale-98 transition-all cursor-pointer"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       <span>{hasCompletedDailyReviewToday ? 'Review Another Build' : 'Complete Daily Review (+15 Pts)'}</span>
@@ -1416,7 +1629,7 @@ export default function App() {
               </p>
               <button
                 onClick={() => setIsGoogleModalOpen(true)}
-                className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2.5 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 shadow-md shadow-sky-300/40 transition-all cursor-pointer"
+                className="rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 px-6 py-2.5 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 shadow-xs transition-all cursor-pointer"
               >
                 Sign in with Google
               </button>
@@ -1427,24 +1640,25 @@ export default function App() {
         {/* Human Reviews Stream */}
         {activeTab === 'reviews' && (
           <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+            {/* Reviews Header */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-200/80 pb-5">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Mascot type="friendly" size="xs" />
                   <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
-                    Community Evaluations
+                    Community Reviews
                   </span>
                 </div>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight sm:text-2xl">
                   Peer Reviews
                 </h2>
                 <p className="text-xs text-slate-600 mt-0.5 font-medium">
-                  Constructive feedback and rubric evaluations from fellow creators.
+                  Community 1 to 5 star ratings and feedback from fellow creators.
                 </p>
               </div>
 
               <div className="text-xs text-slate-500 font-medium">
-                4-part rubric: clarity, execution, technicality, documentation
+                1 to 5 star ratings & feedback
               </div>
             </div>
 
@@ -1452,13 +1666,17 @@ export default function App() {
               <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/80 p-12 text-center text-xs text-slate-600 space-y-3">
                 <p className="font-bold text-slate-800 text-sm">No peer reviews submitted yet.</p>
                 <p className="text-slate-500">
-                  Open any build in the Showcase to submit the first constructive rubric evaluation!
+                  Open any build in the Showcase to submit the first star rating and review!
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {reviews.map((rev) => {
                   const targetProject = projects.find((p) => p.id === rev.projectId);
+                  const stars =
+                    rev.rating ||
+                    Math.max(1, Math.min(5, Math.round((rev.totalScore || 80) / 20)));
+
                   return (
                     <div
                       key={rev.id}
@@ -1485,9 +1703,25 @@ export default function App() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-emerald-50 border border-emerald-300 px-3 py-1 text-xs font-mono text-emerald-800 font-bold">
-                            Rubric: {rev.totalScore}/100
-                          </span>
+                          {/* 1 to 5 Star Display */}
+                          <div className="flex items-center gap-1 rounded-full bg-amber-50 border border-amber-300 px-3 py-1">
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star
+                                  key={s}
+                                  className={`h-4 w-4 ${
+                                    s <= stars
+                                      ? 'fill-amber-400 text-amber-500'
+                                      : 'text-slate-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs font-black font-mono text-amber-900 ml-1">
+                              {stars}/5
+                            </span>
+                          </div>
+
                           <span className="rounded-full bg-sky-50 border border-sky-300 px-3 py-1 text-xs font-mono text-sky-800 flex items-center gap-1 font-bold">
                             <Sparkles className="h-3.5 w-3.5" />
                             Quality: {rev.aiQualityScore}%
@@ -1514,28 +1748,12 @@ export default function App() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-4 gap-2 rounded-2xl bg-slate-50 p-3 text-center text-xs font-mono border-2 border-slate-100">
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Clarity</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.clarity}/25</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Execution</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.execution}/25</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Technicality</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.technicality}/25</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px]">Documentation</span>
-                          <span className="text-slate-900 font-bold">{rev.rubric.documentation}/25</span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                        {rev.feedbackText}
-                      </p>
+                      {/* Review Description */}
+                      {rev.feedbackText && (
+                        <p className="text-xs text-slate-700 leading-relaxed font-medium bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
+                          {rev.feedbackText}
+                        </p>
+                      )}
 
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                         <button
@@ -1590,7 +1808,7 @@ export default function App() {
               </p>
               <button
                 onClick={() => setIsGoogleModalOpen(true)}
-                className="rounded-full bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 px-6 py-2.5 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 shadow-md shadow-sky-300/40 transition-all cursor-pointer"
+                className="rounded-full bg-amber-400 hover:bg-amber-300 border border-amber-500/40 px-6 py-2.5 text-xs font-black text-slate-950 hover:scale-105 active:scale-95 shadow-xs transition-all cursor-pointer"
               >
                 Sign in with Google
               </button>
@@ -1599,27 +1817,36 @@ export default function App() {
         )}
       </main>
 
-      {/* Interactive Themed Maker Faces Row Across the Bottom */}
-      <BottomFacesRow />
-
-      {/* Theme Footer with Logo Mascots */}
-      <footer className="border-t-2 border-slate-200/80 bg-white/70 py-8 text-center text-xs text-slate-500 font-sans">
-        <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Mascot type="earth" size="sm" />
-            <span className="font-black text-slate-900 tracking-tight text-sm">locked in</span>
-            <span className="text-slate-300">·</span>
-            <span className="text-slate-600 font-medium">Where builders share, review, and collaborate.</span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Mascot type="curious" size="xs" title="Curious Star" />
-            <Mascot type="cheerful" size="xs" title="Cheerful Buddy" />
-            <Mascot type="wavy" size="xs" title="Cozy Champ" />
-            <Mascot type="friendly" size="xs" title="Kind Helper" />
-            <span className="text-[11px] font-mono text-slate-400 pl-1">Young Creators Community</span>
+      {/* Theme Footer with Bottom Earth Logo & Easter Egg Bottom Border Faces */}
+      <footer className="border-t-2 border-slate-200/80 bg-white/90 pt-8 pb-4 text-xs font-sans relative overflow-visible select-none">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-6 overflow-visible">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 overflow-visible">
+            {/* Left: Bottom Diamond Earth Logo & App Motto */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setViewMode('intro')}
+                className="hover:scale-105 active:scale-95 transition-transform cursor-pointer shrink-0"
+                title="locked in logo"
+              >
+                <Mascot type="earth" size="md" />
+              </button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-slate-900 tracking-tight text-base">locked in</span>
+                  <span className="text-slate-300">·</span>
+                  <span className="text-xs text-slate-600 font-medium">Where builders share, review, and collaborate.</span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  Young creators community worldwide
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Small Easter Egg Faces Along Bottom Border */}
+        <BottomFacesRow />
       </footer>
 
       {/* Project Detail Modal with Manage Team Section */}
@@ -1653,6 +1880,9 @@ export default function App() {
           allUsers={allRealUsers}
           onUpdateProjectContributors={handleUpdateProjectContributors}
           onSendCollaboration={handleSendCollaboration}
+          onDeleteProject={handleDeleteProject}
+          onToggleHideProject={handleToggleHideProject}
+          onToggleCollabApplications={handleToggleCollabOpen}
         />
       )}
 

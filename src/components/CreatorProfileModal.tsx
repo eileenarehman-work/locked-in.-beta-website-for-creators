@@ -14,7 +14,6 @@ import {
   Trophy,
   Star,
   Hammer,
-  Flame,
   Award,
   ShieldCheck,
   Lock,
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { VerifiedBadge, VERIFIED_REPUTATION_THRESHOLD } from './VerifiedBadge';
+import { CuteFlame } from './CuteFlame';
 import {
   getAllMilestoneBadgesWithStatus,
   getNextMilestoneBadge,
@@ -112,7 +112,7 @@ export const CreatorProfileModal: React.FC<CreatorProfileModalProps> = ({
       case 'hammer':
         return <Hammer className={className} />;
       case 'flame':
-        return <Flame className={className} />;
+        return <CuteFlame size="xs" className={className} />;
       case 'sparkles':
         return <Sparkles className={className} />;
       case 'shield-check':

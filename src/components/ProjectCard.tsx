@@ -6,12 +6,17 @@ import {
   Eye,
   ArrowUpRight,
   Share2,
-  CheckCircle2,
   Sparkles,
   Trophy,
   Star,
   ShieldCheck,
   Users,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  EyeOff,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { VerifiedBadge } from './VerifiedBadge';
 import { Mascot } from './Mascot';
@@ -29,6 +34,9 @@ interface ProjectCardProps {
   onOpenAuthorProfile?: (author: User) => void;
   onSelectTag?: (tag: string) => void;
   onOpenCollaboration?: (project: Project, mode: 'request' | 'invite') => void;
+  onDeleteProject?: (projectId: string) => void;
+  onToggleHideProject?: (projectId: string) => void;
+  onToggleCollabOpen?: (projectId: string, isOpen: boolean) => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -42,12 +50,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onOpenAuthorProfile,
   onSelectTag,
   onOpenCollaboration,
+  onDeleteProject,
+  onToggleHideProject,
+  onToggleCollabOpen,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [burstParticles, setBurstParticles] = useState<number[]>([]);
+  const [mediaIdx, setMediaIdx] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // 3D perspective tilt calculations
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -83,20 +96,27 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <motion.div
       ref={cardRef}
+      id="project-card"
       initial={{ opacity: 0, y: 22 }}
       animate={{
         opacity: 1,
-        y: isHovered ? -5 : 0,
+        y: 0,
         rotateX,
         rotateY,
-        scale: isHovered ? 1.018 : 1,
+      }}
+      whileHover={{
+        y: -7,
+        scale: 1.022,
+        transition: { type: 'spring', stiffness: 350, damping: 22 },
+      }}
+      whileTap={{
+        scale: 0.985,
+        transition: { duration: 0.1 },
       }}
       transition={{
         opacity: { duration: 0.45, delay: Math.min(index * 0.06, 0.45), ease: [0.21, 0.45, 0.27, 0.9] },
-        y: isHovered ? { duration: 0.2, ease: 'easeOut' } : { duration: 0.45, delay: Math.min(index * 0.06, 0.45), ease: [0.21, 0.45, 0.27, 0.9] },
         rotateX: { type: 'spring', stiffness: 350, damping: 25 },
         rotateY: { type: 'spring', stiffness: 350, damping: 25 },
-        scale: { type: 'spring', stiffness: 350, damping: 25 },
       }}
       style={{ transformStyle: 'preserve-3d', perspective: 1000 }}
       onMouseMove={handleMouseMove}
@@ -109,14 +129,37 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-sky-400/5 via-transparent to-emerald-400/5 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       <div>
-        {/* Cover Media */}
+        {/* Hidden Post Status Notice */}
+        {project.hidden && (
+          <div className="mb-3 flex items-center justify-between rounded-2xl bg-slate-100 border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700">
+            <span className="flex items-center gap-1.5">
+              <EyeOff className="h-3.5 w-3.5 text-slate-500" />
+              <span>Hidden Post (Only visible to you)</span>
+            </span>
+            {onToggleHideProject && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleHideProject(project.id);
+                }}
+                className="text-sky-600 hover:text-sky-800 hover:underline cursor-pointer font-bold text-[11px]"
+              >
+                Unhide
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Cover Media / Multi-image Carousel */}
         <div className="relative mb-4 aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
-          {project.mediaUrls[0] ? (
+          {project.mediaUrls && project.mediaUrls.length > 0 ? (
             <MediaDisplay
-              url={project.mediaUrls[0]}
-              alt={project.title}
+              url={project.mediaUrls[mediaIdx] || project.mediaUrls[0]}
+              alt={`${project.title} asset ${mediaIdx + 1}`}
               showBadge={true}
               autoPlay={false}
+              controls={isVideoUrl(project.mediaUrls[mediaIdx] || project.mediaUrls[0])}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
@@ -131,25 +174,94 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             </div>
           )}
 
-          {/* Actual Qualities Overlay Tag on Image (Top-Left) */}
-          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-300 shadow-2xs">
-              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-              <span>{project.qualities?.[0] || 'Working Prototype'}</span>
-            </span>
-          </div>
+          {/* Multi-Image/Video Carousel Arrow Controls */}
+          {project.mediaUrls && project.mediaUrls.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMediaIdx((prev) => (prev > 0 ? prev - 1 : project.mediaUrls.length - 1));
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/70 text-white backdrop-blur-md hover:bg-slate-900 active:scale-95 transition-all shadow-md cursor-pointer"
+                title="Previous photo/video"
+                aria-label="Previous photo/video"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
 
-          {/* Quick share action */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onShareProject(project);
-            }}
-            className="absolute top-2.5 right-2.5 rounded-full bg-white/90 p-1.5 text-slate-600 backdrop-blur-md transition-colors hover:bg-white hover:text-slate-950 border border-slate-200 shadow-2xs"
-            title="Generate Shareable Proof Card"
-          >
-            <Share2 className="h-4 w-4" />
-          </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMediaIdx((prev) => (prev < project.mediaUrls.length - 1 ? prev + 1 : 0));
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/70 text-white backdrop-blur-md hover:bg-slate-900 active:scale-95 transition-all shadow-md cursor-pointer"
+                title="Next photo/video"
+                aria-label="Next photo/video"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+
+              {/* Indicator Pill */}
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 rounded-full bg-slate-950/70 px-2 py-0.5 text-[10px] font-mono font-bold text-white backdrop-blur-md shadow-xs pointer-events-none">
+                <span>{mediaIdx + 1}/{project.mediaUrls.length}</span>
+              </div>
+            </>
+          )}
+
+          {/* Action buttons: Hide, Delete, Share */}
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-20">
+            {currentUser?.id === project.authorId && (
+              <>
+                {onToggleHideProject && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleHideProject(project.id);
+                    }}
+                    className={`rounded-full p-1.5 backdrop-blur-md transition-colors border shadow-2xs cursor-pointer active:scale-95 ${
+                      project.hidden
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                        : 'bg-white/90 text-slate-600 hover:bg-white hover:text-slate-950 border-slate-200'
+                    }`}
+                    title={project.hidden ? 'Unhide post (make public)' : 'Hide post from feed'}
+                  >
+                    <EyeOff className="h-4 w-4" />
+                  </button>
+                )}
+
+                {onDeleteProject && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Permanently delete "${project.title}"?`)) {
+                        onDeleteProject(project.id);
+                      }
+                    }}
+                    className="rounded-full bg-white/90 p-1.5 text-rose-600 backdrop-blur-md transition-colors hover:bg-rose-50 hover:text-rose-700 border border-rose-200 shadow-2xs cursor-pointer active:scale-95"
+                    title="Delete post"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShareProject(project);
+              }}
+              className="rounded-full bg-white/90 p-1.5 text-slate-600 backdrop-blur-md transition-colors hover:bg-white hover:text-slate-950 border border-slate-200 shadow-2xs cursor-pointer active:scale-95"
+              title="Generate Shareable Proof Card"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* YouTube / Instagram Style Custom Hashtags */}
@@ -174,25 +286,31 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           {project.title}
         </h3>
 
-        {/* Tagline */}
-        <p className="mt-1.5 text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
-          {project.tagline}
-        </p>
+        {/* Project Description Write-up with Read More Truncation */}
+        {(() => {
+          const desc = project.tagline || '';
+          const isLong = desc.length > 95;
+          return (
+            <div className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className={isExpanded ? '' : 'line-clamp-2'}>
+                {desc}
+              </p>
+              {isLong && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded((prev) => !prev);
+                  }}
+                  className="mt-0.5 inline-flex items-center text-[11px] font-bold text-sky-700 hover:text-sky-900 hover:underline cursor-pointer"
+                >
+                  {isExpanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
-        {/* Actual Qualities Chips That Interest Users */}
-        {project.qualities && project.qualities.length > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {project.qualities.slice(0, 3).map((quality, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-800 border border-sky-100 shadow-2xs"
-              >
-                <span className="text-emerald-600 font-bold">✓</span>
-                <span>{quality}</span>
-              </span>
-            ))}
-          </div>
-        )}
 
         {/* Collaboration Team & Request Button */}
         {(() => {
@@ -240,48 +358,95 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </div>
 
               {/* The Collaboration Action Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onOpenCollaboration) {
-                    onOpenCollaboration(project, isOwner ? 'invite' : 'request');
-                  } else {
-                    onOpenProject(project);
-                  }
-                }}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                  isOwner
-                    ? 'bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-300'
-                    : hasPendingRequest
-                    ? 'bg-amber-50 text-amber-800 border border-amber-300'
-                    : isAcceptedContributor
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                    : 'bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 text-slate-950 shadow-2xs hover:scale-103 active:scale-97'
-                }`}
-              >
-                {isOwner ? (
-                  <>
+              {isOwner ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleCollabOpen?.(project.id, project.openForCollab === false);
+                    }}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer ${
+                      project.openForCollab !== false
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                        : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                    }`}
+                    title="Click to toggle collaborator applications"
+                  >
+                    {project.openForCollab !== false ? (
+                      <>
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span>Apps Open</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="h-3 w-3 text-slate-500" />
+                        <span>Apps Closed</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onOpenCollaboration) {
+                        onOpenCollaboration(project, 'invite');
+                      } else {
+                        onOpenProject(project);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-300 transition-all cursor-pointer"
+                  >
                     <Users className="h-3 w-3 text-sky-700" />
-                    <span>Invite Contributor</span>
-                  </>
-                ) : hasPendingRequest ? (
-                  <>
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    <span>Request Pending</span>
-                  </>
-                ) : isAcceptedContributor ? (
-                  <>
-                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    <span>On Team</span>
-                  </>
-                ) : (
-                  <>
-                    <Users className="h-3 w-3 text-slate-900" />
-                    <span>Collaboration Request</span>
-                  </>
-                )}
-              </button>
+                    <span>Invite</span>
+                  </button>
+                </div>
+              ) : project.openForCollab === false && !isAcceptedContributor && !hasPendingRequest ? (
+                <div
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 select-none"
+                  title="The creator is not accepting collaborator applications right now"
+                >
+                  <Lock className="h-3 w-3 text-slate-400" />
+                  <span>Apps Closed</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenCollaboration) {
+                      onOpenCollaboration(project, 'request');
+                    } else {
+                      onOpenProject(project);
+                    }
+                  }}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                    hasPendingRequest
+                      ? 'bg-amber-50 text-amber-800 border border-amber-300'
+                      : isAcceptedContributor
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                      : 'bg-gradient-to-r from-sky-400 via-emerald-300 to-amber-200 text-slate-950 shadow-2xs hover:scale-103 active:scale-97'
+                  }`}
+                >
+                  {hasPendingRequest ? (
+                    <>
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      <span>Request Pending</span>
+                    </>
+                  ) : isAcceptedContributor ? (
+                    <>
+                      <Users className="h-3 w-3 text-emerald-600" />
+                      <span>On Team</span>
+                    </>
+                  ) : (
+                    <>
+                      <Users className="h-3 w-3 text-slate-900" />
+                      <span>Team Up</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           );
         })()}

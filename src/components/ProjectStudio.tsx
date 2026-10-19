@@ -29,6 +29,11 @@ import {
   FolderOpen,
   Cloud,
   RotateCcw,
+  Layers,
+  Cpu,
+  Hammer,
+  Terminal,
+  Users,
 } from 'lucide-react';
 
 interface ProjectStudioProps {
@@ -36,14 +41,22 @@ interface ProjectStudioProps {
   onPublishProject: (project: Project) => void;
 }
 
-const TEEN_CATEGORIES = [
-  { id: '3dprinting', label: '3D Printing & Physical Props', icon: Box, defaultTag: '#3dprinting' },
-  { id: 'robotics', label: 'Robotics, RC & Arduino Circuits', icon: Bot, defaultTag: '#robotics' },
-  { id: 'art', label: 'Digital Art, 3D Models & Animation', icon: Palette, defaultTag: '#art' },
-  { id: 'gamedev', label: 'Game Dev & Modding (Unity/Roblox/Godot)', icon: Gamepad2, defaultTag: '#gamedev' },
-  { id: 'coding', label: 'Websites, Discord Bots & Code Apps', icon: Code2, defaultTag: '#coding' },
-  { id: 'music', label: 'Music Beats, Synth & Audio Projects', icon: Music, defaultTag: '#music' },
-  { id: 'makers', label: 'Crafts, Custom Keyboards & Inventions', icon: Box, defaultTag: '#makers' },
+export const TEEN_CATEGORIES = [
+  { id: 'cad', label: 'CAD & 3D Mechanical Design', icon: Layers, defaultTag: '#cad' },
+  { id: '3dprinting', label: '3D Printing & Rapid Prototyping', icon: Box, defaultTag: '#3dprinting' },
+  { id: 'robotics', label: 'Robotics, RC & Drone Hardware', icon: Bot, defaultTag: '#robotics' },
+  { id: 'hardware', label: 'Electronics, PCB & Arduino Circuits', icon: Cpu, defaultTag: '#hardware' },
+  { id: 'firmware', label: 'Embedded Firmware, C/C++ & IoT', icon: Terminal, defaultTag: '#firmware' },
+  { id: 'coding', label: 'Websites, Software & Code Apps', icon: Code2, defaultTag: '#coding' },
+  { id: 'gamedev', label: 'Game Dev & Interactive (Unity/Godot/Unreal)', icon: Gamepad2, defaultTag: '#gamedev' },
+  { id: 'machining', label: 'CNC, Machining & Metalworking', icon: Hammer, defaultTag: '#machining' },
+  { id: 'woodworking', label: 'Woodworking & Physical Carpentry', icon: Hammer, defaultTag: '#woodworking' },
+  { id: 'art', label: 'Digital Art, Concept Design & 3D Renders', icon: Palette, defaultTag: '#art' },
+  { id: 'music', label: 'Music Beats, Synth & Audio Tech', icon: Music, defaultTag: '#music' },
+  { id: 'aerospace', label: 'Aerospace, Rockets & Flight Tech', icon: Sparkles, defaultTag: '#aerospace' },
+  { id: 'science', label: 'Biotech, Physics & Experimental Tech', icon: Sparkles, defaultTag: '#science' },
+  { id: 'wearables', label: 'Wearables, Fashion Tech & Custom Keyboards', icon: Cpu, defaultTag: '#wearables' },
+  { id: 'makers', label: 'Crafts, Custom Props & Creative Inventions', icon: Box, defaultTag: '#makers' },
 ];
 
 export const ProjectStudio: React.FC<ProjectStudioProps> = ({
@@ -72,6 +85,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [demoUrl, setDemoUrl] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
+  const [openForCollab, setOpenForCollab] = useState<boolean>(true);
   const [status, setStatus] = useState<ProjectStatus>('DRAFT');
 
   // Human verification check
@@ -255,6 +269,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
       likesCount: 0,
       tags: tags.length ? tags : ['#makers'],
       qualities: [category.split('&')[0].trim()],
+      openForCollab,
       status: 'DRAFT',
       milestones: [
         {
@@ -293,6 +308,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
     setTags(draft.tags && draft.tags.length ? draft.tags : ['#makers']);
     setDemoUrl(draft.demoUrl || '');
     setRepoUrl(draft.repoUrl || '');
+    setOpenForCollab(draft.openForCollab !== false);
     setStatus('DRAFT');
     setIsDraftsModalOpen(false);
     setHasRecoveredAutoSave(false);
@@ -420,6 +436,7 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
       viewsCount: 1,
       likesCount: 0,
       tags: tags.length ? tags : ['#makers'],
+      openForCollab,
       qualities: [
         'Working Prototype',
         category.split('&')[0].trim(),
@@ -885,6 +902,35 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
                   + Add
                 </button>
               </div>
+            </div>
+
+            {/* Collaborator Applications Toggle */}
+            <div className="rounded-3xl border-2 border-slate-200 bg-white p-5 space-y-2.5 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-sky-600" />
+                  <span>Collaborator Applications</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setOpenForCollab(!openForCollab)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                    openForCollab ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                  aria-label="Toggle collaborator applications"
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      openForCollab ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                {openForCollab
+                  ? 'Open — other creators can apply to join and collaborate on this project.'
+                  : 'Closed — you are not accepting collaborator applications for this project.'}
+              </p>
             </div>
 
             {/* Quick Human Verification */}
