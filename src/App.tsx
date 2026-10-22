@@ -1223,7 +1223,7 @@ export default function App() {
                   <DoodleFace type="wink_apricot" size="sm" />
                 </h1>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Real projects in CAD, hardware, robotics, code, and creative fabrication.
+                  Real projects in design, hardware, art, code, and much more!
                 </p>
               </div>
 
@@ -1271,7 +1271,7 @@ export default function App() {
               </button>
 
               {/* Real Registered Builders */}
-              {allRealUsers.slice(0, 8).map((builder) => (
+              {allRealUsers.filter((b) => b.id !== currentUser?.id).slice(0, 8).map((builder) => (
                 <button
                   key={builder.id}
                   type="button"
@@ -1397,19 +1397,19 @@ export default function App() {
 
               {/* Projects Feed Grid - Clean Instagram-Style Visual Focus */}
               {filteredProjects.length === 0 ? (
-                <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/70 p-10 text-center space-y-3">
+                <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white/70 p-12 text-center space-y-3">
                   <div className="mx-auto flex justify-center">
                     <DoodleFace type="star_butter" size="lg" />
                   </div>
-                  <h3 className="text-base font-black text-slate-900">
-                    {selectedCategory !== 'all' || selectedTag !== '#all' || searchQuery
-                      ? 'No builds match this filter'
-                      : 'No builds published yet'}
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                    {projects.length === 0
+                      ? 'no content yet... be the first to share!'
+                      : 'No builds match this filter'}
                   </h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    {selectedCategory !== 'all' || selectedTag !== '#all' || searchQuery
-                      ? 'Try choosing All Categories or clearing your search filter.'
-                      : 'Be the first to post a build in CAD, 3D printing, robotics, or code!'}
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                    {projects.length === 0
+                      ? 'No one has shared a build yet. Jump into the studio and be the very first to showcase your work!'
+                      : 'Try choosing All Categories or clearing your search filter.'}
                   </p>
                   <div className="pt-2 flex items-center justify-center gap-2">
                     {(selectedCategory !== 'all' || selectedTag !== '#all' || searchQuery) && (

@@ -12,13 +12,10 @@ import {
   CheckCircle,
   ArrowRight,
   AtSign,
-  Check,
-  Key,
   Settings,
   RefreshCw,
   Send,
   Sparkles,
-  Sliders,
   Lock,
   Eye,
   EyeOff,
@@ -28,7 +25,6 @@ import {
   sendVerificationCode,
   verifyCode,
   getEmailConfigStatus,
-  updateEmailConfig,
   EmailConfigStatus,
 } from '../services/authEmailService';
 import { signInWithGoogle, syncUserToFirestore } from '../services/firestoreService';
@@ -92,22 +88,13 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [emailStatusMsg, setEmailStatusMsg] = useState<string | null>(null);
   const [previewDevCode, setPreviewDevCode] = useState<string | null>(null);
 
-  // Email service API configuration settings
+  // Email service status
   const [emailConfig, setEmailConfig] = useState<EmailConfigStatus | null>(null);
-  const [showConfigSettings, setShowConfigSettings] = useState(false);
-  const [configProvider, setConfigProvider] = useState<'resend' | 'sendgrid'>('resend');
-  const [configApiKey, setConfigApiKey] = useState('');
-  const [configEmailFrom, setConfigEmailFrom] = useState('locked in. <onboarding@resend.dev>');
-  const [configSaveMsg, setConfigSaveMsg] = useState<string | null>(null);
-  const [isSavingConfig, setIsSavingConfig] = useState(false);
 
   // Load server email configuration status
   useEffect(() => {
     getEmailConfigStatus().then((cfg) => {
       setEmailConfig(cfg);
-      if (cfg.provider === 'sendgrid') setConfigProvider('sendgrid');
-      else setConfigProvider('resend');
-      if (cfg.fromEmail) setConfigEmailFrom(cfg.fromEmail);
     });
   }, []);
 
@@ -160,20 +147,6 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
     }, 600);
   };
 
-  // Save server email configuration settings
-  const handleSaveEmailConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingConfig(true);
-    setConfigSaveMsg(null);
-
-    const res = await updateEmailConfig(configProvider, configApiKey, configEmailFrom);
-    setIsSavingConfig(false);
-    setConfigSaveMsg(res.message);
-
-    const updated = await getEmailConfigStatus();
-    setEmailConfig(updated);
-  };
-
   // Google Sign-In with Firebase Auth
   const handleGoogleSignIn = async () => {
     setIsGoogleSigningIn(true);
@@ -186,6 +159,12 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       const errorObj = err as { code?: string; message?: string };
       if (errorObj?.code === 'auth/popup-closed-by-user') {
         setAuthError('Google sign-in popup was closed.');
+      } else if (errorObj?.code === 'auth/popup-blocked') {
+        setAuthError('Google sign-in popup was blocked by your browser. Please enable popups for this tab and click again.');
+      } else if (errorObj?.code === 'auth/cancelled-popup-request') {
+        setAuthError('Google sign-in request was cancelled.');
+      } else if (errorObj?.code === 'auth/unauthorized-domain') {
+        setAuthError('This domain is not yet authorized in Firebase. You can also sign in instantly using email & password below.');
       } else {
         setAuthError(errorObj?.message || 'Failed to sign in with Google. Please try again.');
       }
@@ -392,18 +371,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         className="my-8 w-full max-w-lg rounded-3xl border-2 border-sky-200 bg-white p-6 sm:p-7 shadow-2xl relative overflow-hidden cursor-default text-slate-800"
       >
-        {/* Top Controls: Email Service Settings Toggle & Cancel Button */}
-        <div className="absolute top-5 right-5 flex items-center gap-2 z-10">
-          <button
-            type="button"
-            onClick={() => setShowConfigSettings((prev) => !prev)}
-            title="Configure Email Service API Key"
-            className="flex items-center gap-1.5 rounded-full border-2 border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 transition-all shadow-2xs cursor-pointer active:scale-95"
-          >
-            <Sliders className="h-3.5 w-3.5 text-sky-600" />
-            <span className="hidden sm:inline">Email API</span>
-          </button>
-
+        {/* Top Controls: Cancel Button */}
+        <div className="absolute top-5 right-5 z-10">
           <button
             type="button"
             onClick={onClose}
@@ -420,85 +389,6 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
         <div className="flex justify-center mb-3">
           <Logo size="md" />
         </div>
-
-        {/* Collapsible Email Service API Configuration Settings Panel */}
-        {showConfigSettings && (
-          <div className="mb-5 rounded-2xl border-2 border-sky-300 bg-sky-50/70 p-4 text-xs space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-center justify-between">
-              <span className="font-black text-sky-950 uppercase tracking-wider flex items-center gap-1.5 text-xs">
-                <Key className="h-4 w-4 text-sky-700" />
-                <span>Email Service API Settings</span>
-              </span>
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
-                emailConfig?.configured ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
-              }`}>
-                {emailConfig?.configured ? `Active: ${emailConfig.provider}` : 'No API Key Configured'}
-              </span>
-            </div>
-
-            <p className="text-[11px] text-slate-600 leading-relaxed font-sans">
-              Real verification emails are sent using an external API service. Configure your API key here or define <code>RESEND_API_KEY</code> in <code>.env.example</code>.
-            </p>
-
-            <form onSubmit={handleSaveEmailConfig} className="space-y-2.5">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] font-mono font-bold text-slate-700 uppercase mb-1">Provider</label>
-                  <select
-                    value={configProvider}
-                    onChange={(e) => setConfigProvider(e.target.value as 'resend' | 'sendgrid')}
-                    className="w-full rounded-xl border border-sky-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-sky-500 font-medium"
-                  >
-                    <option value="resend">Resend (Recommended)</option>
-                    <option value="sendgrid">SendGrid</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-mono font-bold text-slate-700 uppercase mb-1">Sender Email</label>
-                  <input
-                    type="text"
-                    value={configEmailFrom}
-                    onChange={(e) => setConfigEmailFrom(e.target.value)}
-                    placeholder="locked in. <onboarding@resend.dev>"
-                    className="w-full rounded-xl border border-sky-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-sky-500 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono font-bold text-slate-700 uppercase mb-1">
-                  {configProvider === 'resend' ? 'Resend API Key' : 'SendGrid API Key'}
-                </label>
-                <input
-                  type="password"
-                  value={configApiKey}
-                  onChange={(e) => setConfigApiKey(e.target.value)}
-                  placeholder={configProvider === 'resend' ? 're_123456789...' : 'SG.xxxxxxxx...'}
-                  className="w-full rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs text-slate-800 font-mono focus:outline-none focus:border-sky-500"
-                />
-              </div>
-
-              {configSaveMsg && (
-                <div className="p-2 rounded-xl bg-white border border-sky-200 text-[11px] text-sky-900 font-medium">
-                  {configSaveMsg}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[10px] text-slate-500 font-sans">
-                  Free keys at <a href="https://resend.com/api-keys" target="_blank" rel="noreferrer" className="text-sky-600 underline">resend.com</a>
-                </span>
-                <button
-                  type="submit"
-                  disabled={isSavingConfig}
-                  className="px-3.5 py-1 text-xs font-bold text-slate-950 bg-sky-400 hover:bg-sky-300 rounded-full transition-colors cursor-pointer"
-                >
-                  {isSavingConfig ? 'Saving...' : 'Save Settings'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {/* Google Sign-in with Firebase Auth */}
         <div className="mb-4">
@@ -561,8 +451,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             <Mail className="h-3.5 w-3.5 text-sky-600" />
             <span>Real 6-digit email verification</span>
           </span>
-          <span className="text-[10px] font-mono text-slate-500">
-            {emailConfig?.configured ? `via ${emailConfig.provider}` : 'API Ready'}
+          <span className="text-[10px] font-mono text-emerald-700 font-bold">
+            Secure Delivery
           </span>
         </div>
 

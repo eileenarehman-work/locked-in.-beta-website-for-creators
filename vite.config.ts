@@ -8,7 +8,7 @@ export default defineConfig({
   base: '/locked-in.-beta-website-for-creators/',
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '.'),
+      '@': path.resolve(import.meta.dirname || '.', '.'),
     },
   },
   server: {

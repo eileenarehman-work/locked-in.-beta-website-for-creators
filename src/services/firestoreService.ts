@@ -148,10 +148,8 @@ export function subscribeFirestoreUsers(callback: (users: User[]) => void): () =
             users.push(data);
           }
         });
-        if (users.length > 0) {
-          storage.saveAllUsers(users);
-          callback(users);
-        }
+        storage.saveAllUsers(users);
+        callback(users);
       },
       (error) => {
         console.warn('Firestore users snapshot listener error:', error.message);
@@ -180,10 +178,8 @@ export function subscribeFirestoreProjects(callback: (projects: Project[]) => vo
             projs.push(p);
           }
         });
-        if (projs.length > 0) {
-          storage.saveProjects(projs);
-          callback(projs);
-        }
+        storage.saveProjects(projs);
+        callback(projs);
       },
       (error) => {
         console.warn('Projects snapshot error:', error.message);
@@ -233,10 +229,8 @@ export function subscribeFirestoreReviews(callback: (reviews: Review[]) => void)
             revs.push(r);
           }
         });
-        if (revs.length > 0) {
-          storage.saveReviews(revs);
-          callback(revs);
-        }
+        storage.saveReviews(revs);
+        callback(revs);
       },
       (error) => {
         console.warn('Reviews snapshot error:', error.message);

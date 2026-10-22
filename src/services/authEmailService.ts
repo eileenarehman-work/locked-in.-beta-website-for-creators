@@ -105,26 +105,3 @@ export async function verifyCode(email: string, code: string): Promise<VerifyCod
   }
 }
 
-/**
- * Update runtime email service settings on the server
- */
-export async function updateEmailConfig(
-  provider: 'resend' | 'sendgrid',
-  apiKey: string,
-  emailFrom?: string
-): Promise<{ success: boolean; message: string; configured: boolean }> {
-  try {
-    const res = await fetch('/api/auth/email-config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, apiKey, emailFrom }),
-    });
-    return await res.json();
-  } catch (err: any) {
-    return {
-      success: false,
-      configured: false,
-      message: err.message || 'Failed to update email configuration',
-    };
-  }
-}

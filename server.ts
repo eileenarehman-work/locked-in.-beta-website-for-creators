@@ -48,36 +48,6 @@ app.get('/api/auth/email-config', (req, res) => {
   });
 });
 
-// 2. POST Update Server-Side Email Configuration (Runtime settings)
-app.post('/api/auth/email-config', (req, res) => {
-  const { provider, apiKey, emailFrom } = req.body;
-
-  if (provider === 'sendgrid') {
-    emailConfig.provider = 'sendgrid';
-    if (typeof apiKey === 'string') emailConfig.sendgridApiKey = apiKey.trim();
-  } else {
-    emailConfig.provider = 'resend';
-    if (typeof apiKey === 'string') emailConfig.resendApiKey = apiKey.trim();
-  }
-
-  if (emailFrom && typeof emailFrom === 'string') {
-    emailConfig.emailFrom = emailFrom.trim();
-  }
-
-  const hasKey = Boolean(
-    (emailConfig.provider === 'sendgrid' ? emailConfig.sendgridApiKey : emailConfig.resendApiKey).trim()
-  );
-
-  res.json({
-    success: true,
-    configured: hasKey,
-    provider: emailConfig.provider,
-    fromEmail: emailConfig.emailFrom,
-    message: hasKey
-      ? `Email service configuration updated for ${emailConfig.provider}.`
-      : 'Settings updated, but API key is empty.',
-  });
-});
 
 // Helper to send email via Resend
 async function sendViaResend(toEmail: string, code: string, displayName?: string) {
