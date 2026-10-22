@@ -150,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <TabEmoji tab="studio" size="sm" isActive={activeTab === 'studio'} />
-            <span>Studio</span>
+            <span>Post</span>
           </button>
 
           {/* 4. Reviews Tab */}

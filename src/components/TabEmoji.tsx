@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { CuteFlame } from './CuteFlame';
+import { RobotHammerLogo } from './RobotHammerLogo';
 
 export type TabType = 'feed' | 'streak' | 'studio' | 'reviews' | 'messages';
 
@@ -96,56 +97,14 @@ export const TabEmoji: React.FC<TabEmojiProps> = ({
     );
   }
 
-  // 3. STUDIO / POST: Original Post & Studio Design - Drafting compass, stylus & blueprint spark (No faces!)
+  // 3. STUDIO / POST TAB: Hand-drawn Robot & Hammer logo with playful hammering animation
   if (tab === 'studio') {
     return (
-      <motion.svg
-        viewBox="0 0 100 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={`${sz} ${className} shrink-0`}
-        whileHover={{ scale: 1.15, rotate: 6 }}
-        animate={isActive ? { scale: [1, 1.08, 1] } : {}}
-        transition={{ duration: 0.25 }}
-      >
-        {/* Blueprint Studio Canvas backing */}
-        <rect
-          x="16"
-          y="16"
-          width="68"
-          height="68"
-          rx="14"
-          fill={isActive ? '#34d399' : '#d1fae5'}
-          stroke="#1e293b"
-          strokeWidth="6.5"
-        />
-        {/* Diagonal Creator Stylus / Pen tool */}
-        <path
-          d="M 32 68 L 60 40 L 68 48 L 40 76 Z"
-          fill="#ffffff"
-          stroke="#1e293b"
-          strokeWidth="5"
-          strokeLinejoin="round"
-        />
-        {/* Stylus Nib */}
-        <path
-          d="M 32 68 L 24 76 L 32 76 Z"
-          fill="#10b981"
-          stroke="#1e293b"
-          strokeWidth="4"
-          strokeLinejoin="round"
-        />
-        {/* Stylus Cap / Grip */}
-        <line x1="52" y1="48" x2="60" y2="56" stroke="#1e293b" strokeWidth="4.5" />
-
-        {/* Dynamic Plus / Build Spark Icon */}
-        <path
-          d="M 64 24 L 64 36 M 58 30 L 70 30"
-          stroke="#1e293b"
-          strokeWidth="5.5"
-          strokeLinecap="round"
-        />
-      </motion.svg>
+      <RobotHammerLogo
+        size={size}
+        isActive={isActive}
+        className={className}
+      />
     );
   }
 

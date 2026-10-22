@@ -3,6 +3,7 @@ import { Project, ProjectStatus, User } from '../types';
 import { generateProjectDraft, assignSmartTags } from '../services/geminiService';
 import { storage } from '../mock/initialData';
 import { Mascot } from './Mascot';
+import { RobotHammerLogo } from './RobotHammerLogo';
 import { MediaDisplay, isVideoUrl } from './MediaDisplay';
 import {
   Sparkles,
@@ -529,9 +530,9 @@ export const ProjectStudio: React.FC<ProjectStudioProps> = ({
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-200/80 pb-5">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <Mascot type="curious" size="sm" />
+            <RobotHammerLogo size="md" isActive={true} />
             <h2 className="text-xl font-black text-slate-900 tracking-tight sm:text-2xl">
-              Project Studio
+              Post Build Studio
             </h2>
             {currentDraftId ? (
               <span className="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
