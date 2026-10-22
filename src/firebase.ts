@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import rawConfig from '../firebase-applet-config.json';
+import rawConfig from '@firebase-config';
 
 // Support both environment variables (for git/CI deployments) and local applet config
 const firebaseConfig = {

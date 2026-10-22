@@ -1,14 +1,21 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
 import { defineConfig } from 'vite';
+
+const rootDir = import.meta.dirname || '.';
+const localConfigPath = path.resolve(rootDir, 'firebase-applet-config.json');
+const defaultConfigPath = path.resolve(rootDir, 'src/firebase-config-default.json');
+const hasLocalConfig = fs.existsSync(localConfigPath);
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/locked-in.-beta-website-for-creators/',
   resolve: {
     alias: {
-      '@': path.resolve(import.meta.dirname || '.', '.'),
+      '@': path.resolve(rootDir, '.'),
+      '@firebase-config': hasLocalConfig ? localConfigPath : defaultConfigPath,
     },
   },
   server: {

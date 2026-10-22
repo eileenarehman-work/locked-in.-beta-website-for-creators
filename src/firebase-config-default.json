@@ -1,0 +1,9 @@
+{
+  "projectId": "lockedin-demo",
+  "appId": "1:000000000000:web:0000000000000000000000",
+  "apiKey": "AIzaSy_DEMO_KEY_FOR_BUILD_COMPATIBILITY_ONLY",
+  "authDomain": "lockedin-demo.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "lockedin-demo.firebasestorage.app",
+  "messagingSenderId": "000000000000"
+}

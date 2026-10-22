@@ -19,6 +19,10 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@firebase-config": [
+        "./firebase-applet-config.json",
+        "./src/firebase-config-default.json"
       ]
     },
     "allowImportingTsExtensions": true,
